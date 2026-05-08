@@ -1,0 +1,17 @@
+{
+  "name": "albania-rides",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm --workspace apps/mobile run start",
+    "admin": "npm --workspace apps/admin run dev",
+    "api": "npm --workspace apps/api run dev",
+    "build": "npm --workspaces --if-present run build",
+    "lint": "npm --workspaces --if-present run lint",
+    "typecheck": "npm --workspaces --if-present run typecheck"
+  }
+}

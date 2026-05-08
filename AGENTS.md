@@ -17,10 +17,10 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 
 ## Target Stack
 
-- Mobile app: React Native + Expo
-- Backend: Node.js or .NET REST API
-- Database: PostgreSQL or Supabase
-- Admin dashboard: React
+- Mobile app: React Native + Expo (Expo Router v6, Albanian UI)
+- Backend: Node.js Express REST API (TypeScript)
+- Database: Supabase (PostgreSQL) + Prisma ORM
+- Admin dashboard: React + Vite
 - Maps/search: Google Maps or Mapbox
 - Authentication: JWT
 - Push notifications: Expo Notifications or native push service
@@ -31,39 +31,39 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 
 ### Mobile App - User Features
 
-- [ ] Register account
-- [ ] Login
-- [ ] Logout
+- [x] Register account
+- [x] Login
+- [x] Logout
 - [ ] Edit profile
 - [ ] Upload profile picture
-- [ ] Search rides by departure city
-- [ ] Search rides by destination city
-- [ ] Search rides by date
-- [ ] View available trips
-- [ ] View trip details
-- [ ] View driver profile
-- [ ] View driver rating
-- [ ] Reserve/book seat
-- [ ] Cancel booking
-- [ ] View passenger trip history
+- [x] Search rides by departure city
+- [x] Search rides by destination city
+- [x] Search rides by date
+- [x] View available trips
+- [x] View trip details
+- [x] View driver profile
+- [x] View driver rating
+- [x] Reserve/book seat
+- [x] Cancel booking
+- [x] View passenger trip history
 - [ ] Receive push notifications
 - [ ] Rate driver after trip
 - [ ] Review driver after trip
 
 ### Mobile App - Driver Features
 
-- [ ] Become/use driver profile
-- [ ] Publish trip
-- [ ] Set departure city
-- [ ] Set destination city
-- [ ] Set date and time
-- [ ] Set price per seat
-- [ ] Set available seats
-- [ ] View incoming reservations
-- [ ] Accept reservation
-- [ ] Reject reservation
-- [ ] View passengers for a trip
-- [ ] View driver trip history
+- [x] Become/use driver profile
+- [x] Publish trip
+- [x] Set departure city
+- [x] Set destination city
+- [x] Set date and time
+- [x] Set price per seat
+- [x] Set available seats
+- [x] View incoming reservations
+- [x] Accept reservation
+- [x] Reject reservation
+- [x] View passengers for a trip
+- [x] View driver trip history
 - [ ] Receive reservation notifications
 
 ### Admin Dashboard
@@ -83,45 +83,45 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 
 - [x] REST API project setup
 - [x] Environment configuration
-- [ ] JWT authentication
-- [ ] User registration endpoint
-- [ ] Login endpoint
-- [ ] Profile endpoint
-- [ ] Driver profile endpoint
-- [ ] Trip creation endpoint
-- [ ] Trip search endpoint
-- [ ] Trip details endpoint
-- [ ] Reservation creation endpoint
-- [ ] Reservation cancel endpoint
-- [ ] Reservation accept endpoint
-- [ ] Reservation reject endpoint
-- [ ] Ratings/reviews endpoint
-- [ ] Admin users endpoint
-- [ ] Admin trips endpoint
-- [ ] Admin reports endpoint
+- [x] JWT authentication
+- [x] User registration endpoint
+- [x] Login endpoint
+- [x] Profile endpoint
+- [x] Driver profile endpoint
+- [x] Trip creation endpoint
+- [x] Trip search endpoint
+- [x] Trip details endpoint
+- [x] Reservation creation endpoint
+- [x] Reservation cancel endpoint
+- [x] Reservation accept endpoint
+- [x] Reservation reject endpoint
+- [x] Ratings/reviews endpoint
+- [x] Admin users endpoint
+- [x] Admin trips endpoint
+- [x] Admin reports endpoint
 - [ ] Push notification integration
 - [ ] Image upload integration
 
 ### Database
 
-- [ ] Users table
-- [ ] Driver profiles table
-- [ ] Trips table
-- [ ] Reservations table
-- [ ] Reviews table
-- [ ] Reports table
-- [ ] Push notification tokens table
-- [ ] Admin users/roles model
-- [ ] Albanian cities reference data
+- [x] Users table
+- [x] Driver profiles table
+- [x] Trips table
+- [x] Reservations table
+- [x] Reviews table
+- [x] Reports table
+- [x] Push notification tokens table
+- [x] Admin users/roles model
+- [x] Albanian cities reference data
 
 ### Albania-Specific Requirements
 
-- [ ] Restrict supported routes to Albania
-- [ ] Add Albanian city list
-- [ ] Use ALL or EUR pricing decision
+- [x] Restrict supported routes to Albania
+- [x] Add Albanian city list
+- [x] Use ALL or EUR pricing decision (EUR chosen)
 - [ ] Add phone number format validation for Albania
-- [ ] Albanian language support decision
-- [ ] English language support decision
+- [x] Albanian language support decision (Albanian only)
+- [x] English language support decision (not included in MVP)
 
 ### Ads And Monetization
 
@@ -175,22 +175,22 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 
 ### Phase 2 - Core Backend
 
-- [ ] Database schema
-- [ ] Authentication
-- [ ] Users and profiles
-- [ ] Trips
-- [ ] Reservations
-- [ ] Basic seed data for Albanian cities
+- [x] Database schema
+- [x] Authentication
+- [x] Users and profiles
+- [x] Trips
+- [x] Reservations
+- [x] Basic seed data for Albanian cities
 
 ### Phase 3 - Core Mobile Flow
 
-- [ ] Auth screens
-- [ ] Passenger search screen
-- [ ] Trip results screen
-- [ ] Trip details screen
-- [ ] Driver publish trip screen
-- [ ] Booking/reservation flow
-- [ ] Trip history screens
+- [x] Auth screens
+- [x] Passenger search screen
+- [x] Trip results screen
+- [x] Trip details screen
+- [x] Driver publish trip screen
+- [x] Booking/reservation flow
+- [x] Trip history screens
 
 ### Phase 4 - Admin MVP
 
@@ -269,5 +269,7 @@ Better long-term monetization options may include featured drivers, promoted tri
 - [x] Project folder created
 - [x] Requirements tracking file created
 - [x] Git repository initialized
-- [ ] GitHub remote connected
+- [x] GitHub remote connected
 - [x] Initial project scaffold created
+- [x] Phase 2 backend complete (Supabase + Prisma + JWT + all endpoints)
+- [x] Phase 3 mobile complete (Expo Router + all screens in Albanian)

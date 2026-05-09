@@ -34,7 +34,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Register account
 - [x] Login
 - [x] Logout
-- [ ] Edit profile
+- [x] Edit profile
 - [ ] Upload profile picture
 - [x] Search rides by departure city
 - [x] Search rides by destination city

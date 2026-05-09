@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
-import { useFocusEffect, router } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
@@ -12,9 +12,14 @@ export default function Profili() {
   const [showDriverForm, setShowDriverForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', phone: '' });
 
   useFocusEffect(useCallback(() => {
-    api.get<any>('/api/v1/users/me', token ?? undefined).then(setProfile).catch(() => {}).finally(() => setLoading(false));
+    api.get<any>('/api/v1/users/me', token ?? undefined)
+      .then(p => { setProfile(p); setEditForm({ firstName: p.firstName, lastName: p.lastName, phone: p.phone ?? '' }); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [token]));
 
   const handleLogout = () => {
@@ -22,6 +27,26 @@ export default function Profili() {
       { text: 'Jo' },
       { text: 'Po, dil', style: 'destructive', onPress: signOut },
     ]);
+  };
+
+  const saveProfile = async () => {
+    if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
+      Alert.alert('Gabim', 'Emri dhe mbiemri janë të detyrueshme'); return;
+    }
+    setSaving(true);
+    try {
+      const body: any = { firstName: editForm.firstName.trim(), lastName: editForm.lastName.trim() };
+      if (editForm.phone.trim()) body.phone = editForm.phone.trim();
+      const updated = await api.patch<any>('/api/v1/users/me', body, token ?? undefined);
+      setProfile((p: any) => ({ ...p, ...updated }));
+      await signIn(token!, { ...user!, firstName: updated.firstName, lastName: updated.lastName });
+      setEditMode(false);
+      Alert.alert('Sukses', 'Profili u përditësua!');
+    } catch (e: any) {
+      Alert.alert('Gabim', e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const createDriverProfile = async () => {
@@ -52,7 +77,37 @@ export default function Profili() {
         <View style={s.roleBadge}>
           <Text style={s.roleText}>{profile?.role === 'DRIVER' ? '🚗 Shofer' : '🧳 Pasagjer'}</Text>
         </View>
+        <TouchableOpacity style={s.editHeaderBtn} onPress={() => setEditMode(v => !v)}>
+          <Text style={s.editHeaderBtnText}>{editMode ? 'Anulo' : '✏️ Ndrysho'}</Text>
+        </TouchableOpacity>
       </View>
+
+      {editMode && (
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Ndrysho profilin</Text>
+          {[
+            { key: 'firstName', label: 'Emri' },
+            { key: 'lastName', label: 'Mbiemri' },
+            { key: 'phone', label: 'Telefoni (opsional)' },
+          ].map(({ key, label }) => (
+            <View key={key}>
+              <Text style={s.label}>{label}</Text>
+              <TextInput
+                style={s.input}
+                value={editForm[key as keyof typeof editForm]}
+                onChangeText={v => setEditForm(f => ({ ...f, [key]: v }))}
+                placeholder={label}
+                placeholderTextColor={colors.subtle}
+                autoCapitalize={key === 'phone' ? 'none' : 'words'}
+                keyboardType={key === 'phone' ? 'phone-pad' : 'default'}
+              />
+            </View>
+          ))}
+          <TouchableOpacity style={[s.saveBtn, saving && { opacity: 0.6 }]} onPress={saveProfile} disabled={saving}>
+            <Text style={s.saveBtnText}>{saving ? 'Duke ruajtur...' : 'Ruaj ndryshimet'}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {profile?.driverProfile && (
         <View style={s.section}>
@@ -116,6 +171,8 @@ const s = StyleSheet.create({
   email: { fontSize: 13, color: '#BFDBFE', marginTop: 2 },
   roleBadge: { marginTop: 10, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 14, paddingVertical: 4, borderRadius: 20 },
   roleText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  editHeaderBtn: { marginTop: 14, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 18, paddingVertical: 7, borderRadius: 20 },
+  editHeaderBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   section: { margin: 16, backgroundColor: colors.surface, borderRadius: 14, padding: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
   infoRow: { color: colors.text, fontSize: 14, marginBottom: 6 },

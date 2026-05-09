@@ -1,12 +1,19 @@
 export const colors = {
-  primary: '#2563EB',
-  primaryLight: '#DBEAFE',
-  background: '#F8FAFC',
-  surface: '#FFFFFF',
-  text: '#1E293B',
-  subtle: '#64748B',
-  border: '#E2E8F0',
-  danger: '#EF4444',
-  success: '#22C55E',
-  warning: '#F59E0B',
+  primary: '#DC2626',
+  primaryDark: '#7F1D1D',
+  primaryLight: '#3D1515',
+  background: '#0D0D0D',
+  surface: '#1A1A1A',
+  surfaceElevated: '#242424',
+  text: '#F9FAFB',
+  subtle: '#9CA3AF',
+  border: '#2D2D2D',
+  danger: '#F87171',
+  success: '#34D399',
+  warning: '#FBBF24',
+};
+
+export const gradient = {
+  header: ['#0D0D0D', '#7F1D1D', '#DC2626'] as const,
+  card: ['#1A1A1A', '#242424'] as const,
 };

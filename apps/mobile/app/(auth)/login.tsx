@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
 import { Link, router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors } from '../../lib/colors';
+import { colors, gradient } from '../../lib/colors';
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -26,40 +27,46 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={s.inner}>
-        <Text style={s.title}>Albania Rides</Text>
-        <Text style={s.subtitle}>Hyr në llogarinë tënde</Text>
+    <LinearGradient colors={['#0D0D0D', '#1A0000']} style={{ flex: 1 }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={s.inner}>
+          <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
+          <Text style={s.title}>Albania Rides</Text>
+          <Text style={s.subtitle}>Hyr në llogarinë tënde</Text>
 
-        <TextInput style={s.input} placeholder="Email" value={email} onChangeText={setEmail}
-          autoCapitalize="none" keyboardType="email-address" placeholderTextColor={colors.subtle} />
-        <TextInput style={s.input} placeholder="Fjalëkalimi" value={password} onChangeText={setPassword}
-          secureTextEntry={true} placeholderTextColor={colors.subtle} />
+          <TextInput style={s.input} placeholder="Email" value={email} onChangeText={setEmail}
+            autoCapitalize="none" keyboardType="email-address" placeholderTextColor={colors.subtle} />
+          <TextInput style={s.input} placeholder="Fjalëkalimi" value={password} onChangeText={setPassword}
+            secureTextEntry={true} placeholderTextColor={colors.subtle} />
 
-        <TouchableOpacity style={[s.btn, loading && s.btnDisabled]} onPress={handleLogin} disabled={loading}>
-          <Text style={s.btnText}>{loading ? 'Duke hyrë...' : 'Hyr'}</Text>
-        </TouchableOpacity>
-
-        <Link href="/(auth)/register" asChild>
-          <TouchableOpacity style={s.link}>
-            <Text style={s.linkText}>Nuk ke llogari? <Text style={s.linkBold}>Regjistrohu</Text></Text>
+          <TouchableOpacity style={[s.btn, loading && s.btnDisabled]} onPress={handleLogin} disabled={loading}>
+            <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.btnGradient}>
+              <Text style={s.btnText}>{loading ? 'Duke hyrë...' : 'Hyr'}</Text>
+            </LinearGradient>
           </TouchableOpacity>
-        </Link>
-      </View>
-    </KeyboardAvoidingView>
+
+          <Link href="/(auth)/register" asChild>
+            <TouchableOpacity style={s.link}>
+              <Text style={s.linkText}>Nuk ke llogari? <Text style={s.linkBold}>Regjistrohu</Text></Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  inner: { flex: 1, padding: 24, justifyContent: 'center' },
-  title: { fontSize: 32, fontWeight: '800', color: colors.primary, textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 16, color: colors.subtle, textAlign: 'center', marginBottom: 40 },
+  inner: { flex: 1, padding: 28, justifyContent: 'center' },
+  logo: { width: 110, height: 110, alignSelf: 'center', marginBottom: 20, borderRadius: 22 },
+  title: { fontSize: 32, fontWeight: '900', color: colors.text, textAlign: 'center', marginBottom: 4 },
+  subtitle: { fontSize: 15, color: colors.subtle, textAlign: 'center', marginBottom: 36 },
   input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, fontSize: 16, color: colors.text, marginBottom: 14 },
-  btn: { backgroundColor: colors.primary, borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
+  btn: { borderRadius: 12, overflow: 'hidden', marginTop: 8 },
   btnDisabled: { opacity: 0.6 },
+  btnGradient: { padding: 16, alignItems: 'center' },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  link: { marginTop: 24, alignItems: 'center' },
+  link: { marginTop: 28, alignItems: 'center' },
   linkText: { color: colors.subtle, fontSize: 14 },
   linkBold: { color: colors.primary, fontWeight: '700' },
 });

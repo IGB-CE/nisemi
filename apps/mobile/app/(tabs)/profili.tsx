@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors } from '../../lib/colors';
+import { colors, gradient } from '../../lib/colors';
 import { ErrorScreen } from '../../components/States';
 
 export default function Profili() {
@@ -76,7 +77,7 @@ export default function Profili() {
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <View style={s.header}>
+      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
         <View style={s.avatar}><Text style={s.avatarText}>{profile?.firstName?.[0]}{profile?.lastName?.[0]}</Text></View>
         <Text style={s.name}>{profile?.firstName} {profile?.lastName}</Text>
         <Text style={s.email}>{profile?.email}</Text>
@@ -87,7 +88,7 @@ export default function Profili() {
         <TouchableOpacity style={s.editHeaderBtn} onPress={() => setEditMode(v => !v)}>
           <Text style={s.editHeaderBtnText}>{editMode ? 'Anulo' : '✏️ Ndrysho'}</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
       {editMode && (
         <View style={s.section}>
@@ -171,19 +172,19 @@ export default function Profili() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: colors.primary, padding: 32, paddingTop: 60, alignItems: 'center' },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  avatarText: { fontSize: 28, fontWeight: '800', color: colors.primary },
+  header: { padding: 32, paddingTop: 60, alignItems: 'center' },
+  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' },
+  avatarText: { fontSize: 28, fontWeight: '800', color: '#fff' },
   name: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  email: { fontSize: 13, color: '#BFDBFE', marginTop: 2 },
-  roleBadge: { marginTop: 10, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 14, paddingVertical: 4, borderRadius: 20 },
+  email: { fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  roleBadge: { marginTop: 10, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 14, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
   roleText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  editHeaderBtn: { marginTop: 14, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 18, paddingVertical: 7, borderRadius: 20 },
+  editHeaderBtn: { marginTop: 14, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 18, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
   editHeaderBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  section: { margin: 16, backgroundColor: colors.surface, borderRadius: 14, padding: 16 },
+  section: { margin: 16, backgroundColor: colors.surface, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.border },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
   infoRow: { color: colors.text, fontSize: 14, marginBottom: 6 },
-  driverBtn: { margin: 16, backgroundColor: colors.primaryLight, borderRadius: 14, padding: 18, alignItems: 'center' },
+  driverBtn: { margin: 16, backgroundColor: colors.primaryLight, borderRadius: 14, padding: 18, alignItems: 'center', borderWidth: 1, borderColor: colors.primary },
   driverBtnText: { color: colors.primary, fontSize: 16, fontWeight: '700' },
   label: { fontSize: 12, color: colors.subtle, fontWeight: '600', marginBottom: 4, marginTop: 8 },
   input: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 15, color: colors.text, marginBottom: 4 },

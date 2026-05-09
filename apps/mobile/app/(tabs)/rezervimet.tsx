@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors } from '../../lib/colors';
+import { colors, gradient } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
 
 const statusMap: Record<string, { label: string; color: string }> = {
@@ -89,7 +90,9 @@ export default function Rezervimet() {
 
   return (
     <View style={s.container}>
-      <View style={s.header}><Text style={s.headerTitle}>Rezervimet e mia</Text></View>
+      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
+        <Text style={s.headerTitle}>Rezervimet e mia</Text>
+      </LinearGradient>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {reservations.length === 0 ? (
           <EmptyState icon="🎫" title="Nuk keni rezervime ende" subtitle="Kërko një udhëtim dhe rezervo vendin tënd." />
@@ -167,9 +170,9 @@ export default function Rezervimet() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: colors.primary, padding: 24, paddingTop: 60 },
+  header: { padding: 24, paddingTop: 60 },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  card: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 1 },
+  card: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
   route: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   city: { fontSize: 17, fontWeight: '700', color: colors.text },
   arrow: { marginHorizontal: 8, color: colors.primary, fontSize: 16 },

@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
-import { colors } from '../../lib/colors';
+import { colors, gradient } from '../../lib/colors';
 import { useAuth } from '../../lib/auth';
 import { EmptyState } from '../../components/States';
 
@@ -80,10 +81,10 @@ export default function Search() {
       {showFrom && <CityModal onSelect={setFrom} onClose={() => setShowFrom(false)} />}
       {showTo && <CityModal onSelect={setTo} onClose={() => setShowTo(false)} />}
 
-      <View style={s.header}>
+      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
         <Text style={s.headerTitle}>Albania Rides</Text>
         <Text style={s.headerSub}>Gjej udhëtimin tënd</Text>
-      </View>
+      </LinearGradient>
 
       {citiesError && (
         <View style={s.citiesError}>
@@ -106,7 +107,9 @@ export default function Search() {
         <TextInput style={s.input} placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} placeholderTextColor={colors.subtle} />
 
         <TouchableOpacity style={s.btn} onPress={search}>
-          <Text style={s.btnText}>🔍  Kërko udhëtime</Text>
+          <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.btnGradient}>
+            <Text style={s.btnText}>🔍  Kërko udhëtime</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
 
@@ -146,21 +149,22 @@ export default function Search() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { backgroundColor: colors.primary, padding: 24, paddingTop: 60 },
+  header: { padding: 24, paddingTop: 60 },
   headerTitle: { fontSize: 26, fontWeight: '800', color: '#fff' },
-  headerSub: { fontSize: 14, color: '#BFDBFE', marginTop: 2 },
-  card: { margin: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  headerSub: { fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  citiesError: { marginHorizontal: 16, marginTop: 8, backgroundColor: 'rgba(245,158,11,0.15)', borderRadius: 10, padding: 12 },
+  citiesErrorText: { color: colors.warning, fontSize: 13, textAlign: 'center' },
+  card: { margin: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
   fieldLabel: { fontSize: 12, color: colors.subtle, fontWeight: '600', marginBottom: 6, marginTop: 12 },
-  picker: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14 },
+  picker: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14 },
   pickerValue: { color: colors.text, fontSize: 15 },
   pickerPlaceholder: { color: colors.subtle, fontSize: 15 },
-  input: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, fontSize: 15, color: colors.text },
-  btn: { backgroundColor: colors.primary, borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 20 },
+  input: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, fontSize: 15, color: colors.text },
+  btn: { borderRadius: 12, overflow: 'hidden', marginTop: 20 },
+  btnGradient: { padding: 15, alignItems: 'center' },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   results: { flex: 1, paddingHorizontal: 16 },
-  citiesError: { marginHorizontal: 16, marginTop: 8, backgroundColor: '#FEF3C7', borderRadius: 10, padding: 12 },
-  citiesErrorText: { color: '#92400E', fontSize: 13, textAlign: 'center' },
-  tripCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 1 },
+  tripCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
   tripRoute: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   tripCity: { fontSize: 17, fontWeight: '700', color: colors.text },
   arrow: { marginHorizontal: 8, color: colors.primary, fontSize: 18 },
@@ -171,12 +175,12 @@ const s = StyleSheet.create({
   tripDriver: { color: colors.subtle, fontSize: 13 },
   tripRating: { color: colors.subtle, fontSize: 13 },
   tripSeats: { color: colors.subtle, fontSize: 13 },
-  modal: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100, justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
+  modal: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, borderTopWidth: 1, borderColor: colors.border },
   modalTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  searchInput: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 15, color: colors.text, marginBottom: 8 },
+  searchInput: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 15, color: colors.text, marginBottom: 8 },
   cityRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
   cityName: { fontSize: 16, color: colors.text },
-  closeBtn: { marginTop: 16, backgroundColor: colors.background, borderRadius: 12, padding: 14, alignItems: 'center' },
+  closeBtn: { marginTop: 16, backgroundColor: colors.surfaceElevated, borderRadius: 12, padding: 14, alignItems: 'center' },
   closeBtnText: { color: colors.subtle, fontWeight: '600' },
 });

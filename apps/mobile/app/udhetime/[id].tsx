@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors } from '../../lib/colors';
+import { colors, gradient } from '../../lib/colors';
 import { ErrorScreen } from '../../components/States';
 
 export default function TripDetail() {
@@ -45,7 +46,7 @@ export default function TripDetail() {
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <View style={s.header}>
+      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
         <TouchableOpacity style={s.back} onPress={() => router.back()}>
           <Text style={s.backText}>← Kthehu</Text>
         </TouchableOpacity>
@@ -55,7 +56,7 @@ export default function TripDetail() {
           <Text style={s.city}>{trip.destCity.name}</Text>
         </View>
         <Text style={s.date}>{new Date(trip.departureAt).toLocaleDateString('sq-AL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
-      </View>
+      </LinearGradient>
 
       <View style={s.card}>
         <Text style={s.cardTitle}>Detajet e udhëtimit</Text>
@@ -106,14 +107,14 @@ function Row({ label, value }: { label: string; value: string }) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: colors.primary, padding: 24, paddingTop: 60 },
+  header: { padding: 24, paddingTop: 60 },
   back: { marginBottom: 12 },
-  backText: { color: '#BFDBFE', fontSize: 14 },
+  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 14 },
   route: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   city: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  arrow: { marginHorizontal: 10, color: '#BFDBFE', fontSize: 22 },
-  date: { color: '#BFDBFE', fontSize: 13 },
-  card: { margin: 16, marginBottom: 0, backgroundColor: colors.surface, borderRadius: 14, padding: 16 },
+  arrow: { marginHorizontal: 10, color: 'rgba(255,255,255,0.5)', fontSize: 22 },
+  date: { color: 'rgba(255,255,255,0.6)', fontSize: 13 },
+  card: { margin: 16, marginBottom: 0, backgroundColor: colors.surface, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.border },
   cardTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
   rowLabel: { color: colors.subtle, fontSize: 14 },
@@ -125,6 +126,6 @@ const s = StyleSheet.create({
   driverMeta: { color: colors.subtle, fontSize: 13, marginTop: 2 },
   bookBtn: { margin: 16, backgroundColor: colors.primary, borderRadius: 14, padding: 18, alignItems: 'center' },
   bookBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
-  fullBanner: { margin: 16, backgroundColor: '#FEE2E2', borderRadius: 14, padding: 16, alignItems: 'center' },
+  fullBanner: { margin: 16, backgroundColor: 'rgba(248,113,113,0.1)', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.danger },
   fullBannerText: { color: colors.danger, fontSize: 14, fontWeight: '600' },
 });

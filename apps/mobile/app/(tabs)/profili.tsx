@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors, gradient } from '../../lib/colors';
+import { colors } from '../../lib/colors';
 import { ErrorScreen } from '../../components/States';
+import GradientHeader from '../../components/GradientHeader';
 
 export default function Profili() {
   const { token, user, signOut, signIn } = useAuth();
@@ -77,7 +77,7 @@ export default function Profili() {
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
+      <GradientHeader style={s.header}>
         <View style={s.avatar}><Text style={s.avatarText}>{profile?.firstName?.[0]}{profile?.lastName?.[0]}</Text></View>
         <Text style={s.name}>{profile?.firstName} {profile?.lastName}</Text>
         <Text style={s.email}>{profile?.email}</Text>
@@ -88,7 +88,7 @@ export default function Profili() {
         <TouchableOpacity style={s.editHeaderBtn} onPress={() => setEditMode(v => !v)}>
           <Text style={s.editHeaderBtnText}>{editMode ? 'Anulo' : '✏️ Ndrysho'}</Text>
         </TouchableOpacity>
-      </LinearGradient>
+      </GradientHeader>
 
       {editMode && (
         <View style={s.section}>
@@ -172,7 +172,7 @@ export default function Profili() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { padding: 32, paddingTop: 60, alignItems: 'center' },
+  header: { alignItems: 'center' },
   avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' },
   avatarText: { fontSize: 28, fontWeight: '800', color: '#fff' },
   name: { fontSize: 22, fontWeight: '800', color: '#fff' },

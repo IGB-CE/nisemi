@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors, gradient } from '../../lib/colors';
+import { colors } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
+import GradientHeader from '../../components/GradientHeader';
 
 const statusMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Në pritje', color: colors.warning },
@@ -90,9 +90,9 @@ export default function Rezervimet() {
 
   return (
     <View style={s.container}>
-      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
+      <GradientHeader>
         <Text style={s.headerTitle}>Rezervimet e mia</Text>
-      </LinearGradient>
+      </GradientHeader>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {reservations.length === 0 ? (
           <EmptyState icon="🎫" title="Nuk keni rezervime ende" subtitle="Kërko një udhëtim dhe rezervo vendin tënd." />

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors, gradient } from '../../lib/colors';
+import { colors } from '../../lib/colors';
+import GradientHeader from '../../components/GradientHeader';
 
 interface City { id: string; name: string; }
 
@@ -70,10 +70,10 @@ export default function Publiko() {
       {showFrom && <CityModal onSelect={c => { setOriginCity(c); setForm(f => ({ ...f, originCityId: c.id })); }} onClose={() => setShowFrom(false)} />}
       {showTo && <CityModal onSelect={c => { setDestCity(c); setForm(f => ({ ...f, destCityId: c.id })); }} onClose={() => setShowTo(false)} />}
       <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-        <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
+        <GradientHeader>
           <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
           <Text style={s.title}>Publiko udhëtim</Text>
-        </LinearGradient>
+        </GradientHeader>
         <View style={s.form}>
           <Text style={s.label}>Nga *</Text>
           <TouchableOpacity style={s.picker} onPress={() => setShowFrom(true)}>
@@ -114,7 +114,6 @@ export default function Publiko() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { padding: 24, paddingTop: 60 },
   back: { color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 8 },
   title: { fontSize: 22, fontWeight: '800', color: '#fff' },
   form: { padding: 16 },

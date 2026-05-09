@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "Albania Rides",
+    "name": "Ikim",
     "slug": "albania-rides",
     "scheme": "albaniarides",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0D0D0D"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.albaniarides.app",
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "Albania Rides dërgon njoftime për rezervimet tuaja."
+        "NSUserNotificationUsageDescription": "Ikim dërgon njoftime për rezervimet tuaja."
       }
     },
     "android": {
@@ -39,7 +39,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#2563EB",
+          "color": "#DC2626",
           "androidMode": "default"
         }
       ]

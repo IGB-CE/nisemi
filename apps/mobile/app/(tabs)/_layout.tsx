@@ -3,7 +3,7 @@ import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
 import { Text } from 'react-native';
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
+function TabIcon({ label }: { label: string }) {
   return <Text style={{ fontSize: 20 }}>{label}</Text>;
 }
 
@@ -16,18 +16,21 @@ export default function TabsLayout() {
       headerShown: false,
       tabBarActiveTintColor: colors.primary,
       tabBarInactiveTintColor: colors.subtle,
-      tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: 8, height: 60 },
+      tabBarStyle: {
+        backgroundColor: colors.surface,
+        borderTopColor: colors.border,
+        borderTopWidth: 1,
+      },
       tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
     }}>
-      <Tabs.Screen name="index" options={{ title: 'Kërko', tabBarIcon: ({ focused }) => <TabIcon label="🔍" focused={focused} /> }} />
-      <Tabs.Screen name="rezervimet" options={{ title: 'Rezervimet', tabBarIcon: ({ focused }) => <TabIcon label="🎫" focused={focused} /> }} />
-      {isDriver && (
-        <Tabs.Screen name="shofer" options={{ title: 'Shofer', tabBarIcon: ({ focused }) => <TabIcon label="🚗" focused={focused} /> }} />
-      )}
-      {!isDriver && (
+      <Tabs.Screen name="index" options={{ title: 'Kërko', tabBarIcon: () => <TabIcon label="🔍" /> }} />
+      <Tabs.Screen name="rezervimet" options={{ title: 'Rezervimet', tabBarIcon: () => <TabIcon label="🎫" /> }} />
+      {isDriver ? (
+        <Tabs.Screen name="shofer" options={{ title: 'Shofer', tabBarIcon: () => <TabIcon label="🚗" /> }} />
+      ) : (
         <Tabs.Screen name="shofer" options={{ href: null }} />
       )}
-      <Tabs.Screen name="profili" options={{ title: 'Profili', tabBarIcon: ({ focused }) => <TabIcon label="👤" focused={focused} /> }} />
+      <Tabs.Screen name="profili" options={{ title: 'Profili', tabBarIcon: () => <TabIcon label="👤" /> }} />
     </Tabs>
   );
 }

@@ -35,7 +35,7 @@ export default function Register() {
         <ScrollView contentContainerStyle={s.inner} keyboardShouldPersistTaps="handled">
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.title}>Krijo llogari</Text>
-          <Text style={s.subtitle}>Regjistrohu në Albania Rides</Text>
+          <Text style={s.subtitle}>Regjistrohu në Ikim</Text>
 
           {[
             { key: 'firstName', label: 'Emri *' },

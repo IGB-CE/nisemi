@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors, gradient } from '../../lib/colors';
+import { colors } from '../../lib/colors';
 import { ErrorScreen } from '../../components/States';
+import GradientHeader from '../../components/GradientHeader';
 
 export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -46,7 +46,7 @@ export default function TripDetail() {
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
+      <GradientHeader>
         <TouchableOpacity style={s.back} onPress={() => router.back()}>
           <Text style={s.backText}>← Kthehu</Text>
         </TouchableOpacity>
@@ -56,7 +56,7 @@ export default function TripDetail() {
           <Text style={s.city}>{trip.destCity.name}</Text>
         </View>
         <Text style={s.date}>{new Date(trip.departureAt).toLocaleDateString('sq-AL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
-      </LinearGradient>
+      </GradientHeader>
 
       <View style={s.card}>
         <Text style={s.cardTitle}>Detajet e udhëtimit</Text>
@@ -107,7 +107,6 @@ function Row({ label, value }: { label: string; value: string }) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { padding: 24, paddingTop: 60 },
   back: { marginBottom: 12 },
   backText: { color: 'rgba(255,255,255,0.6)', fontSize: 14 },
   route: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },

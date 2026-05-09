@@ -31,7 +31,7 @@ export default function Login() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={s.inner}>
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
-          <Text style={s.title}>Albania Rides</Text>
+          <Text style={s.title}>Ikim</Text>
           <Text style={s.subtitle}>Hyr në llogarinë tënde</Text>
 
           <TextInput style={s.input} placeholder="Email" value={email} onChangeText={setEmail}

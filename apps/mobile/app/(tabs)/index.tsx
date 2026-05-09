@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
-import { colors, gradient } from '../../lib/colors';
+import { colors } from '../../lib/colors';
 import { useAuth } from '../../lib/auth';
 import { EmptyState } from '../../components/States';
+import GradientHeader from '../../components/GradientHeader';
 
 interface City { id: string; name: string; }
 interface Trip {
@@ -81,10 +81,10 @@ export default function Search() {
       {showFrom && <CityModal onSelect={setFrom} onClose={() => setShowFrom(false)} />}
       {showTo && <CityModal onSelect={setTo} onClose={() => setShowTo(false)} />}
 
-      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
-        <Text style={s.headerTitle}>Albania Rides</Text>
+      <GradientHeader>
+        <Text style={s.headerTitle}>Ikim</Text>
         <Text style={s.headerSub}>Gjej udhëtimin tënd</Text>
-      </LinearGradient>
+      </GradientHeader>
 
       {citiesError && (
         <View style={s.citiesError}>
@@ -107,9 +107,7 @@ export default function Search() {
         <TextInput style={s.input} placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} placeholderTextColor={colors.subtle} />
 
         <TouchableOpacity style={s.btn} onPress={search}>
-          <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.btnGradient}>
-            <Text style={s.btnText}>🔍  Kërko udhëtime</Text>
-          </LinearGradient>
+          <Text style={s.btnText}>🔍  Kërko udhëtime</Text>
         </TouchableOpacity>
       </View>
 
@@ -149,7 +147,6 @@ export default function Search() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { padding: 24, paddingTop: 60 },
   headerTitle: { fontSize: 26, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
   citiesError: { marginHorizontal: 16, marginTop: 8, backgroundColor: 'rgba(245,158,11,0.15)', borderRadius: 10, padding: 12 },
@@ -160,8 +157,7 @@ const s = StyleSheet.create({
   pickerValue: { color: colors.text, fontSize: 15 },
   pickerPlaceholder: { color: colors.subtle, fontSize: 15 },
   input: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, fontSize: 15, color: colors.text },
-  btn: { borderRadius: 12, overflow: 'hidden', marginTop: 20 },
-  btnGradient: { padding: 15, alignItems: 'center' },
+  btn: { backgroundColor: colors.primary, borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 20 },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   results: { flex: 1, paddingHorizontal: 16 },
   tripCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },

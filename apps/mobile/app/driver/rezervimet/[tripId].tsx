@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
-import { colors, gradient } from '../../../lib/colors';
+import { colors } from '../../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../../components/States';
+import GradientHeader from '../../../components/GradientHeader';
 
 const statusMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Në pritje', color: colors.warning },
@@ -47,7 +47,7 @@ export default function TripReservations() {
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
+      <GradientHeader>
         <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
         <View style={s.route}>
           <Text style={s.city}>{trip.originCity.name}</Text>
@@ -56,7 +56,7 @@ export default function TripReservations() {
         </View>
         <Text style={s.date}>{new Date(trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
         <Text style={s.seats}>💺 {trip.seatsAvailable}/{trip.totalSeats} vende të lira</Text>
-      </LinearGradient>
+      </GradientHeader>
 
       <Text style={s.sectionTitle}>Rezervimet ({reservations.length})</Text>
 
@@ -96,7 +96,6 @@ export default function TripReservations() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { padding: 24, paddingTop: 60 },
   back: { color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 8 },
   route: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   city: { fontSize: 22, fontWeight: '800', color: '#fff' },

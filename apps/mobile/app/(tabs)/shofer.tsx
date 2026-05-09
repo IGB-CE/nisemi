@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors, gradient } from '../../lib/colors';
+import { colors } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
+import GradientHeader from '../../components/GradientHeader';
 
 export default function Shofer() {
   const { token } = useAuth();
@@ -29,12 +29,12 @@ export default function Shofer() {
 
   return (
     <View style={s.container}>
-      <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.header}>
+      <GradientHeader style={s.header}>
         <Text style={s.headerTitle}>Paneli i Shoferit</Text>
         <TouchableOpacity style={s.publishBtn} onPress={() => router.push('/driver/publiko')}>
           <Text style={s.publishBtnText}>+ Publiko udhëtim</Text>
         </TouchableOpacity>
-      </LinearGradient>
+      </GradientHeader>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {trips.length === 0 ? (
           <EmptyState icon="🚗" title="Nuk keni udhëtime të publikuara" subtitle="Shtypni butonin lart për të publikuar udhëtimin tuaj të parë." />
@@ -61,7 +61,7 @@ export default function Shofer() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { padding: 24, paddingTop: 60, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   publishBtn: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
   publishBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },

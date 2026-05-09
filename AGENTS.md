@@ -47,8 +47,8 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Cancel booking
 - [x] View passenger trip history
 - [ ] Receive push notifications
-- [ ] Rate driver after trip
-- [ ] Review driver after trip
+- [x] Rate driver after trip
+- [x] Review driver after trip
 
 ### Mobile App - Driver Features
 
@@ -68,16 +68,16 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 
 ### Admin Dashboard
 
-- [ ] Admin login
-- [ ] Dashboard statistics
-- [ ] Manage users
+- [x] Admin login
+- [x] Dashboard statistics
+- [x] Manage users
 - [ ] Manage drivers
-- [ ] Manage trips
-- [ ] Manage reservations
+- [x] Manage trips
+- [x] Manage reservations
 - [ ] Manage reports
 - [ ] Approve users
-- [ ] Block users
-- [ ] Unblock users
+- [x] Block users
+- [x] Unblock users
 
 ### Backend API
 
@@ -194,12 +194,12 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 
 ### Phase 4 - Admin MVP
 
-- [ ] Admin login
-- [ ] Users list
-- [ ] Trips list
-- [ ] Reservations list
-- [ ] Block/approve actions
-- [ ] Basic statistics
+- [x] Admin login
+- [x] Users list
+- [x] Trips list
+- [x] Reservations list
+- [x] Block/approve actions
+- [x] Basic statistics
 
 ### Phase 5 - Polish And Launch Prep
 
@@ -273,3 +273,5 @@ Better long-term monetization options may include featured drivers, promoted tri
 - [x] Initial project scaffold created
 - [x] Phase 2 backend complete (Supabase + Prisma + JWT + all endpoints)
 - [x] Phase 3 mobile complete (Expo Router + all screens in Albanian)
+- [x] Phase 4 admin dashboard complete (login, stats, users/trips/reservations, block/unblock)
+- [x] Ratings and reviews mobile UI complete (passenger rates driver after completed trip)

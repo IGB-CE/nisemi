@@ -33,7 +33,16 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 router.get('/my', requireAuth, async (req: AuthRequest, res) => {
   const reservations = await prisma.reservation.findMany({
     where: { passengerId: req.userId },
-    include: { trip: { include: { originCity: true, destCity: true, driver: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, driverProfile: { select: { rating: true } } } } } } },
+    include: {
+      trip: {
+        include: {
+          originCity: true,
+          destCity: true,
+          driver: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, driverProfile: { select: { rating: true } } } },
+          reviews: { where: { authorId: req.userId! }, select: { id: true } },
+        },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   });
   res.json(reservations);

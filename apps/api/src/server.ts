@@ -17,7 +17,15 @@ const app = express();
 const PORT = process.env.PORT ?? 4000;
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN ?? '*' }));
+const allowedOrigins = (process.env.CORS_ORIGIN ?? '*').split(',').map(o => o.trim());
+app.use(cors({
+  origin: allowedOrigins.length === 1 && allowedOrigins[0] === '*'
+    ? '*'
+    : (origin, cb) => {
+        if (!origin || allowedOrigins.includes(origin)) cb(null, true);
+        else cb(new Error('Not allowed by CORS'));
+      },
+}));
 app.use(express.json());
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'albania-rides-api' }));

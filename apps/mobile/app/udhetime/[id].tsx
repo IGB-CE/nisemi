@@ -1,20 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
+import { ErrorScreen } from '../../components/States';
 
 export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { token, user } = useAuth();
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState(false);
 
-  useEffect(() => {
-    api.get<any>(`/api/v1/trips/${id}`).then(setTrip).catch(() => {}).finally(() => setLoading(false));
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    api.get<any>(`/api/v1/trips/${id}`)
+      .then(setTrip)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(load, [load]);
 
   const book = async () => {
     if (!token) { router.push('/(auth)/login'); return; }
@@ -29,7 +38,8 @@ export default function TripDetail() {
   };
 
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
-  if (!trip) return <View style={s.center}><Text>Udhëtimi nuk u gjet</Text></View>;
+  if (error) return <ErrorScreen message={error} onRetry={load} />;
+  if (!trip) return <ErrorScreen message="Ky udhëtim nuk u gjet." />;
 
   const isOwnTrip = trip.driver.id === user?.id;
 

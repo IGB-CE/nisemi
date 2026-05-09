@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { api } from '../../lib/api';
 import { colors } from '../../lib/colors';
 import { useAuth } from '../../lib/auth';
+import { EmptyState } from '../../components/States';
 
 interface City { id: string; name: string; }
 interface Trip {
@@ -25,17 +26,20 @@ export default function Search() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [citiesError, setCitiesError] = useState(false);
   const [showFrom, setShowFrom] = useState(false);
   const [showTo, setShowTo] = useState(false);
   const [cityFilter, setCityFilter] = useState('');
 
   useEffect(() => {
-    api.get<City[]>('/api/v1/cities').then(setCities).catch(() => {});
+    api.get<City[]>('/api/v1/cities').then(setCities).catch(() => setCitiesError(true));
   }, []);
 
   const search = async () => {
     setLoading(true);
     setSearched(true);
+    setSearchError(null);
     try {
       const params = new URLSearchParams();
       if (from) params.set('from', from.id);
@@ -44,7 +48,7 @@ export default function Search() {
       const data = await api.get<Trip[]>(`/api/v1/trips?${params}`, token ?? undefined);
       setTrips(data);
     } catch (e: any) {
-      Alert.alert('Gabim', e.message);
+      setSearchError(e.message);
     } finally {
       setLoading(false);
     }
@@ -81,6 +85,12 @@ export default function Search() {
         <Text style={s.headerSub}>Gjej udhëtimin tënd</Text>
       </View>
 
+      {citiesError && (
+        <View style={s.citiesError}>
+          <Text style={s.citiesErrorText}>⚠️ Nuk u ngarkuan qytetet. Kontrollo lidhjen.</Text>
+        </View>
+      )}
+
       <View style={s.card}>
         <Text style={s.fieldLabel}>Nga</Text>
         <TouchableOpacity style={s.picker} onPress={() => setShowFrom(true)}>
@@ -104,8 +114,10 @@ export default function Search() {
 
       {searched && !loading && (
         <ScrollView style={s.results} contentContainerStyle={{ paddingBottom: 20 }}>
-          {trips.length === 0 ? (
-            <Text style={s.empty}>Nuk u gjetën udhëtime</Text>
+          {searchError ? (
+            <EmptyState icon="⚠️" title="Kërkimi dështoi" subtitle={searchError} />
+          ) : trips.length === 0 ? (
+            <EmptyState icon="🔍" title="Nuk u gjetën udhëtime" subtitle="Provo me data ose qytete të ndryshme." />
           ) : (
             trips.map(trip => (
               <TouchableOpacity key={trip.id} style={s.tripCard} onPress={() => router.push(`/udhetime/${trip.id}`)}>
@@ -146,7 +158,8 @@ const s = StyleSheet.create({
   btn: { backgroundColor: colors.primary, borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 20 },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   results: { flex: 1, paddingHorizontal: 16 },
-  empty: { textAlign: 'center', color: colors.subtle, marginTop: 40, fontSize: 15 },
+  citiesError: { marginHorizontal: 16, marginTop: 8, backgroundColor: '#FEF3C7', borderRadius: 10, padding: 12 },
+  citiesErrorText: { color: '#92400E', fontSize: 13, textAlign: 'center' },
   tripCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 1 },
   tripRoute: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   tripCity: { fontSize: 17, fontWeight: '700', color: colors.text },

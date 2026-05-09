@@ -4,21 +4,27 @@ import { useFocusEffect, router } from 'expo-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
+import { ErrorScreen, EmptyState } from '../../components/States';
 
 export default function Shofer() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useFocusEffect(useCallback(() => {
+  const load = useCallback(() => {
     setLoading(true);
+    setError(null);
     api.get<any[]>('/api/v1/trips/my', token ?? undefined)
       .then(setTrips)
-      .catch(() => {})
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token]));
+  }, [token]);
+
+  useFocusEffect(load);
 
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
+  if (error) return <ErrorScreen message={error} onRetry={load} />;
 
   return (
     <View style={s.container}>
@@ -30,7 +36,7 @@ export default function Shofer() {
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {trips.length === 0 ? (
-          <Text style={s.empty}>Nuk keni udhëtime të publikuara</Text>
+          <EmptyState icon="🚗" title="Nuk keni udhëtime të publikuara" subtitle="Shtypni butonin lart për të publikuar udhëtimin tuaj të parë." />
         ) : trips.map(trip => (
           <TouchableOpacity key={trip.id} style={s.card} onPress={() => router.push(`/driver/rezervimet/${trip.id}`)}>
             <View style={s.route}>
@@ -58,7 +64,6 @@ const s = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   publishBtn: { backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
   publishBtnText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
-  empty: { textAlign: 'center', color: colors.subtle, marginTop: 60, fontSize: 15 },
   card: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 1 },
   route: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   city: { fontSize: 17, fontWeight: '700', color: colors.text },

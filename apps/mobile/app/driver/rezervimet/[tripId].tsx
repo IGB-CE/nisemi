@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { colors } from '../../../lib/colors';
+import { ErrorScreen, EmptyState } from '../../../components/States';
 
 const statusMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Në pritje', color: colors.warning },
@@ -17,12 +18,18 @@ export default function TripReservations() {
   const { token } = useAuth();
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const load = () => {
-    api.get<any>(`/api/v1/trips/${tripId}`, token ?? undefined).then(setTrip).catch(() => {}).finally(() => setLoading(false));
-  };
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    api.get<any>(`/api/v1/trips/${tripId}`, token ?? undefined)
+      .then(setTrip)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [tripId, token]);
 
-  useEffect(load, [tripId]);
+  useEffect(load, [load]);
 
   const action = async (reservationId: string, act: 'accept' | 'reject') => {
     try {
@@ -32,7 +39,8 @@ export default function TripReservations() {
   };
 
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
-  if (!trip) return <View style={s.center}><Text>Nuk u gjet</Text></View>;
+  if (error) return <ErrorScreen message={error} onRetry={load} />;
+  if (!trip) return <ErrorScreen message="Ky udhëtim nuk u gjet." />;
 
   const reservations = trip.reservations ?? [];
 
@@ -52,7 +60,7 @@ export default function TripReservations() {
       <Text style={s.sectionTitle}>Rezervimet ({reservations.length})</Text>
 
       {reservations.length === 0 ? (
-        <Text style={s.empty}>Nuk ka rezervime ende</Text>
+        <EmptyState icon="👥" title="Nuk ka rezervime ende" subtitle="Pasagjerët do të shfaqen këtu sapo të rezervojnë." />
       ) : reservations.map((r: any) => {
         const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
         return (
@@ -95,7 +103,6 @@ const s = StyleSheet.create({
   date: { color: '#BFDBFE', fontSize: 13, marginBottom: 2 },
   seats: { color: '#BFDBFE', fontSize: 13 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, margin: 16, marginBottom: 8 },
-  empty: { textAlign: 'center', color: colors.subtle, marginTop: 40, fontSize: 15 },
   card: { margin: 16, marginTop: 0, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 14, padding: 16 },
   passengerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center' },

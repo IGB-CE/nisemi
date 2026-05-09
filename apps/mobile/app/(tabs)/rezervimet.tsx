@@ -4,6 +4,7 @@ import { useFocusEffect, router } from 'expo-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
+import { ErrorScreen, EmptyState } from '../../components/States';
 
 const statusMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Në pritje', color: colors.warning },
@@ -30,18 +31,22 @@ export default function Rezervimet() {
   const { token } = useAuth();
   const [reservations, setReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [ratingTarget, setRatingTarget] = useState<RatingTarget | null>(null);
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useFocusEffect(useCallback(() => {
+  const load = useCallback(() => {
     setLoading(true);
+    setError(null);
     api.get<any[]>('/api/v1/reservations/my', token ?? undefined)
       .then(setReservations)
-      .catch(() => {})
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token]));
+  }, [token]);
+
+  useFocusEffect(load);
 
   const cancel = async (id: string) => {
     Alert.alert('Konfirmo', 'Dëshiron të anulosh këtë rezervim?', [
@@ -80,13 +85,14 @@ export default function Rezervimet() {
   };
 
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
+  if (error) return <ErrorScreen message={error} onRetry={load} />;
 
   return (
     <View style={s.container}>
       <View style={s.header}><Text style={s.headerTitle}>Rezervimet e mia</Text></View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {reservations.length === 0 ? (
-          <Text style={s.empty}>Nuk keni rezervime</Text>
+          <EmptyState icon="🎫" title="Nuk keni rezervime ende" subtitle="Kërko një udhëtim dhe rezervo vendin tënd." />
         ) : reservations.map(r => {
           const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
           const isPast = new Date(r.trip.departureAt) < new Date();
@@ -163,7 +169,6 @@ const s = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: colors.primary, padding: 24, paddingTop: 60 },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  empty: { textAlign: 'center', color: colors.subtle, marginTop: 60, fontSize: 15 },
   card: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 1 },
   route: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   city: { fontSize: 17, fontWeight: '700', color: colors.text },
@@ -180,7 +185,6 @@ const s = StyleSheet.create({
   rateBtn: { paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.warning, borderRadius: 20 },
   rateBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   rated: { color: colors.warning, fontSize: 13, fontWeight: '600' },
-  // modal
   modalOverlay: { flex: 1, backgroundColor: '#00000066', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28, paddingBottom: 40 },
   modalTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 4 },

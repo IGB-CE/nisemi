@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
+import { ErrorScreen } from '../../components/States';
 
 export default function Profili() {
   const { token, user, signOut, signIn } = useAuth();
@@ -12,15 +13,20 @@ export default function Profili() {
   const [showDriverForm, setShowDriverForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', phone: '' });
 
-  useFocusEffect(useCallback(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     api.get<any>('/api/v1/users/me', token ?? undefined)
       .then(p => { setProfile(p); setEditForm({ firstName: p.firstName, lastName: p.lastName, phone: p.phone ?? '' }); })
-      .catch(() => {})
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token]));
+  }, [token]);
+
+  useFocusEffect(load);
 
   const handleLogout = () => {
     Alert.alert('Dil', 'Dëshiron të dalësh?', [
@@ -66,6 +72,7 @@ export default function Profili() {
   };
 
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
+  if (error) return <ErrorScreen message={error} onRetry={load} />;
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>

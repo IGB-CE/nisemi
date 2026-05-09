@@ -100,7 +100,7 @@ export default function Publiko() {
           </View>
 
           <Text style={s.label}>Shënime (opsionale)</Text>
-          <TextInput style={[s.input, { height: 80 }]} placeholder="Çdo informacion shtesë..." value={form.notes} onChangeText={set('notes')} multiline placeholderTextColor={colors.subtle} />
+          <TextInput style={[s.input, { height: 80 }]} placeholder="Çdo informacion shtesë..." value={form.notes} onChangeText={set('notes')} multiline={true} placeholderTextColor={colors.subtle} />
 
           <TouchableOpacity style={[s.btn, saving && { opacity: 0.6 }]} onPress={publish} disabled={saving}>
             <Text style={s.btnText}>{saving ? 'Duke publikuar...' : '🚗 Publiko udhëtimin'}</Text>

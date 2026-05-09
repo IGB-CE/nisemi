@@ -34,7 +34,7 @@ export default function Login() {
         <TextInput style={s.input} placeholder="Email" value={email} onChangeText={setEmail}
           autoCapitalize="none" keyboardType="email-address" placeholderTextColor={colors.subtle} />
         <TextInput style={s.input} placeholder="Fjalëkalimi" value={password} onChangeText={setPassword}
-          secureTextEntry placeholderTextColor={colors.subtle} />
+          secureTextEntry={true} placeholderTextColor={colors.subtle} />
 
         <TouchableOpacity style={[s.btn, loading && s.btnDisabled]} onPress={handleLogin} disabled={loading}>
           <Text style={s.btnText}>{loading ? 'Duke hyrë...' : 'Hyr'}</Text>

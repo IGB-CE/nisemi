@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { sendPushNotifications } from '../lib/push.js';
 
 const router = Router();
 
@@ -49,7 +50,10 @@ router.get('/my', requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.patch('/:id/accept', requireAuth, async (req: AuthRequest, res) => {
-  const reservation = await prisma.reservation.findUnique({ where: { id: req.params.id }, include: { trip: true } });
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: req.params.id },
+    include: { trip: { include: { originCity: true, destCity: true } } },
+  });
   if (!reservation) { res.status(404).json({ error: 'Reservation not found' }); return; }
   if (reservation.trip.driverId !== req.userId) { res.status(403).json({ error: 'Forbidden' }); return; }
   if (reservation.status !== 'PENDING') { res.status(400).json({ error: 'Reservation is not pending' }); return; }
@@ -58,16 +62,35 @@ router.patch('/:id/accept', requireAuth, async (req: AuthRequest, res) => {
     prisma.reservation.update({ where: { id: req.params.id }, data: { status: 'ACCEPTED' } }),
     prisma.trip.update({ where: { id: reservation.tripId }, data: { seatsAvailable: { decrement: reservation.seats } } }),
   ]);
+
+  const tokens = await prisma.pushToken.findMany({ where: { userId: reservation.passengerId }, select: { token: true } });
+  await sendPushNotifications(
+    tokens.map(t => t.token),
+    'Rezervimi u pranua ✅',
+    `Udhëtimi ${reservation.trip.originCity.name} → ${reservation.trip.destCity.name} u konfirmua.`
+  );
+
   res.json(updated);
 });
 
 router.patch('/:id/reject', requireAuth, async (req: AuthRequest, res) => {
-  const reservation = await prisma.reservation.findUnique({ where: { id: req.params.id }, include: { trip: true } });
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: req.params.id },
+    include: { trip: { include: { originCity: true, destCity: true } } },
+  });
   if (!reservation) { res.status(404).json({ error: 'Reservation not found' }); return; }
   if (reservation.trip.driverId !== req.userId) { res.status(403).json({ error: 'Forbidden' }); return; }
   if (reservation.status !== 'PENDING') { res.status(400).json({ error: 'Reservation is not pending' }); return; }
 
   const updated = await prisma.reservation.update({ where: { id: req.params.id }, data: { status: 'REJECTED' } });
+
+  const tokens = await prisma.pushToken.findMany({ where: { userId: reservation.passengerId }, select: { token: true } });
+  await sendPushNotifications(
+    tokens.map(t => t.token),
+    'Rezervimi u refuzua ❌',
+    `Udhëtimi ${reservation.trip.originCity.name} → ${reservation.trip.destCity.name} u refuzua nga shoferi.`
+  );
+
   res.json(updated);
 });
 

@@ -46,7 +46,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Reserve/book seat
 - [x] Cancel booking
 - [x] View passenger trip history
-- [ ] Receive push notifications
+- [x] Receive push notifications
 - [x] Rate driver after trip
 - [x] Review driver after trip
 
@@ -64,7 +64,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Reject reservation
 - [x] View passengers for a trip
 - [x] View driver trip history
-- [ ] Receive reservation notifications
+- [x] Receive reservation notifications
 
 ### Admin Dashboard
 
@@ -99,7 +99,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Admin users endpoint
 - [x] Admin trips endpoint
 - [x] Admin reports endpoint
-- [ ] Push notification integration
+- [x] Push notification integration
 - [ ] Image upload integration
 
 ### Database

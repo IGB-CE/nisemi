@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.albaniarides.app"
+      "bundleIdentifier": "com.albaniarides.app",
+      "infoPlist": {
+        "NSUserNotificationUsageDescription": "Albania Rides dërgon njoftime për rezervimet tuaja."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +34,15 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2563EB",
+          "androidMode": "default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

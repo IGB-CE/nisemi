@@ -13,6 +13,7 @@ import MegaStat from '../../components/ui/MegaStat';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import BarChart from '../../components/ui/BarChart';
 import Pill from '../../components/ui/Pill';
+import CarPhotoUploader from '../../components/CarPhotoUploader';
 
 const MONTHS = ['J', 'F', 'M', 'A', 'M', 'Q', 'K', 'G', 'S', 'T', 'N', 'D'];
 
@@ -161,6 +162,17 @@ export default function Profili() {
             </>
           )}
         </Card>
+
+        {isDriver && dp && (
+          <Card style={s.section}>
+            <Text style={s.cardLabel}>Foto e makinës</Text>
+            <View style={{ height: 12 }} />
+            <CarPhotoUploader
+              currentUrl={dp.carPhotoUrl}
+              onUploaded={(url) => setProfile((p: any) => ({ ...p, driverProfile: { ...p.driverProfile, carPhotoUrl: url } }))}
+            />
+          </Card>
+        )}
 
         <Card style={s.section}>
           <Text style={s.cardLabel}>Aktiviteti — {new Date().getFullYear()}</Text>

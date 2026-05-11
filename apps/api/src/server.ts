@@ -28,7 +28,7 @@ app.use(cors({
         else cb(new Error('Not allowed by CORS'));
       },
 }));
-app.use(express.json());
+app.use(express.json({ limit: '8mb' }));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'albania-rides-api' }));
 

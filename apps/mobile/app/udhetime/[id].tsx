@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { api } from '../../lib/api';
@@ -117,6 +117,12 @@ export default function TripDetail() {
         </View>
       )}
 
+      {trip.driver.driverProfile?.carPhotoUrl && (
+        <View style={[s.card, { padding: 0, overflow: 'hidden' }]}>
+          <Image source={{ uri: trip.driver.driverProfile.carPhotoUrl }} style={s.carPhoto} />
+        </View>
+      )}
+
       <View style={s.card}>
         <Text style={s.cardTitle}>Shoferi</Text>
         <View style={s.driverRow}>
@@ -213,6 +219,7 @@ const s = StyleSheet.create({
   driverName: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 2 },
   driverMeta: { color: colors.subtle, fontSize: 13, marginTop: 2 },
   routeMap: { height: 180, width: '100%' },
+  carPhoto: { width: '100%', height: 200, backgroundColor: colors.surfaceElevated },
   mapLabel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 10, borderTopWidth: 1, borderTopColor: colors.border },
   mapLabelText: { color: colors.text, fontSize: 13, fontWeight: '600' },
   mapLabelArrow: { color: colors.primary, fontSize: 14 },

@@ -17,11 +17,14 @@ export default function TabsLayout() {
       tabBarActiveTintColor: colors.primary,
       tabBarInactiveTintColor: colors.subtle,
       tabBarStyle: {
-        backgroundColor: colors.surface,
+        backgroundColor: colors.background,
         borderTopColor: colors.border,
         borderTopWidth: 1,
+        height: 64,
+        paddingBottom: 8,
+        paddingTop: 6,
       },
-      tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+      tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
     }}>
       <Tabs.Screen name="index" options={{ title: 'Kërko', tabBarIcon: () => <TabIcon label="🔍" /> }} />
       <Tabs.Screen name="rezervimet" options={{ title: 'Rezervimet', tabBarIcon: () => <TabIcon label="🎫" /> }} />

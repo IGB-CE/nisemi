@@ -1,15 +1,26 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors } from '../../lib/colors';
+import { colors, typography } from '../../lib/colors';
 import { ErrorScreen } from '../../components/States';
-import GradientHeader from '../../components/GradientHeader';
+import Card from '../../components/ui/Card';
+import StatRow from '../../components/ui/StatRow';
+import MegaStat from '../../components/ui/MegaStat';
+import PrimaryButton from '../../components/ui/PrimaryButton';
+import BarChart from '../../components/ui/BarChart';
+import Pill from '../../components/ui/Pill';
+
+const MONTHS = ['J', 'F', 'M', 'A', 'M', 'Q', 'K', 'G', 'S', 'T', 'N', 'D'];
 
 export default function Profili() {
   const { token, user, signOut, signIn } = useAuth();
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<any>(null);
+  const [tripsByMonth, setTripsByMonth] = useState<number[]>(new Array(12).fill(0));
   const [driverForm, setDriverForm] = useState({ carModel: '', carColor: '', carPlate: '' });
   const [showDriverForm, setShowDriverForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -28,6 +39,20 @@ export default function Profili() {
   }, [token]);
 
   useFocusEffect(load);
+
+  useEffect(() => {
+    if (!token) return;
+    const isDriver = profile?.role === 'DRIVER' || profile?.role === 'ADMIN';
+    const path = isDriver ? '/api/v1/trips/my' : '/api/v1/reservations/my';
+    api.get<any[]>(path, token).then(items => {
+      const counts = new Array(12).fill(0);
+      for (const it of items) {
+        const date = new Date(isDriver ? it.departureAt : it.trip?.departureAt);
+        if (!isNaN(date.getTime())) counts[date.getMonth()]++;
+      }
+      setTripsByMonth(counts);
+    }).catch(() => {});
+  }, [token, profile?.role]);
 
   const handleLogout = () => {
     Alert.alert('Dil', 'Dëshiron të dalësh?', [
@@ -48,7 +73,6 @@ export default function Profili() {
       setProfile((p: any) => ({ ...p, ...updated }));
       await signIn(token!, { ...user!, firstName: updated.firstName, lastName: updated.lastName });
       setEditMode(false);
-      Alert.alert('Sukses', 'Profili u përditësua!');
     } catch (e: any) {
       Alert.alert('Gabim', e.message);
     } finally {
@@ -67,7 +91,6 @@ export default function Profili() {
       setProfile(updated);
       await signIn(token!, { ...user!, role: 'DRIVER' });
       setShowDriverForm(false);
-      Alert.alert('Sukses', 'Profili i shoferit u krijua!');
     } catch (e: any) { Alert.alert('Gabim', e.message); }
     finally { setSaving(false); }
   };
@@ -75,123 +98,172 @@ export default function Profili() {
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
   if (error) return <ErrorScreen message={error} onRetry={load} />;
 
+  const isDriver = profile?.role === 'DRIVER' || profile?.role === 'ADMIN';
+  const memberYear = profile?.createdAt ? new Date(profile.createdAt).getFullYear() : new Date().getFullYear();
+  const dp = profile?.driverProfile;
+  const reviewsCount = dp?.totalTrips ?? 0;
+  const rating = dp?.rating ?? 0;
+
   return (
-    <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <GradientHeader style={s.header}>
-        <View style={s.avatar}><Text style={s.avatarText}>{profile?.firstName?.[0]}{profile?.lastName?.[0]}</Text></View>
-        <Text style={s.name}>{profile?.firstName} {profile?.lastName}</Text>
-        <Text style={s.email}>{profile?.email}</Text>
-        {profile?.phone && <Text style={s.email}>📞 {profile.phone}</Text>}
-        <View style={s.roleBadge}>
-          <Text style={s.roleText}>{profile?.role === 'DRIVER' ? '🚗 Shofer' : '🧳 Pasagjer'}</Text>
+    <View style={s.container}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 60, paddingTop: insets.top + 8 }} showsVerticalScrollIndicator={false}>
+        <View style={s.topBar}>
+          <View style={{ width: 28 }} />
+          <Text style={s.topBarTitle}>Profili</Text>
+          <TouchableOpacity onPress={() => setEditMode(v => !v)} style={s.topBarBtn}>
+            <Text style={s.topBarBtnText}>{editMode ? '✕' : '⋯'}</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={s.editHeaderBtn} onPress={() => setEditMode(v => !v)}>
-          <Text style={s.editHeaderBtnText}>{editMode ? 'Anulo' : '✏️ Ndrysho'}</Text>
-        </TouchableOpacity>
-      </GradientHeader>
 
-      {editMode && (
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Ndrysho profilin</Text>
-          {[
-            { key: 'firstName', label: 'Emri' },
-            { key: 'lastName', label: 'Mbiemri' },
-            { key: 'phone', label: 'Telefoni (opsional)' },
-          ].map(({ key, label }) => (
-            <View key={key}>
-              <Text style={s.label}>{label}</Text>
-              <TextInput
-                style={s.input}
-                value={editForm[key as keyof typeof editForm]}
-                onChangeText={v => setEditForm(f => ({ ...f, [key]: v }))}
-                placeholder={label}
-                placeholderTextColor={colors.subtle}
-                autoCapitalize={key === 'phone' ? 'none' : 'words'}
-                keyboardType={key === 'phone' ? 'phone-pad' : 'default'}
-              />
+        <View style={s.hero}>
+          <View style={s.heroLeft}>
+            <Text style={s.firstName} numberOfLines={1}>{profile?.firstName}</Text>
+            <Text style={s.lastName} numberOfLines={1}>{profile?.lastName}</Text>
+            <Text style={s.memberSince}>Anëtar që nga ({memberYear})</Text>
+
+            <View style={s.bigStats}>
+              <View style={s.bigStat}>
+                <MegaStat value={isDriver ? (dp?.totalTrips ?? 0) : tripsByMonth.reduce((a, b) => a + b, 0)} unit="Udhëtime" />
+              </View>
+              <View style={s.bigStat}>
+                <MegaStat value={isDriver ? rating.toFixed(1) : reviewsCount} unit={isDriver ? 'Vlerësim' : 'Rezervime'} />
+              </View>
             </View>
-          ))}
-          <TouchableOpacity style={[s.saveBtn, saving && { opacity: 0.6 }]} onPress={saveProfile} disabled={saving}>
-            <Text style={s.saveBtnText}>{saving ? 'Duke ruajtur...' : 'Ruaj ndryshimet'}</Text>
-          </TouchableOpacity>
+          </View>
+
+          <View style={s.heroRight}>
+            <LinearGradient
+              colors={['rgba(225,6,0,0.0)', 'rgba(225,6,0,0.7)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={s.avatarGlow}
+            >
+              <View style={s.avatar}>
+                <Text style={s.avatarText}>{profile?.firstName?.[0]}{profile?.lastName?.[0]}</Text>
+              </View>
+            </LinearGradient>
+          </View>
         </View>
-      )}
 
-      {profile?.driverProfile && (
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Makina ime</Text>
-          <Text style={s.infoRow}>🚘 {profile.driverProfile.carModel} — {profile.driverProfile.carColor}</Text>
-          <Text style={s.infoRow}>🔢 {profile.driverProfile.carPlate}</Text>
-          <Text style={s.infoRow}>⭐ {profile.driverProfile.rating.toFixed(1)} vlerësim</Text>
-          <Text style={s.infoRow}>🛣️ {profile.driverProfile.totalTrips} udhëtime</Text>
-        </View>
-      )}
+        <Card style={s.section}>
+          <View style={s.sectionHeader}>
+            <Pill label={isDriver ? 'Shofer' : 'Pasagjer'} />
+            <Text style={s.email}>{profile?.email}</Text>
+          </View>
+          {profile?.phone && <StatRow icon="📞" value={profile.phone} label="Telefoni" />}
+          {isDriver && dp && (
+            <>
+              <View style={s.divider} />
+              <StatRow icon="🏆" value={dp.totalTrips} label="Udhëtime totale" />
+              <StatRow icon="⭐" value={rating.toFixed(1)} label="Vlerësim mesatar" />
+              <StatRow icon="🚘" value={`${dp.carModel} · ${dp.carColor}`} label="Makina" />
+              <StatRow icon="🔢" value={dp.carPlate} label="Targa" />
+            </>
+          )}
+        </Card>
 
-      {!profile?.driverProfile && !showDriverForm && (
-        <TouchableOpacity style={s.driverBtn} onPress={() => setShowDriverForm(true)}>
-          <Text style={s.driverBtnText}>🚗 Bëhu shofer</Text>
-        </TouchableOpacity>
-      )}
+        <Card style={s.section}>
+          <Text style={s.cardLabel}>Aktiviteti — {new Date().getFullYear()}</Text>
+          <View style={{ height: 12 }} />
+          <BarChart
+            data={MONTHS.map((m, i) => ({ label: m, value: tripsByMonth[i] }))}
+            height={100}
+          />
+        </Card>
 
-      {showDriverForm && (
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Regjistrohu si shofer</Text>
-          {[
-            { key: 'carModel', label: 'Modeli i makinës' },
-            { key: 'carColor', label: 'Ngjyra' },
-            { key: 'carPlate', label: 'Targa' },
-          ].map(({ key, label }) => (
-            <View key={key}>
-              <Text style={s.label}>{label}</Text>
-              <TextInput
-                style={s.input}
-                value={driverForm[key as keyof typeof driverForm]}
-                onChangeText={v => setDriverForm(f => ({ ...f, [key]: v }))}
-                autoCapitalize="characters"
-                placeholderTextColor={colors.subtle}
-                placeholder={label}
-              />
+        {editMode && (
+          <Card style={s.section}>
+            <Text style={s.cardLabel}>Ndrysho profilin</Text>
+            {[
+              { key: 'firstName', label: 'Emri' },
+              { key: 'lastName', label: 'Mbiemri' },
+              { key: 'phone', label: 'Telefoni' },
+            ].map(({ key, label }) => (
+              <View key={key} style={{ marginTop: 14 }}>
+                <Text style={s.fieldLabel}>{label}</Text>
+                <TextInput
+                  style={s.input}
+                  value={editForm[key as keyof typeof editForm]}
+                  onChangeText={v => setEditForm(f => ({ ...f, [key]: v }))}
+                  placeholderTextColor={colors.subtle}
+                  autoCapitalize={key === 'phone' ? 'none' : 'words'}
+                  keyboardType={key === 'phone' ? 'phone-pad' : 'default'}
+                />
+              </View>
+            ))}
+            <View style={{ marginTop: 18 }}>
+              <PrimaryButton label="Ruaj ndryshimet" onPress={saveProfile} loading={saving} />
             </View>
-          ))}
-          <TouchableOpacity style={[s.saveBtn, saving && { opacity: 0.6 }]} onPress={createDriverProfile} disabled={saving}>
-            <Text style={s.saveBtnText}>{saving ? 'Duke ruajtur...' : 'Krijo profilin'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.cancelLink} onPress={() => setShowDriverForm(false)}>
-            <Text style={s.cancelLinkText}>Anulo</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+          </Card>
+        )}
 
-      <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
-        <Text style={s.logoutText}>Dil nga llogaria</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {!isDriver && !showDriverForm && (
+          <View style={s.section}>
+            <PrimaryButton label="Bëhu shofer" icon="🚗" onPress={() => setShowDriverForm(true)} variant="outline" />
+          </View>
+        )}
+
+        {showDriverForm && (
+          <Card style={s.section}>
+            <Text style={s.cardLabel}>Regjistrohu si shofer</Text>
+            {[
+              { key: 'carModel', label: 'Modeli i makinës' },
+              { key: 'carColor', label: 'Ngjyra' },
+              { key: 'carPlate', label: 'Targa' },
+            ].map(({ key, label }) => (
+              <View key={key} style={{ marginTop: 14 }}>
+                <Text style={s.fieldLabel}>{label}</Text>
+                <TextInput
+                  style={s.input}
+                  value={driverForm[key as keyof typeof driverForm]}
+                  onChangeText={v => setDriverForm(f => ({ ...f, [key]: v }))}
+                  autoCapitalize="characters"
+                  placeholderTextColor={colors.subtle}
+                />
+              </View>
+            ))}
+            <View style={{ marginTop: 18, gap: 10 }}>
+              <PrimaryButton label="Krijo profilin" onPress={createDriverProfile} loading={saving} />
+              <PrimaryButton label="Anulo" onPress={() => setShowDriverForm(false)} variant="ghost" />
+            </View>
+          </Card>
+        )}
+
+        <View style={s.section}>
+          <PrimaryButton label="Dil nga llogaria" onPress={handleLogout} variant="ghost" />
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { alignItems: 'center' },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' },
-  avatarText: { fontSize: 28, fontWeight: '800', color: '#fff' },
-  name: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  email: { fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
-  roleBadge: { marginTop: 10, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 14, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
-  roleText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  editHeaderBtn: { marginTop: 14, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 18, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
-  editHeaderBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  section: { margin: 16, backgroundColor: colors.surface, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.border },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  infoRow: { color: colors.text, fontSize: 14, marginBottom: 6 },
-  driverBtn: { margin: 16, backgroundColor: colors.primaryLight, borderRadius: 14, padding: 18, alignItems: 'center', borderWidth: 1, borderColor: colors.primary },
-  driverBtnText: { color: colors.primary, fontSize: 16, fontWeight: '700' },
-  label: { fontSize: 12, color: colors.subtle, fontWeight: '600', marginBottom: 4, marginTop: 8 },
-  input: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 15, color: colors.text, marginBottom: 4 },
-  saveBtn: { backgroundColor: colors.primary, borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 16 },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  cancelLink: { alignItems: 'center', marginTop: 12 },
-  cancelLinkText: { color: colors.subtle, fontSize: 14 },
-  logoutBtn: { margin: 16, marginTop: 8, borderWidth: 1, borderColor: colors.danger, borderRadius: 14, padding: 16, alignItems: 'center' },
-  logoutText: { color: colors.danger, fontSize: 15, fontWeight: '700' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8 },
+  topBarTitle: { ...typography.h3, color: colors.textDim },
+  topBarBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  topBarBtnText: { color: colors.text, fontSize: 18, fontWeight: '700' },
+
+  hero: { flexDirection: 'row', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, gap: 12 },
+  heroLeft: { flex: 1, justifyContent: 'center' },
+  firstName: { ...typography.hero, lineHeight: 56 },
+  lastName: { ...typography.h1, color: colors.primary, marginTop: -4 },
+  memberSince: { ...typography.caption, marginTop: 6, color: colors.textDim },
+  bigStats: { marginTop: 20, gap: 6 },
+  bigStat: {},
+
+  heroRight: { width: 120, justifyContent: 'center', alignItems: 'center' },
+  avatarGlow: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center' },
+  avatar: { width: 110, height: 110, borderRadius: 55, backgroundColor: colors.surfaceElevated, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: colors.primary },
+  avatarText: { fontSize: 36, fontWeight: '900', color: colors.text },
+
+  section: { marginHorizontal: 16, marginTop: 14 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  email: { ...typography.caption, color: colors.textDim },
+  cardLabel: { ...typography.label },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: 8 },
+
+  fieldLabel: { ...typography.label, marginBottom: 6 },
+  input: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text },
 });

@@ -48,7 +48,7 @@ export default function Shofer() {
             <Text style={s.date}>{new Date(trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
             <View style={s.meta}>
               <Text style={s.metaText}>💺 {trip.seatsAvailable}/{trip.totalSeats} vende</Text>
-              <Text style={s.metaText}>💰 {Number(trip.pricePerSeat).toFixed(0)} €/vend</Text>
+              <Text style={s.metaText}>💰 {Number(trip.pricePerSeat).toFixed(0)} L/vend</Text>
               <Text style={s.metaText}>📋 {trip.reservations?.length ?? 0} rezervime</Text>
             </View>
           </TouchableOpacity>

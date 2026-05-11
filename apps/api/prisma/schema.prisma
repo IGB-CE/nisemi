@@ -29,6 +29,8 @@ model User {
   pushTokens       PushToken[]
   reportsBy        Report[]      @relation("ReportsBy")
   reportsAgainst   Report[]      @relation("ReportsAgainst")
+  messagesSent     Message[]     @relation("MessagesSent")
+  messagesReceived Message[]     @relation("MessagesReceived")
 }
 
 enum Role {
@@ -85,6 +87,7 @@ model Trip {
   updatedAt      DateTime   @updatedAt
 
   reservations Reservation[]
+  messages     Message[]
 }
 
 enum TripStatus {
@@ -150,4 +153,20 @@ model PushToken {
   token     String   @unique
   platform  String
   createdAt DateTime @default(now())
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  tripId     String
+  trip       Trip     @relation(fields: [tripId], references: [id])
+  senderId   String
+  sender     User     @relation("MessagesSent", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("MessagesReceived", fields: [receiverId], references: [id])
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([tripId, senderId, receiverId])
+  @@index([receiverId, read])
 }

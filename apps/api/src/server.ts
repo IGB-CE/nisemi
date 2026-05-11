@@ -13,6 +13,7 @@ import citiesRouter from './routes/cities.js';
 import adminRouter from './routes/admin.js';
 import pushTokensRouter from './routes/push-tokens.js';
 import reportsRouter from './routes/reports.js';
+import messagesRouter from './routes/messages.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -41,5 +42,6 @@ app.use('/api/v1/cities', citiesRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/push-tokens', pushTokensRouter);
 app.use('/api/v1/reports', reportsRouter);
+app.use('/api/v1/messages', messagesRouter);
 
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));

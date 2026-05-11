@@ -25,6 +25,7 @@ export default function TabsLayout() {
     }}>
       <Tabs.Screen name="index" options={{ title: 'Kërko', tabBarIcon: () => <TabIcon label="🔍" /> }} />
       <Tabs.Screen name="rezervimet" options={{ title: 'Rezervimet', tabBarIcon: () => <TabIcon label="🎫" /> }} />
+      <Tabs.Screen name="mesazhet" options={{ title: 'Mesazhet', tabBarIcon: () => <TabIcon label="💬" /> }} />
       {isDriver ? (
         <Tabs.Screen name="shofer" options={{ title: 'Shofer', tabBarIcon: () => <TabIcon label="🚗" /> }} />
       ) : (

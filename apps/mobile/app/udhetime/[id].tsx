@@ -78,7 +78,7 @@ export default function TripDetail() {
 
       <View style={s.card}>
         <Text style={s.cardTitle}>Detajet e udhëtimit</Text>
-        <Row label="Çmimi" value={`${Number(trip.pricePerSeat).toFixed(0)} € / vend`} />
+        <Row label="Çmimi" value={`${Number(trip.pricePerSeat).toFixed(0)} L / vend`} />
         <Row label="Vende të lira" value={`${trip.seatsAvailable} nga ${trip.totalSeats}`} />
         {trip.notes && <Row label="Shënime" value={trip.notes} />}
       </View>
@@ -132,6 +132,11 @@ export default function TripDetail() {
             )}
           </View>
         </View>
+        {token && !isOwnTrip && (
+          <TouchableOpacity style={s.contactBtn} onPress={() => router.push({ pathname: '/chat/[tripId]/[userId]', params: { tripId: trip.id, userId: trip.driver.id } })}>
+            <Text style={s.contactBtnText}>💬 Kontakto shoferin</Text>
+          </TouchableOpacity>
+        )}
         {token && !isOwnTrip && (
           <TouchableOpacity style={s.reportLink} onPress={() => setShowReport(true)}>
             <Text style={s.reportLinkText}>⚠️ Raporto shoferin</Text>
@@ -215,7 +220,9 @@ const s = StyleSheet.create({
   bookBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   fullBanner: { margin: 16, backgroundColor: 'rgba(248,113,113,0.1)', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.danger },
   fullBannerText: { color: colors.danger, fontSize: 14, fontWeight: '600' },
-  reportLink: { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, alignItems: 'flex-end' },
+  contactBtn: { marginTop: 14, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.primary, alignItems: 'center' },
+  contactBtnText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
+  reportLink: { marginTop: 12, alignItems: 'flex-end' },
   reportLinkText: { color: colors.subtle, fontSize: 12 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },

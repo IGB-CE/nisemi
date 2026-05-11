@@ -61,7 +61,7 @@ export default function Trips() {
                   hour: '2-digit', minute: '2-digit',
                 })}
               </td>
-              <td>{Number(t.pricePerSeat).toFixed(0)} €</td>
+              <td>{Number(t.pricePerSeat).toFixed(0)} L</td>
               <td>{t.seatsAvailable}/{t.totalSeats}</td>
               <td><span className={`badge ${STATUS_CLASS[t.status] ?? 'badge-neutral'}`}>{t.status}</span></td>
             </tr>

@@ -108,7 +108,7 @@ export default function Search() {
                 </View>
                 <View style={s.tripMeta}>
                   <Text style={s.tripDate}>{new Date(trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
-                  <Text style={s.tripPrice}>{Number(trip.pricePerSeat).toFixed(0)} €</Text>
+                  <Text style={s.tripPrice}>{Number(trip.pricePerSeat).toFixed(0)} L</Text>
                 </View>
                 <View style={s.tripFooter}>
                   <Text style={s.tripDriver}>👤 {trip.driver.firstName} {trip.driver.lastName}</Text>

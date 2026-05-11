@@ -86,6 +86,9 @@ export default function TripReservations() {
                 </TouchableOpacity>
               </View>
             )}
+            <TouchableOpacity style={s.chatBtn} onPress={() => router.push({ pathname: '/chat/[tripId]/[userId]', params: { tripId: trip.id, userId: r.passenger.id } })}>
+              <Text style={s.chatBtnText}>💬 Kontakto pasagjerin</Text>
+            </TouchableOpacity>
           </View>
         );
       })}
@@ -116,4 +119,6 @@ const s = StyleSheet.create({
   acceptText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   rejectBtn: { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.danger, borderRadius: 10, padding: 12, alignItems: 'center' },
   rejectText: { color: colors.danger, fontWeight: '700', fontSize: 14 },
+  chatBtn: { marginTop: 10, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.primary, alignItems: 'center' },
+  chatBtnText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
 });

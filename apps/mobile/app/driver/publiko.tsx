@@ -67,8 +67,8 @@ export default function Publiko() {
           <Text style={s.label}>Data dhe ora e nisjes *</Text>
           <DateTimeField value={departureAt} onChange={setDepartureAt} mode="datetime" placeholder="Zgjidhni datën dhe orën" />
 
-          <Text style={s.label}>Çmimi për vend (€) *</Text>
-          <TextInput style={s.input} placeholder="10" value={form.pricePerSeat} onChangeText={set('pricePerSeat')} keyboardType="numeric" placeholderTextColor={colors.subtle} />
+          <Text style={s.label}>Çmimi për vend (L) *</Text>
+          <TextInput style={s.input} placeholder="1000" value={form.pricePerSeat} onChangeText={set('pricePerSeat')} keyboardType="numeric" placeholderTextColor={colors.subtle} />
 
           <Text style={s.label}>Numri i vendeve</Text>
           <View style={s.seatRow}>

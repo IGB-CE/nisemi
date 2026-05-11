@@ -6,11 +6,13 @@ import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
 import GradientHeader from '../../components/GradientHeader';
 import CityMapPicker, { type City } from '../../components/CityMapPicker';
+import DateTimeField from '../../components/DateTimeField';
 
 export default function Publiko() {
   const { token } = useAuth();
   const [cities, setCities] = useState<City[]>([]);
-  const [form, setForm] = useState({ originCityId: '', destCityId: '', departureAt: '', pricePerSeat: '', totalSeats: '3', notes: '' });
+  const [form, setForm] = useState({ originCityId: '', destCityId: '', pricePerSeat: '', totalSeats: '3', notes: '' });
+  const [departureAt, setDepartureAt] = useState<Date | null>(null);
   const [originCity, setOriginCity] = useState<City | null>(null);
   const [destCity, setDestCity] = useState<City | null>(null);
   const [showFrom, setShowFrom] = useState(false);
@@ -22,7 +24,7 @@ export default function Publiko() {
   const set = (k: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
   const publish = async () => {
-    if (!form.originCityId || !form.destCityId || !form.departureAt || !form.pricePerSeat) {
+    if (!form.originCityId || !form.destCityId || !departureAt || !form.pricePerSeat) {
       Alert.alert('Gabim', 'Plotëso të gjitha fushat e detyrueshme'); return;
     }
     setSaving(true);
@@ -30,7 +32,7 @@ export default function Publiko() {
       await api.post('/api/v1/trips', {
         originCityId: form.originCityId,
         destCityId: form.destCityId,
-        departureAt: new Date(form.departureAt).toISOString(),
+        departureAt: departureAt!.toISOString(),
         pricePerSeat: Number(form.pricePerSeat),
         totalSeats: Number(form.totalSeats),
         notes: form.notes || undefined,
@@ -45,7 +47,7 @@ export default function Publiko() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <CityMapPicker visible={showFrom} cities={cities} onSelect={c => { setOriginCity(c); setForm(f => ({ ...f, originCityId: c.id })); }} onClose={() => setShowFrom(false)} title="Zgjidhni qytetin e nisjes" />
-      <CityMapPicker visible={showTo} cities={cities} onSelect={c => { setDestCity(c); setForm(f => ({ ...f, destCityId: c.id })); }} onClose={() => setShowTo(false)} title="Zgjidhni destinacionin" />}
+      <CityMapPicker visible={showTo} cities={cities} onSelect={c => { setDestCity(c); setForm(f => ({ ...f, destCityId: c.id })); }} onClose={() => setShowTo(false)} title="Zgjidhni destinacionin" />
       <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
         <GradientHeader>
           <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
@@ -62,8 +64,8 @@ export default function Publiko() {
             <Text style={destCity ? s.pickerValue : s.pickerPlaceholder}>{destCity?.name ?? 'Zgjidhni destinacionin'}</Text>
           </TouchableOpacity>
 
-          <Text style={s.label}>Data dhe ora e nisjes * (YYYY-MM-DD HH:MM)</Text>
-          <TextInput style={s.input} placeholder="2026-05-20 08:00" value={form.departureAt} onChangeText={set('departureAt')} placeholderTextColor={colors.subtle} />
+          <Text style={s.label}>Data dhe ora e nisjes *</Text>
+          <DateTimeField value={departureAt} onChange={setDepartureAt} mode="datetime" placeholder="Zgjidhni datën dhe orën" />
 
           <Text style={s.label}>Çmimi për vend (€) *</Text>
           <TextInput style={s.input} placeholder="10" value={form.pricePerSeat} onChangeText={set('pricePerSeat')} keyboardType="numeric" placeholderTextColor={colors.subtle} />

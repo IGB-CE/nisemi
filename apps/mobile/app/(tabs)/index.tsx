@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { api } from '../../lib/api';
 import { colors } from '../../lib/colors';
@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth';
 import { EmptyState } from '../../components/States';
 import GradientHeader from '../../components/GradientHeader';
 import CityMapPicker, { type City } from '../../components/CityMapPicker';
+import DateTimeField from '../../components/DateTimeField';
 
 interface Trip {
   id: string;
@@ -23,7 +24,7 @@ export default function Search() {
   const [cities, setCities] = useState<City[]>([]);
   const [from, setFrom] = useState<City | null>(null);
   const [to, setTo] = useState<City | null>(null);
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState<Date | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,7 +45,7 @@ export default function Search() {
       const params = new URLSearchParams();
       if (from) params.set('from', from.id);
       if (to) params.set('to', to.id);
-      if (date) params.set('date', date);
+      if (date) params.set('date', date.toISOString().split('T')[0]);
       const data = await api.get<Trip[]>(`/api/v1/trips?${params}`, token ?? undefined);
       setTrips(data);
     } catch (e: any) {
@@ -82,7 +83,7 @@ export default function Search() {
         </TouchableOpacity>
 
         <Text style={s.fieldLabel}>Data (opsionale)</Text>
-        <TextInput style={s.input} placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} placeholderTextColor={colors.subtle} />
+        <DateTimeField value={date} onChange={setDate} placeholder="Zgjidhni datën" />
 
         <TouchableOpacity style={s.btn} onPress={search}>
           <Text style={s.btnText}>🔍  Kërko udhëtime</Text>
@@ -134,7 +135,6 @@ const s = StyleSheet.create({
   picker: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14 },
   pickerValue: { color: colors.text, fontSize: 15 },
   pickerPlaceholder: { color: colors.subtle, fontSize: 15 },
-  input: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, fontSize: 15, color: colors.text },
   btn: { backgroundColor: colors.primary, borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 20 },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   results: { flex: 1, paddingHorizontal: 16 },

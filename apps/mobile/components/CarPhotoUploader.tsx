@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
-import * as FileSystem from 'expo-file-system/legacy';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useDialog } from '../lib/dialog';
 import { colors, typography } from '../lib/colors';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 
 export default function CarPhotoUploader({ currentUrl, onUploaded }: Props) {
   const { token } = useAuth();
+  const dialog = useDialog();
   const [uploading, setUploading] = useState(false);
 
   const pickAndUpload = async (source: 'gallery' | 'camera') => {
@@ -22,7 +23,7 @@ export default function CarPhotoUploader({ currentUrl, onUploaded }: Props) {
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert('Leje e refuzuar', 'Nuk mund të hapim galerinë/kamerën.');
+        await dialog.alert('Leje e refuzuar', 'Nuk mund të hapim galerinë/kamerën.');
         return;
       }
 
@@ -49,18 +50,22 @@ export default function CarPhotoUploader({ currentUrl, onUploaded }: Props) {
       );
       onUploaded(updated.carPhotoUrl);
     } catch (e: any) {
-      Alert.alert('Gabim', e.message ?? 'Ngarkimi dështoi');
+      await dialog.alert('Gabim', e.message ?? 'Ngarkimi dështoi');
     } finally {
       setUploading(false);
     }
   };
 
   const showSourceMenu = () => {
-    Alert.alert('Foto e makinës', undefined, [
-      { text: 'Bëj foto', onPress: () => pickAndUpload('camera') },
-      { text: 'Zgjidh nga galeria', onPress: () => pickAndUpload('gallery') },
-      { text: 'Anulo', style: 'cancel' },
-    ]);
+    dialog.show({
+      title: 'Foto e makinës',
+      message: 'Zgjidh nga ku të marrësh foton',
+      buttons: [
+        { label: 'Bëj foto', variant: 'primary', onPress: () => pickAndUpload('camera') },
+        { label: 'Zgjidh nga galeria', variant: 'primary', onPress: () => pickAndUpload('gallery') },
+        { label: 'Anulo', variant: 'cancel' },
+      ],
+    });
   };
 
   return (

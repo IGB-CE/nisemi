@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { useDialog } from '../../lib/dialog';
 import { colors, typography } from '../../lib/colors';
 import CityMapPicker, { type City } from '../../components/CityMapPicker';
 import DateTimeField from '../../components/DateTimeField';
@@ -12,6 +13,7 @@ import Card from '../../components/ui/Card';
 
 export default function Publiko() {
   const { token } = useAuth();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [cities, setCities] = useState<City[]>([]);
   const [form, setForm] = useState({ originCityId: '', destCityId: '', pricePerSeat: '', totalSeats: '3', notes: '' });
@@ -28,7 +30,7 @@ export default function Publiko() {
 
   const publish = async () => {
     if (!form.originCityId || !form.destCityId || !departureAt || !form.pricePerSeat) {
-      Alert.alert('Gabim', 'Plotëso të gjitha fushat e detyrueshme'); return;
+      await dialog.alert('Gabim', 'Plotëso të gjitha fushat e detyrueshme'); return;
     }
     setSaving(true);
     try {
@@ -40,10 +42,9 @@ export default function Publiko() {
         totalSeats: Number(form.totalSeats),
         notes: form.notes || undefined,
       }, token ?? undefined);
-      Alert.alert('Sukses', 'Udhëtimi u publikua.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (e: any) { Alert.alert('Gabim', e.message); }
+      await dialog.alert('Sukses', 'Udhëtimi u publikua.');
+      router.back();
+    } catch (e: any) { await dialog.alert('Gabim', e.message); }
     finally { setSaving(false); }
   };
 

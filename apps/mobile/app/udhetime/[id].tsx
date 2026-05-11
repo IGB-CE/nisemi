@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { useDialog } from '../../lib/dialog';
 import { colors, typography } from '../../lib/colors';
 import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
@@ -13,6 +14,7 @@ import PrimaryButton from '../../components/ui/PrimaryButton';
 export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { token, user } = useAuth();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -38,10 +40,9 @@ export default function TripDetail() {
     setBooking(true);
     try {
       await api.post('/api/v1/reservations', { tripId: id, seats: 1 }, token);
-      Alert.alert('Sukses', 'Rezervimi u dërgua. Prit konfirmimin e shoferit.', [
-        { text: 'OK', onPress: () => router.push('/(tabs)/rezervimet') },
-      ]);
-    } catch (e: any) { Alert.alert('Gabim', e.message); }
+      await dialog.alert('Sukses', 'Rezervimi u dërgua. Prit konfirmimin e shoferit.');
+      router.push('/(tabs)/rezervimet');
+    } catch (e: any) { await dialog.alert('Gabim', e.message); }
     finally { setBooking(false); }
   };
 
@@ -54,15 +55,15 @@ export default function TripDetail() {
 
   const submitReport = async () => {
     if (reportReason.trim().length < 10) {
-      Alert.alert('Gabim', 'Arsyeja duhet të ketë të paktën 10 karaktere.'); return;
+      await dialog.alert('Gabim', 'Arsyeja duhet të ketë të paktën 10 karaktere.'); return;
     }
     setReporting(true);
     try {
       await api.post('/api/v1/reports', { reportedId: trip.driver.id, reason: reportReason.trim() }, token ?? undefined);
       setShowReport(false);
       setReportReason('');
-      Alert.alert('Faleminderit', 'Raporti u dërgua.');
-    } catch (e: any) { Alert.alert('Gabim', e.message); }
+      await dialog.alert('Faleminderit', 'Raporti u dërgua.');
+    } catch (e: any) { await dialog.alert('Gabim', e.message); }
     finally { setReporting(false); }
   };
 

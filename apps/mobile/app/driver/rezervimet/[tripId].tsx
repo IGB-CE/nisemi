@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
+import { useDialog } from '../../../lib/dialog';
 import { colors, typography } from '../../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../../components/States';
 import PrimaryButton from '../../../components/ui/PrimaryButton';
@@ -18,6 +19,7 @@ const statusMap: Record<string, { label: string; color: string }> = {
 export default function TripReservations() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { token } = useAuth();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function TripReservations() {
     try {
       await api.patch(`/api/v1/reservations/${reservationId}/${act}`, {}, token ?? undefined);
       load();
-    } catch (e: any) { Alert.alert('Gabim', e.message); }
+    } catch (e: any) { await dialog.alert('Gabim', e.message); }
   };
 
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;

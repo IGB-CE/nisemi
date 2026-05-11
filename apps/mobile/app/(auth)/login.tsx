@@ -1,29 +1,31 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { useDialog } from '../../lib/dialog';
 import { colors, typography, gradient } from '../../lib/colors';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 
 export default function Login() {
   const { signIn } = useAuth();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) { Alert.alert('Gabim', 'Plotëso të gjitha fushat'); return; }
+    if (!email || !password) { await dialog.alert('Gabim', 'Plotëso të gjitha fushat'); return; }
     setLoading(true);
     try {
       const res = await api.post<{ token: string; user: any }>('/api/v1/auth/login', { email, password });
       await signIn(res.token, res.user);
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('Gabim', e.message);
+      await dialog.alert('Gabim', e.message);
     } finally {
       setLoading(false);
     }

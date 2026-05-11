@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { useDialog } from '../../lib/dialog';
 import { colors, typography } from '../../lib/colors';
 import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
@@ -19,6 +20,7 @@ const MONTHS = ['J', 'F', 'M', 'A', 'M', 'Q', 'K', 'G', 'S', 'T', 'N', 'D'];
 
 export default function Profili() {
   const { token, user, signOut, signIn } = useAuth();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<any>(null);
   const [tripsByMonth, setTripsByMonth] = useState<number[]>(new Array(12).fill(0));
@@ -55,16 +57,14 @@ export default function Profili() {
     }).catch(() => {});
   }, [token, profile?.role]);
 
-  const handleLogout = () => {
-    Alert.alert('Dil', 'Dëshiron të dalësh?', [
-      { text: 'Jo' },
-      { text: 'Po, dil', style: 'destructive', onPress: signOut },
-    ]);
+  const handleLogout = async () => {
+    const ok = await dialog.confirm('Dilni nga llogaria?', undefined, 'Po, dil', true);
+    if (ok) await signOut();
   };
 
   const saveProfile = async () => {
     if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
-      Alert.alert('Gabim', 'Emri dhe mbiemri janë të detyrueshme'); return;
+      await dialog.alert('Gabim', 'Emri dhe mbiemri janë të detyrueshme'); return;
     }
     setSaving(true);
     try {
@@ -75,7 +75,7 @@ export default function Profili() {
       await signIn(token!, { ...user!, firstName: updated.firstName, lastName: updated.lastName });
       setEditMode(false);
     } catch (e: any) {
-      Alert.alert('Gabim', e.message);
+      await dialog.alert('Gabim', e.message);
     } finally {
       setSaving(false);
     }
@@ -83,7 +83,7 @@ export default function Profili() {
 
   const createDriverProfile = async () => {
     if (!driverForm.carModel || !driverForm.carColor || !driverForm.carPlate) {
-      Alert.alert('Gabim', 'Plotëso të gjitha fushat'); return;
+      await dialog.alert('Gabim', 'Plotëso të gjitha fushat'); return;
     }
     setSaving(true);
     try {
@@ -92,7 +92,7 @@ export default function Profili() {
       setProfile(updated);
       await signIn(token!, { ...user!, role: 'DRIVER' });
       setShowDriverForm(false);
-    } catch (e: any) { Alert.alert('Gabim', e.message); }
+    } catch (e: any) { await dialog.alert('Gabim', e.message); }
     finally { setSaving(false); }
   };
 

@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { useDialog } from '../../lib/dialog';
 import { colors, typography } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -31,6 +32,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 
 export default function Rezervimet() {
   const { token } = useAuth();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [reservations, setReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,15 +54,12 @@ export default function Rezervimet() {
   useFocusEffect(load);
 
   const cancel = async (id: string) => {
-    Alert.alert('Konfirmo', 'Dëshiron të anulosh këtë rezervim?', [
-      { text: 'Jo' },
-      { text: 'Po, anulo', style: 'destructive', onPress: async () => {
-        try {
-          await api.patch(`/api/v1/reservations/${id}/cancel`, {}, token ?? undefined);
-          setReservations(r => r.map(x => x.id === id ? { ...x, status: 'CANCELLED' } : x));
-        } catch (e: any) { Alert.alert('Gabim', e.message); }
-      }},
-    ]);
+    const ok = await dialog.confirm('Anulo rezervimin?', 'Ky veprim nuk mund të zhbëhet.', 'Po, anulo', true);
+    if (!ok) return;
+    try {
+      await api.patch(`/api/v1/reservations/${id}/cancel`, {}, token ?? undefined);
+      setReservations(r => r.map(x => x.id === id ? { ...x, status: 'CANCELLED' } : x));
+    } catch (e: any) { await dialog.alert('Gabim', e.message); }
   };
 
   const openRating = (r: any) => {
@@ -81,7 +80,7 @@ export default function Rezervimet() {
       ));
       setRatingTarget(null);
     } catch (e: any) {
-      Alert.alert('Gabim', e.message);
+      await dialog.alert('Gabim', e.message);
     } finally {
       setSubmitting(false);
     }

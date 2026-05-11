@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, TouchableOpacity } from 'react-native';
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { useDialog } from '../../lib/dialog';
 import { colors, typography, gradient } from '../../lib/colors';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 
 export default function Register() {
   const { signIn } = useAuth();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -18,7 +20,7 @@ export default function Register() {
 
   const handleRegister = async () => {
     if (!form.firstName || !form.lastName || !form.email || !form.password) {
-      Alert.alert('Gabim', 'Plotëso fushat e detyrueshme'); return;
+      await dialog.alert('Gabim', 'Plotëso fushat e detyrueshme'); return;
     }
     setLoading(true);
     try {
@@ -26,7 +28,7 @@ export default function Register() {
       await signIn(res.token, res.user);
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('Gabim', e.message);
+      await dialog.alert('Gabim', e.message);
     } finally {
       setLoading(false);
     }

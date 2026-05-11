@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { api } from '../../lib/api';
@@ -15,6 +15,9 @@ export default function TripDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reporting, setReporting] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -44,6 +47,20 @@ export default function TripDetail() {
   if (!trip) return <ErrorScreen message="Ky udhëtim nuk u gjet." />;
 
   const isOwnTrip = trip.driver.id === user?.id;
+
+  const submitReport = async () => {
+    if (reportReason.trim().length < 10) {
+      Alert.alert('Gabim', 'Arsyeja duhet të ketë të paktën 10 karaktere.'); return;
+    }
+    setReporting(true);
+    try {
+      await api.post('/api/v1/reports', { reportedId: trip.driver.id, reason: reportReason.trim() }, token ?? undefined);
+      setShowReport(false);
+      setReportReason('');
+      Alert.alert('Faleminderit', 'Raporti u dërgua. Do ta shqyrtojmë sa më shpejt.');
+    } catch (e: any) { Alert.alert('Gabim', e.message); }
+    finally { setReporting(false); }
+  };
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -104,7 +121,7 @@ export default function TripDetail() {
         <Text style={s.cardTitle}>Shoferi</Text>
         <View style={s.driverRow}>
           <View style={s.driverAvatar}><Text style={s.driverAvatarText}>{trip.driver.firstName[0]}</Text></View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={s.driverName}>{trip.driver.firstName} {trip.driver.lastName}</Text>
             {trip.driver.driverProfile && (
               <>
@@ -115,6 +132,11 @@ export default function TripDetail() {
             )}
           </View>
         </View>
+        {token && !isOwnTrip && (
+          <TouchableOpacity style={s.reportLink} onPress={() => setShowReport(true)}>
+            <Text style={s.reportLinkText}>⚠️ Raporto shoferin</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {!isOwnTrip && trip.status === 'SCHEDULED' && trip.seatsAvailable > 0 && (
@@ -126,6 +148,33 @@ export default function TripDetail() {
       {trip.seatsAvailable === 0 && (
         <View style={s.fullBanner}><Text style={s.fullBannerText}>Ky udhëtim është plotësisht i zënë</Text></View>
       )}
+
+      <Modal visible={showReport} transparent animationType="slide" onRequestClose={() => setShowReport(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>Raporto shoferin</Text>
+            <Text style={s.modalSub}>Shpjego arsyen e raportit (min. 10 karaktere)</Text>
+            <TextInput
+              style={s.reasonInput}
+              placeholder="P.sh. sjellje e papërshtatshme, mashtrim..."
+              placeholderTextColor={colors.subtle}
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+              maxLength={500}
+              textAlignVertical="top"
+            />
+            <View style={s.modalBtns}>
+              <TouchableOpacity style={s.cancelModalBtn} onPress={() => { setShowReport(false); setReportReason(''); }}>
+                <Text style={s.cancelModalText}>Anulo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.submitBtn, reporting && { opacity: 0.6 }]} onPress={submitReport} disabled={reporting}>
+                <Text style={s.submitBtnText}>{reporting ? 'Duke dërguar...' : 'Dërgo raportin'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </ScrollView>
   );
 }
@@ -166,4 +215,16 @@ const s = StyleSheet.create({
   bookBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   fullBanner: { margin: 16, backgroundColor: 'rgba(248,113,113,0.1)', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.danger },
   fullBannerText: { color: colors.danger, fontSize: 14, fontWeight: '600' },
+  reportLink: { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, alignItems: 'flex-end' },
+  reportLinkText: { color: colors.subtle, fontSize: 12 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalCard: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 4 },
+  modalSub: { fontSize: 13, color: colors.subtle, marginBottom: 14 },
+  reasonInput: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text, minHeight: 100, marginBottom: 20 },
+  modalBtns: { flexDirection: 'row', gap: 12 },
+  cancelModalBtn: { flex: 1, paddingVertical: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 12, alignItems: 'center' },
+  cancelModalText: { color: colors.subtle, fontWeight: '600' },
+  submitBtn: { flex: 2, paddingVertical: 14, backgroundColor: colors.danger, borderRadius: 12, alignItems: 'center' },
+  submitBtnText: { color: '#fff', fontWeight: '700' },
 });

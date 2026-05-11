@@ -88,6 +88,7 @@ model Trip {
 
   reservations Reservation[]
   messages     Message[]
+  reviews      Review[]
 }
 
 enum TripStatus {
@@ -118,6 +119,7 @@ enum ReservationStatus {
 model Review {
   id        String   @id @default(cuid())
   tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id])
   authorId  String
   author    User     @relation("ReviewsGiven", fields: [authorId], references: [id])
   targetId  String

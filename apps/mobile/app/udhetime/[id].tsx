@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
@@ -65,6 +66,40 @@ export default function TripDetail() {
         {trip.notes && <Row label="Shënime" value={trip.notes} />}
       </View>
 
+      {trip.originCity.lat && trip.originCity.lng && trip.destCity.lat && trip.destCity.lng && (
+        <View style={[s.card, { padding: 0, overflow: 'hidden' }]}>
+          <MapView
+            style={s.routeMap}
+            initialRegion={{
+              latitude: (trip.originCity.lat + trip.destCity.lat) / 2,
+              longitude: (trip.originCity.lng + trip.destCity.lng) / 2,
+              latitudeDelta: Math.abs(trip.originCity.lat - trip.destCity.lat) * 2 + 0.5,
+              longitudeDelta: Math.abs(trip.originCity.lng - trip.destCity.lng) * 2 + 0.5,
+            }}
+            scrollEnabled={false}
+            zoomEnabled={false}
+            pitchEnabled={false}
+            rotateEnabled={false}
+          >
+            <Marker coordinate={{ latitude: trip.originCity.lat, longitude: trip.originCity.lng }} title={trip.originCity.name} pinColor={colors.success} />
+            <Marker coordinate={{ latitude: trip.destCity.lat, longitude: trip.destCity.lng }} title={trip.destCity.name} pinColor={colors.primary} />
+            <Polyline
+              coordinates={[
+                { latitude: trip.originCity.lat, longitude: trip.originCity.lng },
+                { latitude: trip.destCity.lat, longitude: trip.destCity.lng },
+              ]}
+              strokeColor={colors.primary}
+              strokeWidth={3}
+            />
+          </MapView>
+          <View style={s.mapLabel}>
+            <Text style={s.mapLabelText}>🟢 {trip.originCity.name}</Text>
+            <Text style={s.mapLabelArrow}>→</Text>
+            <Text style={s.mapLabelText}>📍 {trip.destCity.name}</Text>
+          </View>
+        </View>
+      )}
+
       <View style={s.card}>
         <Text style={s.cardTitle}>Shoferi</Text>
         <View style={s.driverRow}>
@@ -123,6 +158,10 @@ const s = StyleSheet.create({
   driverAvatarText: { fontSize: 20, fontWeight: '700', color: colors.primary },
   driverName: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 2 },
   driverMeta: { color: colors.subtle, fontSize: 13, marginTop: 2 },
+  routeMap: { height: 180, width: '100%' },
+  mapLabel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  mapLabelText: { color: colors.text, fontSize: 13, fontWeight: '600' },
+  mapLabelArrow: { color: colors.primary, fontSize: 14 },
   bookBtn: { margin: 16, backgroundColor: colors.primary, borderRadius: 14, padding: 18, alignItems: 'center' },
   bookBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   fullBanner: { margin: 16, backgroundColor: 'rgba(248,113,113,0.1)', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.danger },

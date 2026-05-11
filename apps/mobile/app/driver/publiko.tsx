@@ -5,8 +5,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
 import GradientHeader from '../../components/GradientHeader';
-
-interface City { id: string; name: string; }
+import CityMapPicker, { type City } from '../../components/CityMapPicker';
 
 export default function Publiko() {
   const { token } = useAuth();
@@ -16,7 +15,6 @@ export default function Publiko() {
   const [destCity, setDestCity] = useState<City | null>(null);
   const [showFrom, setShowFrom] = useState(false);
   const [showTo, setShowTo] = useState(false);
-  const [cityFilter, setCityFilter] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { api.get<City[]>('/api/v1/cities').then(setCities).catch(() => {}); }, []);
@@ -44,31 +42,10 @@ export default function Publiko() {
     finally { setSaving(false); }
   };
 
-  const filteredCities = cities.filter(c => c.name.toLowerCase().includes(cityFilter.toLowerCase()));
-
-  const CityModal = ({ onSelect, onClose }: { onSelect: (c: City) => void; onClose: () => void }) => (
-    <View style={s.modal}>
-      <View style={s.modalContent}>
-        <Text style={s.modalTitle}>Zgjidhni qytetin</Text>
-        <TextInput style={s.searchInput} placeholder="Kërko..." value={cityFilter} onChangeText={setCityFilter} placeholderTextColor={colors.subtle} />
-        <ScrollView style={{ maxHeight: 300 }}>
-          {filteredCities.map(c => (
-            <TouchableOpacity key={c.id} style={s.cityRow} onPress={() => { onSelect(c); setCityFilter(''); onClose(); }}>
-              <Text style={s.cityName}>{c.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <TouchableOpacity style={s.closeBtn} onPress={() => { setCityFilter(''); onClose(); }}>
-          <Text style={s.closeBtnText}>Mbyll</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {showFrom && <CityModal onSelect={c => { setOriginCity(c); setForm(f => ({ ...f, originCityId: c.id })); }} onClose={() => setShowFrom(false)} />}
-      {showTo && <CityModal onSelect={c => { setDestCity(c); setForm(f => ({ ...f, destCityId: c.id })); }} onClose={() => setShowTo(false)} />}
+      <CityMapPicker visible={showFrom} cities={cities} onSelect={c => { setOriginCity(c); setForm(f => ({ ...f, originCityId: c.id })); }} onClose={() => setShowFrom(false)} title="Zgjidhni qytetin e nisjes" />
+      <CityMapPicker visible={showTo} cities={cities} onSelect={c => { setDestCity(c); setForm(f => ({ ...f, destCityId: c.id })); }} onClose={() => setShowTo(false)} title="Zgjidhni destinacionin" />}
       <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
         <GradientHeader>
           <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
@@ -129,12 +106,4 @@ const s = StyleSheet.create({
   seatBtnTextActive: { color: '#fff' },
   btn: { backgroundColor: colors.primary, borderRadius: 14, padding: 18, alignItems: 'center', marginTop: 32 },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  modal: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  searchInput: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 15, color: colors.text, marginBottom: 8 },
-  cityRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
-  cityName: { fontSize: 16, color: colors.text },
-  closeBtn: { marginTop: 16, backgroundColor: colors.background, borderRadius: 12, padding: 14, alignItems: 'center' },
-  closeBtnText: { color: colors.subtle, fontWeight: '600' },
 });

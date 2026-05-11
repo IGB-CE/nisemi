@@ -35,7 +35,7 @@ async function main() {
   for (const city of cities) {
     await prisma.city.upsert({
       where: { name: city.name },
-      update: {},
+      update: { lat: city.lat, lng: city.lng, nameAlbanian: city.nameAlbanian },
       create: city,
     });
   }

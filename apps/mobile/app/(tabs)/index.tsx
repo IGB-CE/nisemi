@@ -6,8 +6,8 @@ import { colors } from '../../lib/colors';
 import { useAuth } from '../../lib/auth';
 import { EmptyState } from '../../components/States';
 import GradientHeader from '../../components/GradientHeader';
+import CityMapPicker, { type City } from '../../components/CityMapPicker';
 
-interface City { id: string; name: string; }
 interface Trip {
   id: string;
   originCity: City;
@@ -31,7 +31,6 @@ export default function Search() {
   const [citiesError, setCitiesError] = useState(false);
   const [showFrom, setShowFrom] = useState(false);
   const [showTo, setShowTo] = useState(false);
-  const [cityFilter, setCityFilter] = useState('');
 
   useEffect(() => {
     api.get<City[]>('/api/v1/cities').then(setCities).catch(() => setCitiesError(true));
@@ -55,31 +54,10 @@ export default function Search() {
     }
   };
 
-  const filteredCities = cities.filter(c => c.name.toLowerCase().includes(cityFilter.toLowerCase()));
-
-  const CityModal = ({ onSelect, onClose }: { onSelect: (c: City) => void; onClose: () => void }) => (
-    <View style={s.modal}>
-      <View style={s.modalContent}>
-        <Text style={s.modalTitle}>Zgjidhni qytetin</Text>
-        <TextInput style={s.searchInput} placeholder="Kërko qytet..." value={cityFilter} onChangeText={setCityFilter} placeholderTextColor={colors.subtle} />
-        <ScrollView style={{ maxHeight: 300 }}>
-          {filteredCities.map(c => (
-            <TouchableOpacity key={c.id} style={s.cityRow} onPress={() => { onSelect(c); setCityFilter(''); onClose(); }}>
-              <Text style={s.cityName}>{c.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <TouchableOpacity style={s.closeBtn} onPress={() => { setCityFilter(''); onClose(); }}>
-          <Text style={s.closeBtnText}>Mbyll</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
     <View style={s.container}>
-      {showFrom && <CityModal onSelect={setFrom} onClose={() => setShowFrom(false)} />}
-      {showTo && <CityModal onSelect={setTo} onClose={() => setShowTo(false)} />}
+      <CityMapPicker visible={showFrom} cities={cities} onSelect={setFrom} onClose={() => setShowFrom(false)} title="Zgjidhni qytetin e nisjes" />
+      <CityMapPicker visible={showTo} cities={cities} onSelect={setTo} onClose={() => setShowTo(false)} title="Zgjidhni destinacionin" />
 
       <GradientHeader>
         <Text style={s.headerTitle}>Ikim</Text>
@@ -171,12 +149,4 @@ const s = StyleSheet.create({
   tripDriver: { color: colors.subtle, fontSize: 13 },
   tripRating: { color: colors.subtle, fontSize: 13 },
   tripSeats: { color: colors.subtle, fontSize: 13 },
-  modal: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, borderTopWidth: 1, borderColor: colors.border },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  searchInput: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 15, color: colors.text, marginBottom: 8 },
-  cityRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
-  cityName: { fontSize: 16, color: colors.text },
-  closeBtn: { marginTop: 16, backgroundColor: colors.surfaceElevated, borderRadius: 12, padding: 14, alignItems: 'center' },
-  closeBtnText: { color: colors.subtle, fontWeight: '600' },
 });

@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
 import { Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function TabIcon({ label }: { label: string }) {
   return <Text style={{ fontSize: 20 }}>{label}</Text>;
@@ -9,6 +10,7 @@ function TabIcon({ label }: { label: string }) {
 
 export default function TabsLayout() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const isDriver = user?.role === 'DRIVER' || user?.role === 'ADMIN';
 
   return (
@@ -20,9 +22,9 @@ export default function TabsLayout() {
         backgroundColor: colors.background,
         borderTopColor: colors.border,
         borderTopWidth: 1,
-        height: 64,
-        paddingBottom: 8,
-        paddingTop: 6,
+        height: 60 + insets.bottom,
+        paddingBottom: insets.bottom + 6,
+        paddingTop: 8,
       },
       tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
     }}>

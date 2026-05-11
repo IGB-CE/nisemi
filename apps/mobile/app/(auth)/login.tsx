@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors, gradient } from '../../lib/colors';
+import { colors, typography, gradient } from '../../lib/colors';
+import PrimaryButton from '../../components/ui/PrimaryButton';
 
 export default function Login() {
   const { signIn } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,46 +30,71 @@ export default function Login() {
   };
 
   return (
-    <LinearGradient colors={['#0D0D0D', '#1A0000']} style={{ flex: 1 }}>
+    <View style={s.container}>
+      <LinearGradient
+        colors={gradient.hero}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 0.8, y: 1 }}
+        style={s.bg}
+        pointerEvents="none"
+      />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={s.inner}>
+        <ScrollView contentContainerStyle={[s.scroll, { paddingTop: insets.top + 40 }]} keyboardShouldPersistTaps="handled">
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
-          <Text style={s.title}>Ikim</Text>
-          <Text style={s.subtitle}>Hyr në llogarinë tënde</Text>
+          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.title}>Mirë se erdhe</Text>
+          <Text style={s.subtitle}>Hyr për të vazhduar</Text>
 
-          <TextInput style={s.input} placeholder="Email" value={email} onChangeText={setEmail}
-            autoCapitalize="none" keyboardType="email-address" placeholderTextColor={colors.subtle} />
-          <TextInput style={s.input} placeholder="Fjalëkalimi" value={password} onChangeText={setPassword}
-            secureTextEntry={true} placeholderTextColor={colors.subtle} />
+          <View style={s.form}>
+            <Text style={s.fieldLabel}>Email</Text>
+            <TextInput
+              style={s.input}
+              placeholder="ti@example.com"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholderTextColor={colors.subtle}
+            />
 
-          <TouchableOpacity style={[s.btn, loading && s.btnDisabled]} onPress={handleLogin} disabled={loading}>
-            <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.btnGradient}>
-              <Text style={s.btnText}>{loading ? 'Duke hyrë...' : 'Hyr'}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+            <Text style={s.fieldLabel}>Fjalëkalimi</Text>
+            <TextInput
+              style={s.input}
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholderTextColor={colors.subtle}
+            />
 
-          <Link href="/(auth)/register" asChild>
-            <TouchableOpacity style={s.link}>
-              <Text style={s.linkText}>Nuk ke llogari? <Text style={s.linkBold}>Regjistrohu</Text></Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
+            <View style={{ marginTop: 20 }}>
+              <PrimaryButton label="Hyr" onPress={handleLogin} loading={loading} />
+            </View>
+
+            <Link href="/(auth)/register" asChild>
+              <TouchableOpacity style={s.link}>
+                <Text style={s.linkText}>Nuk ke llogari? <Text style={s.linkBold}>Regjistrohu</Text></Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  inner: { flex: 1, padding: 28, justifyContent: 'center' },
-  logo: { width: 110, height: 110, alignSelf: 'center', marginBottom: 20, borderRadius: 22 },
-  title: { fontSize: 32, fontWeight: '900', color: colors.text, textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 15, color: colors.subtle, textAlign: 'center', marginBottom: 36 },
-  input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, fontSize: 16, color: colors.text, marginBottom: 14 },
-  btn: { borderRadius: 12, overflow: 'hidden', marginTop: 8 },
-  btnDisabled: { opacity: 0.6 },
-  btnGradient: { padding: 16, alignItems: 'center' },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  link: { marginTop: 28, alignItems: 'center' },
+  container: { flex: 1, backgroundColor: colors.background },
+  bg: { ...StyleSheet.absoluteFillObject, opacity: 0.4 },
+  scroll: { padding: 28, paddingBottom: 60 },
+  logo: { width: 84, height: 84, alignSelf: 'center', marginBottom: 28, borderRadius: 18 },
+  brand: { ...typography.label, color: colors.primary, fontSize: 12, textAlign: 'center' },
+  title: { ...typography.display, textAlign: 'center', marginTop: 8 },
+  subtitle: { ...typography.bodyDim, textAlign: 'center', marginTop: 8, marginBottom: 36 },
+  form: { gap: 4 },
+  fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 12 },
+  input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, fontSize: 16, color: colors.text },
+  link: { marginTop: 24, alignItems: 'center' },
   linkText: { color: colors.subtle, fontSize: 14 },
   linkBold: { color: colors.primary, fontWeight: '700' },
 });

@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors } from '../../lib/colors';
+import { colors, typography } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
-import GradientHeader from '../../components/GradientHeader';
 
 interface Conversation {
   tripId: string;
@@ -25,6 +25,7 @@ function formatTime(iso: string) {
 
 export default function Mesazhet() {
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,40 +44,66 @@ export default function Mesazhet() {
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
   if (error) return <ErrorScreen message={error} onRetry={load} />;
 
+  const totalUnread = conversations.reduce((sum, c) => sum + c.unread, 0);
+
   return (
     <View style={s.container}>
-      <GradientHeader>
-        <Text style={s.headerTitle}>Mesazhet</Text>
-      </GradientHeader>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <View style={s.headerWrap}>
+          <Text style={s.brand}>IKIM</Text>
+          <View style={s.titleRow}>
+            <Text style={s.title}>Mesazhet</Text>
+            {totalUnread > 0 && (
+              <View style={s.unreadHero}>
+                <Text style={s.unreadHeroText}>{totalUnread}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
         {conversations.length === 0 ? (
-          <EmptyState icon="💬" title="Nuk keni biseda ende" subtitle="Hap një udhëtim dhe kontakto shoferin." />
-        ) : conversations.map(c => (
-          <TouchableOpacity
-            key={`${c.tripId}-${c.otherUser.id}`}
-            style={s.card}
-            onPress={() => router.push({ pathname: '/chat/[tripId]/[userId]', params: { tripId: c.tripId, userId: c.otherUser.id } })}
-          >
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>{c.otherUser.firstName[0]}</Text>
-            </View>
-            <View style={s.body}>
-              <View style={s.topRow}>
-                <Text style={s.name} numberOfLines={1}>{c.otherUser.firstName} {c.otherUser.lastName}</Text>
-                <Text style={s.time}>{formatTime(c.lastMessage.createdAt)}</Text>
-              </View>
-              <Text style={s.route} numberOfLines={1}>{c.trip.originCity.name} → {c.trip.destCity.name}</Text>
-              <View style={s.bottomRow}>
-                <Text style={[s.preview, c.unread > 0 && !c.lastMessage.fromMe && s.previewUnread]} numberOfLines={1}>
-                  {c.lastMessage.fromMe ? 'Ti: ' : ''}{c.lastMessage.content}
-                </Text>
-                {c.unread > 0 && !c.lastMessage.fromMe && (
-                  <View style={s.badge}><Text style={s.badgeText}>{c.unread}</Text></View>
-                )}
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+          <View style={{ marginTop: 40 }}>
+            <EmptyState icon="💬" title="Nuk keni biseda ende" subtitle="Hap një udhëtim dhe kontakto shoferin." />
+          </View>
+        ) : (
+          <View style={s.list}>
+            {conversations.map(c => {
+              const initials = `${c.otherUser.firstName?.[0] ?? ''}${c.otherUser.lastName?.[0] ?? ''}`;
+              const isUnread = c.unread > 0 && !c.lastMessage.fromMe;
+              return (
+                <TouchableOpacity
+                  key={`${c.tripId}-${c.otherUser.id}`}
+                  style={s.card}
+                  onPress={() => router.push({ pathname: '/chat/[tripId]/[userId]', params: { tripId: c.tripId, userId: c.otherUser.id } })}
+                  activeOpacity={0.85}
+                >
+                  <View style={s.avatar}>
+                    {c.otherUser.avatarUrl ? (
+                      <Image source={{ uri: c.otherUser.avatarUrl }} style={s.avatarImg} />
+                    ) : (
+                      <Text style={s.avatarText}>{initials}</Text>
+                    )}
+                  </View>
+                  <View style={s.body}>
+                    <View style={s.topRow}>
+                      <Text style={s.name} numberOfLines={1}>{c.otherUser.firstName} {c.otherUser.lastName}</Text>
+                      <Text style={[s.time, isUnread && s.timeUnread]}>{formatTime(c.lastMessage.createdAt)}</Text>
+                    </View>
+                    <Text style={s.route} numberOfLines={1}>{c.trip.originCity.name} → {c.trip.destCity.name}</Text>
+                    <View style={s.bottomRow}>
+                      <Text style={[s.preview, isUnread && s.previewUnread]} numberOfLines={1}>
+                        {c.lastMessage.fromMe ? 'Ti: ' : ''}{c.lastMessage.content}
+                      </Text>
+                      {isUnread && (
+                        <View style={s.badge}><Text style={s.badgeText}>{c.unread}</Text></View>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -84,19 +111,29 @@ export default function Mesazhet() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border, gap: 12 },
-  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center' },
-  avatarText: { fontSize: 20, fontWeight: '700', color: colors.primary },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+
+  headerWrap: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16 },
+  brand: { ...typography.label, color: colors.primary, fontSize: 10 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
+  title: { ...typography.h1 },
+  unreadHero: { backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, minWidth: 24, alignItems: 'center' },
+  unreadHeroText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+
+  list: { paddingHorizontal: 16, gap: 10 },
+  card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.border, gap: 12 },
+  avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.surfaceElevated, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: colors.borderStrong },
+  avatarImg: { width: '100%', height: '100%' },
+  avatarText: { fontSize: 18, fontWeight: '800', color: colors.text },
   body: { flex: 1, justifyContent: 'center' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
-  name: { fontSize: 15, fontWeight: '700', color: colors.text, flex: 1 },
-  time: { fontSize: 11, color: colors.subtle },
-  route: { fontSize: 12, color: colors.subtle, marginBottom: 4 },
+  name: { ...typography.h3, fontSize: 15, flex: 1 },
+  time: { ...typography.caption, fontSize: 11 },
+  timeUnread: { color: colors.primary, fontWeight: '700' },
+  route: { ...typography.caption, marginBottom: 4 },
   bottomRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   preview: { flex: 1, fontSize: 13, color: colors.subtle },
   previewUnread: { color: colors.text, fontWeight: '600' },
   badge: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, paddingHorizontal: 7, justifyContent: 'center', alignItems: 'center' },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
 });

@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, Image, TouchableOpacity } from 'react-native';
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors, gradient } from '../../lib/colors';
+import { colors, typography, gradient } from '../../lib/colors';
+import PrimaryButton from '../../components/ui/PrimaryButton';
 
 export default function Register() {
   const { signIn } = useAuth();
+  const insets = useSafeAreaInsets();
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '' });
   const [loading, setLoading] = useState(false);
 
@@ -30,64 +33,72 @@ export default function Register() {
   };
 
   return (
-    <LinearGradient colors={['#0D0D0D', '#1A0000']} style={{ flex: 1 }}>
+    <View style={s.container}>
+      <LinearGradient
+        colors={gradient.hero}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 0.8, y: 1 }}
+        style={s.bg}
+        pointerEvents="none"
+      />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={s.inner} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[s.scroll, { paddingTop: insets.top + 30 }]} keyboardShouldPersistTaps="handled">
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
-          <Text style={s.title}>Krijo llogari</Text>
-          <Text style={s.subtitle}>Regjistrohu në Ikim</Text>
+          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.title}>Krijo llogarinë</Text>
+          <Text style={s.subtitle}>Filloni në më pak se një minutë</Text>
 
-          {[
-            { key: 'firstName', label: 'Emri *' },
-            { key: 'lastName', label: 'Mbiemri *' },
-            { key: 'email', label: 'Email *', keyboard: 'email-address' as const },
-            { key: 'phone', label: 'Telefoni' },
-            { key: 'password', label: 'Fjalëkalimi *', secure: true },
-          ].map(({ key, label, keyboard, secure }) => (
-            <View key={key}>
-              <Text style={s.label}>{label}</Text>
-              <TextInput
-                style={s.input}
-                value={form[key as keyof typeof form]}
-                onChangeText={set(key as keyof typeof form)}
-                autoCapitalize={key === 'email' ? 'none' : 'words'}
-                keyboardType={keyboard}
-                secureTextEntry={secure}
-                placeholderTextColor={colors.subtle}
-                placeholder={label.replace(' *', '')}
-              />
+          <View style={s.form}>
+            {[
+              { key: 'firstName', label: 'Emri', required: true },
+              { key: 'lastName', label: 'Mbiemri', required: true },
+              { key: 'email', label: 'Email', required: true, keyboard: 'email-address' as const },
+              { key: 'phone', label: 'Telefoni' },
+              { key: 'password', label: 'Fjalëkalimi', required: true, secure: true },
+            ].map(({ key, label, required, keyboard, secure }) => (
+              <View key={key}>
+                <Text style={s.fieldLabel}>{label}{required && ' *'}</Text>
+                <TextInput
+                  style={s.input}
+                  value={form[key as keyof typeof form]}
+                  onChangeText={set(key as keyof typeof form)}
+                  autoCapitalize={key === 'email' ? 'none' : 'words'}
+                  keyboardType={keyboard}
+                  secureTextEntry={secure}
+                  placeholderTextColor={colors.subtle}
+                  placeholder={label}
+                />
+              </View>
+            ))}
+
+            <View style={{ marginTop: 20 }}>
+              <PrimaryButton label="Regjistrohu" onPress={handleRegister} loading={loading} />
             </View>
-          ))}
 
-          <TouchableOpacity style={[s.btn, loading && s.btnDisabled]} onPress={handleRegister} disabled={loading}>
-            <LinearGradient colors={gradient.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.btnGradient}>
-              <Text style={s.btnText}>{loading ? 'Duke u regjistruar...' : 'Regjistrohu'}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <Link href="/(auth)/login" asChild>
-            <TouchableOpacity style={s.link}>
-              <Text style={s.linkText}>Ke llogari? <Text style={s.linkBold}>Hyr</Text></Text>
-            </TouchableOpacity>
-          </Link>
+            <Link href="/(auth)/login" asChild>
+              <TouchableOpacity style={s.link}>
+                <Text style={s.linkText}>Ke llogari? <Text style={s.linkBold}>Hyr</Text></Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  inner: { padding: 28, paddingTop: 60, paddingBottom: 40 },
-  logo: { width: 80, height: 80, alignSelf: 'center', marginBottom: 16, borderRadius: 16 },
-  title: { fontSize: 28, fontWeight: '900', color: colors.text, marginBottom: 4 },
-  subtitle: { fontSize: 15, color: colors.subtle, marginBottom: 28 },
-  label: { fontSize: 13, color: colors.subtle, marginBottom: 6, fontWeight: '600' },
-  input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text, marginBottom: 16 },
-  btn: { borderRadius: 12, overflow: 'hidden', marginTop: 8 },
-  btnDisabled: { opacity: 0.6 },
-  btnGradient: { padding: 16, alignItems: 'center' },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  link: { marginTop: 24, alignItems: 'center', marginBottom: 40 },
+  container: { flex: 1, backgroundColor: colors.background },
+  bg: { ...StyleSheet.absoluteFillObject, opacity: 0.4 },
+  scroll: { padding: 28, paddingBottom: 60 },
+  logo: { width: 70, height: 70, alignSelf: 'center', marginBottom: 20, borderRadius: 16 },
+  brand: { ...typography.label, color: colors.primary, fontSize: 12, textAlign: 'center' },
+  title: { ...typography.h1, textAlign: 'center', marginTop: 8 },
+  subtitle: { ...typography.bodyDim, textAlign: 'center', marginTop: 6, marginBottom: 24 },
+  form: { gap: 2 },
+  fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 10 },
+  input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text },
+  link: { marginTop: 24, alignItems: 'center', marginBottom: 20 },
   linkText: { color: colors.subtle, fontSize: 14 },
   linkBold: { color: colors.primary, fontWeight: '700' },
 });

@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
-import { colors } from '../../../lib/colors';
+import { colors, typography } from '../../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../../components/States';
-import GradientHeader from '../../../components/GradientHeader';
+import PrimaryButton from '../../../components/ui/PrimaryButton';
 
 const statusMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Në pritje', color: colors.warning },
@@ -17,6 +18,7 @@ const statusMap: Record<string, { label: string; color: string }> = {
 export default function TripReservations() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,81 +46,132 @@ export default function TripReservations() {
   if (!trip) return <ErrorScreen message="Ky udhëtim nuk u gjet." />;
 
   const reservations = trip.reservations ?? [];
+  const pending = reservations.filter((r: any) => r.status === 'PENDING').length;
+  const accepted = reservations.filter((r: any) => r.status === 'ACCEPTED').length;
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <GradientHeader>
-        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
-        <View style={s.route}>
-          <Text style={s.city}>{trip.originCity.name}</Text>
-          <Text style={s.arrow}>→</Text>
-          <Text style={s.city}>{trip.destCity.name}</Text>
+    <View style={s.container}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <View style={s.headerWrap}>
+          <TouchableOpacity onPress={() => router.back()} style={s.back}>
+            <Text style={s.backText}>← Kthehu</Text>
+          </TouchableOpacity>
+          <Text style={s.brand}>IKIM</Text>
+          <View style={s.route}>
+            <Text style={s.city}>{trip.originCity.name}</Text>
+            <Text style={s.arrow}>→</Text>
+            <Text style={s.city}>{trip.destCity.name}</Text>
+          </View>
+          <Text style={s.date}>{new Date(trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
         </View>
-        <Text style={s.date}>{new Date(trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
-        <Text style={s.seats}>💺 {trip.seatsAvailable}/{trip.totalSeats} vende të lira</Text>
-      </GradientHeader>
 
-      <Text style={s.sectionTitle}>Rezervimet ({reservations.length})</Text>
+        <View style={s.statGrid}>
+          <View style={s.statCell}>
+            <Text style={s.statLabel}>Totale</Text>
+            <Text style={s.statValue}>{reservations.length}</Text>
+          </View>
+          <View style={s.statCell}>
+            <Text style={s.statLabel}>Në pritje</Text>
+            <Text style={[s.statValue, pending > 0 && { color: colors.warning }]}>{pending}</Text>
+          </View>
+          <View style={[s.statCell, { borderRightWidth: 0 }]}>
+            <Text style={s.statLabel}>Të lira</Text>
+            <Text style={s.statValue}>{trip.seatsAvailable}/{trip.totalSeats}</Text>
+          </View>
+        </View>
 
-      {reservations.length === 0 ? (
-        <EmptyState icon="👥" title="Nuk ka rezervime ende" subtitle="Pasagjerët do të shfaqen këtu sapo të rezervojnë." />
-      ) : reservations.map((r: any) => {
-        const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
-        return (
-          <View key={r.id} style={s.card}>
-            <View style={s.passengerRow}>
-              <View style={s.avatar}><Text style={s.avatarText}>{r.passenger.firstName[0]}</Text></View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.passengerName}>{r.passenger.firstName} {r.passenger.lastName}</Text>
-                <Text style={s.passengerSeats}>Kërkon {r.seats} vend{r.seats > 1 ? 'e' : ''}</Text>
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>Pasagjerët</Text>
+          <Text style={s.sectionMeta}>{accepted} të konfirmuar</Text>
+        </View>
+
+        {reservations.length === 0 ? (
+          <View style={{ marginTop: 20 }}>
+            <EmptyState icon="👥" title="Nuk ka rezervime ende" subtitle="Pasagjerët do të shfaqen këtu sapo të rezervojnë." />
+          </View>
+        ) : reservations.map((r: any) => {
+          const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
+          return (
+            <View key={r.id} style={s.card}>
+              <View style={s.passengerRow}>
+                <View style={s.avatar}>
+                  {r.passenger.avatarUrl ? (
+                    <Image source={{ uri: r.passenger.avatarUrl }} style={s.avatarImg} />
+                  ) : (
+                    <Text style={s.avatarText}>{r.passenger.firstName[0]}{r.passenger.lastName[0]}</Text>
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.passengerName}>{r.passenger.firstName} {r.passenger.lastName}</Text>
+                  <Text style={s.passengerSeats}>💺 {r.seats} vend{r.seats > 1 ? 'e' : ''}</Text>
+                </View>
+                <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
+                  <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
+                </View>
               </View>
-              <View style={[s.badge, { backgroundColor: st.color + '22' }]}>
-                <Text style={[s.badgeText, { color: st.color }]}>{st.label}</Text>
+
+              <View style={s.actionRow}>
+                {r.status === 'PENDING' && (
+                  <>
+                    <View style={{ flex: 1 }}>
+                      <PrimaryButton label="✓ Prano" onPress={() => action(r.id, 'accept')} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <PrimaryButton label="✕ Refuzo" onPress={() => action(r.id, 'reject')} variant="outline" />
+                    </View>
+                  </>
+                )}
+                {r.status === 'ACCEPTED' && (
+                  <View style={{ flex: 1 }}>
+                    <PrimaryButton
+                      label="Kontakto"
+                      icon="💬"
+                      onPress={() => router.push({ pathname: '/chat/[tripId]/[userId]', params: { tripId: trip.id, userId: r.passenger.id } })}
+                      variant="outline"
+                    />
+                  </View>
+                )}
               </View>
             </View>
-            {r.status === 'PENDING' && (
-              <View style={s.actions}>
-                <TouchableOpacity style={s.acceptBtn} onPress={() => action(r.id, 'accept')}>
-                  <Text style={s.acceptText}>✓ Prano</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.rejectBtn} onPress={() => action(r.id, 'reject')}>
-                  <Text style={s.rejectText}>✕ Refuzo</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            <TouchableOpacity style={s.chatBtn} onPress={() => router.push({ pathname: '/chat/[tripId]/[userId]', params: { tripId: trip.id, userId: r.passenger.id } })}>
-              <Text style={s.chatBtnText}>💬 Kontakto pasagjerin</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      })}
-    </ScrollView>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  back: { color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 8 },
-  route: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  city: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  arrow: { marginHorizontal: 8, color: 'rgba(255,255,255,0.5)', fontSize: 20 },
-  date: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 2 },
-  seats: { color: 'rgba(255,255,255,0.6)', fontSize: 13 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, margin: 16, marginBottom: 8 },
-  card: { margin: 16, marginTop: 0, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.border },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+
+  headerWrap: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 4 },
+  back: { marginBottom: 8 },
+  backText: { color: colors.textDim, fontSize: 14 },
+  brand: { ...typography.label, color: colors.primary, fontSize: 10 },
+  route: { flexDirection: 'row', alignItems: 'baseline', marginTop: 8, flexWrap: 'wrap' },
+  city: { ...typography.h1, fontSize: 26 },
+  arrow: { ...typography.h2, color: colors.primary, marginHorizontal: 10 },
+  date: { ...typography.caption, marginTop: 6 },
+
+  statGrid: { flexDirection: 'row', marginTop: 20, marginHorizontal: 16, paddingVertical: 16, backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
+  statCell: { flex: 1, paddingHorizontal: 12, borderRightWidth: 1, borderRightColor: colors.border, alignItems: 'flex-start' },
+  statLabel: { ...typography.caption, color: colors.subtle, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statValue: { ...typography.h2, marginTop: 4 },
+
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginHorizontal: 24, marginTop: 28, marginBottom: 12 },
+  sectionTitle: { ...typography.h2 },
+  sectionMeta: { ...typography.caption, color: colors.textDim },
+
+  card: { marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
   passengerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center' },
-  avatarText: { fontSize: 18, fontWeight: '700', color: colors.primary },
-  passengerName: { fontSize: 15, fontWeight: '700', color: colors.text },
-  passengerSeats: { color: colors.subtle, fontSize: 13, marginTop: 2 },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  badgeText: { fontSize: 11, fontWeight: '700' },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.border },
-  acceptBtn: { flex: 1, backgroundColor: colors.success, borderRadius: 10, padding: 12, alignItems: 'center' },
-  acceptText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  rejectBtn: { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.danger, borderRadius: 10, padding: 12, alignItems: 'center' },
-  rejectText: { color: colors.danger, fontWeight: '700', fontSize: 14 },
-  chatBtn: { marginTop: 10, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.primary, alignItems: 'center' },
-  chatBtnText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
+  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surfaceElevated, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: colors.borderStrong },
+  avatarImg: { width: '100%', height: '100%' },
+  avatarText: { fontSize: 16, fontWeight: '800', color: colors.text },
+  passengerName: { ...typography.h3, fontSize: 15 },
+  passengerSeats: { ...typography.caption, marginTop: 2 },
+
+  statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
+  statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+
+  actionRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
 });

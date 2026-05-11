@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors } from '../../lib/colors';
+import { colors, typography } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
-import GradientHeader from '../../components/GradientHeader';
+import PrimaryButton from '../../components/ui/PrimaryButton';
 
 const statusMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Në pritje', color: colors.warning },
@@ -30,6 +31,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 
 export default function Rezervimet() {
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const [reservations, setReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,50 +90,81 @@ export default function Rezervimet() {
   if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
   if (error) return <ErrorScreen message={error} onRetry={load} />;
 
+  const active = reservations.filter(r => ['PENDING', 'ACCEPTED'].includes(r.status));
+  const totalSeats = reservations.reduce((sum, r) => sum + (r.status === 'ACCEPTED' ? r.seats : 0), 0);
+
   return (
     <View style={s.container}>
-      <GradientHeader>
-        <Text style={s.headerTitle}>Rezervimet e mia</Text>
-      </GradientHeader>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <View style={s.headerWrap}>
+          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.title}>Rezervimet</Text>
+        </View>
+
+        <View style={s.statGrid}>
+          <View style={s.statCell}>
+            <Text style={s.statLabel}>Totale</Text>
+            <Text style={s.statValue}>{reservations.length}</Text>
+          </View>
+          <View style={s.statCell}>
+            <Text style={s.statLabel}>Aktive</Text>
+            <Text style={s.statValue}>{active.length}</Text>
+          </View>
+          <View style={[s.statCell, { borderRightWidth: 0 }]}>
+            <Text style={s.statLabel}>Vende</Text>
+            <Text style={s.statValue}>{totalSeats}</Text>
+          </View>
+        </View>
+
         {reservations.length === 0 ? (
-          <EmptyState icon="🎫" title="Nuk keni rezervime ende" subtitle="Kërko një udhëtim dhe rezervo vendin tënd." />
+          <View style={{ marginTop: 24 }}>
+            <EmptyState icon="🎫" title="Nuk keni rezervime ende" subtitle="Kërko një udhëtim dhe rezervo vendin tënd." />
+          </View>
         ) : reservations.map(r => {
           const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
           const isPast = new Date(r.trip.departureAt) < new Date();
           const canRate = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length === 0;
+          const hasReview = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length > 0;
           return (
             <View key={r.id} style={s.card}>
-              <TouchableOpacity onPress={() => router.push(`/udhetime/${r.trip.id}`)}>
-                <View style={s.route}>
-                  <Text style={s.city}>{r.trip.originCity.name}</Text>
-                  <Text style={s.arrow}>→</Text>
-                  <Text style={s.city}>{r.trip.destCity.name}</Text>
+              <TouchableOpacity onPress={() => router.push(`/udhetime/${r.trip.id}` as any)} activeOpacity={0.85}>
+                <View style={s.cardTop}>
+                  <View style={s.routeDots}>
+                    <View style={s.dotPrimary} />
+                    <View style={s.dotLine} />
+                    <View style={s.dotEnd} />
+                  </View>
+                  <View style={s.routeBody}>
+                    <Text style={s.city}>{r.trip.originCity.name}</Text>
+                    <Text style={s.cityDest}>{r.trip.destCity.name}</Text>
+                  </View>
+                  <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
+                    <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
+                  </View>
                 </View>
-                <Text style={s.date}>{new Date(r.trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
-                <Text style={s.driver}>Shofer: {r.trip.driver.firstName} {r.trip.driver.lastName}</Text>
-                <Text style={s.seats}>Vende: {r.seats}</Text>
+                <View style={s.metaRow}>
+                  <Text style={s.metaItem}>📅 {new Date(r.trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
+                  <Text style={s.metaDot}>·</Text>
+                  <Text style={s.metaItem}>💺 {r.seats}</Text>
+                  <Text style={s.metaDot}>·</Text>
+                  <Text style={s.metaItem}>{r.trip.driver.firstName} {r.trip.driver.lastName}</Text>
+                </View>
               </TouchableOpacity>
-              <View style={s.footer}>
-                <View style={[s.badge, { backgroundColor: st.color + '22' }]}>
-                  <Text style={[s.badgeText, { color: st.color }]}>{st.label}</Text>
-                </View>
-                <View style={s.actions}>
+              {(canRate || hasReview || (['PENDING', 'ACCEPTED'].includes(r.status) && !isPast)) && (
+                <View style={s.actionRow}>
                   {canRate && (
                     <TouchableOpacity style={s.rateBtn} onPress={() => openRating(r)}>
                       <Text style={s.rateBtnText}>★ Vlerëso</Text>
                     </TouchableOpacity>
                   )}
-                  {r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length > 0 && (
-                    <Text style={s.rated}>★ Vlerësuar</Text>
-                  )}
+                  {hasReview && <Text style={s.rated}>★ Vlerësuar</Text>}
                   {['PENDING', 'ACCEPTED'].includes(r.status) && !isPast && (
                     <TouchableOpacity style={s.cancelBtn} onPress={() => cancel(r.id)}>
                       <Text style={s.cancelText}>Anulo</Text>
                     </TouchableOpacity>
                   )}
                 </View>
-              </View>
+              )}
             </View>
           );
         })}
@@ -140,25 +173,26 @@ export default function Rezervimet() {
       <Modal visible={!!ratingTarget} transparent animationType="slide" onRequestClose={() => setRatingTarget(null)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.modalOverlay}>
           <View style={s.modalCard}>
-            <Text style={s.modalTitle}>Vlerëso shoferin</Text>
-            <Text style={s.modalSub}>{ratingTarget?.driverName}</Text>
+            <Text style={s.modalLabel}>Vlerëso shoferin</Text>
+            <Text style={s.modalTitle}>{ratingTarget?.driverName}</Text>
+            <View style={{ height: 20 }} />
             <StarPicker value={stars} onChange={setStars} />
             <TextInput
               style={s.commentInput}
-              placeholder="Koment (opsional)..."
+              placeholder="Shkruaj një koment (opsional)..."
               placeholderTextColor={colors.subtle}
               value={comment}
               onChangeText={setComment}
-              multiline={true}
+              multiline
               maxLength={300}
             />
             <View style={s.modalBtns}>
-              <TouchableOpacity style={s.cancelModalBtn} onPress={() => setRatingTarget(null)}>
-                <Text style={s.cancelModalText}>Anulo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[s.submitBtn, submitting && s.submitBtnDisabled]} onPress={submitReview} disabled={submitting}>
-                <Text style={s.submitBtnText}>{submitting ? 'Duke dërguar...' : 'Dërgo'}</Text>
-              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <PrimaryButton label="Anulo" onPress={() => setRatingTarget(null)} variant="ghost" />
+              </View>
+              <View style={{ flex: 2 }}>
+                <PrimaryButton label="Dërgo vlerësimin" onPress={submitReview} loading={submitting} />
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -169,37 +203,48 @@ export default function Rezervimet() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { padding: 24, paddingTop: 60 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  card: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-  route: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  city: { fontSize: 17, fontWeight: '700', color: colors.text },
-  arrow: { marginHorizontal: 8, color: colors.primary, fontSize: 16 },
-  date: { color: colors.subtle, fontSize: 13, marginBottom: 4 },
-  driver: { color: colors.subtle, fontSize: 13, marginBottom: 4 },
-  seats: { color: colors.subtle, fontSize: 13 },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border },
-  badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
-  badgeText: { fontSize: 12, fontWeight: '700' },
-  actions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  cancelBtn: { paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: colors.danger, borderRadius: 20 },
-  cancelText: { color: colors.danger, fontSize: 13, fontWeight: '600' },
-  rateBtn: { paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.warning, borderRadius: 20 },
-  rateBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  rated: { color: colors.warning, fontSize: 13, fontWeight: '600' },
-  modalOverlay: { flex: 1, backgroundColor: '#00000066', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28, paddingBottom: 40 },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 4 },
-  modalSub: { fontSize: 14, color: colors.subtle, marginBottom: 20 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+
+  headerWrap: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 4 },
+  brand: { ...typography.label, color: colors.primary, fontSize: 10 },
+  title: { ...typography.h1, marginTop: 4 },
+
+  statGrid: { flexDirection: 'row', marginTop: 20, marginHorizontal: 16, paddingVertical: 16, backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, marginBottom: 14 },
+  statCell: { flex: 1, paddingHorizontal: 12, borderRightWidth: 1, borderRightColor: colors.border, alignItems: 'flex-start' },
+  statLabel: { ...typography.caption, color: colors.subtle, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statValue: { ...typography.h2, marginTop: 4 },
+
+  card: { marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  routeDots: { alignItems: 'center', width: 12 },
+  dotPrimary: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  dotLine: { width: 2, height: 26, backgroundColor: colors.borderStrong, marginVertical: 2 },
+  dotEnd: { width: 8, height: 8, borderRadius: 4, borderWidth: 2, borderColor: colors.primary, backgroundColor: 'transparent' },
+  routeBody: { flex: 1, justifyContent: 'space-between', height: 50 },
+  city: { ...typography.h3, fontSize: 16 },
+  cityDest: { ...typography.h3, fontSize: 16, color: colors.textDim },
+
+  statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1, alignSelf: 'flex-start' },
+  statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, flexWrap: 'wrap' },
+  metaItem: { ...typography.caption, color: colors.textDim, fontSize: 12 },
+  metaDot: { color: colors.subtle, fontSize: 12 },
+
+  actionRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 12 },
+  rateBtn: { paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.warning + '20', borderWidth: 1, borderColor: colors.warning, borderRadius: 999 },
+  rateBtnText: { color: colors.warning, fontSize: 12, fontWeight: '700' },
+  rated: { color: colors.warning, fontSize: 12, fontWeight: '700' },
+  cancelBtn: { paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.danger, borderRadius: 999 },
+  cancelText: { color: colors.danger, fontSize: 12, fontWeight: '700' },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
+  modalCard: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, borderTopWidth: 1, borderColor: colors.border },
+  modalLabel: { ...typography.label },
+  modalTitle: { ...typography.h2, marginTop: 4 },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 },
-  star: { fontSize: 42, color: colors.border },
+  star: { fontSize: 42, color: colors.borderStrong },
   starFilled: { color: colors.warning },
-  commentInput: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text, minHeight: 80, textAlignVertical: 'top', marginBottom: 20 },
-  modalBtns: { flexDirection: 'row', gap: 12 },
-  cancelModalBtn: { flex: 1, paddingVertical: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 12, alignItems: 'center' },
-  cancelModalText: { color: colors.subtle, fontWeight: '600', fontSize: 15 },
-  submitBtn: { flex: 2, paddingVertical: 14, backgroundColor: colors.primary, borderRadius: 12, alignItems: 'center' },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  commentInput: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text, minHeight: 80, textAlignVertical: 'top', marginBottom: 16 },
+  modalBtns: { flexDirection: 'row', gap: 10, marginTop: 4 },
 });

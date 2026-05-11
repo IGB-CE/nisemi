@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
@@ -14,6 +13,7 @@ import PrimaryButton from '../../components/ui/PrimaryButton';
 import BarChart from '../../components/ui/BarChart';
 import Pill from '../../components/ui/Pill';
 import CarPhotoUploader from '../../components/CarPhotoUploader';
+import AvatarUploader from '../../components/AvatarUploader';
 
 const MONTHS = ['J', 'F', 'M', 'A', 'M', 'Q', 'K', 'G', 'S', 'T', 'N', 'D'];
 
@@ -133,16 +133,11 @@ export default function Profili() {
           </View>
 
           <View style={s.heroRight}>
-            <LinearGradient
-              colors={['rgba(225,6,0,0.0)', 'rgba(225,6,0,0.7)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={s.avatarGlow}
-            >
-              <View style={s.avatar}>
-                <Text style={s.avatarText}>{profile?.firstName?.[0]}{profile?.lastName?.[0]}</Text>
-              </View>
-            </LinearGradient>
+            <AvatarUploader
+              currentUrl={profile?.avatarUrl}
+              initials={`${profile?.firstName?.[0] ?? ''}${profile?.lastName?.[0] ?? ''}`}
+              onUploaded={(url) => setProfile((p: any) => ({ ...p, avatarUrl: url }))}
+            />
           </View>
         </View>
 
@@ -265,10 +260,7 @@ const s = StyleSheet.create({
   bigStats: { marginTop: 20, gap: 6 },
   bigStat: {},
 
-  heroRight: { width: 120, justifyContent: 'center', alignItems: 'center' },
-  avatarGlow: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center' },
-  avatar: { width: 110, height: 110, borderRadius: 55, backgroundColor: colors.surfaceElevated, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: colors.primary },
-  avatarText: { fontSize: 36, fontWeight: '900', color: colors.text },
+  heroRight: { width: 140, justifyContent: 'center', alignItems: 'center' },
 
   section: { marginHorizontal: 16, marginTop: 14 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },

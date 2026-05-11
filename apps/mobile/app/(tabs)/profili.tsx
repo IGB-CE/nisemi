@@ -260,7 +260,7 @@ const s = StyleSheet.create({
   bigStats: { marginTop: 20, gap: 6 },
   bigStat: {},
 
-  heroRight: { width: 140, justifyContent: 'center', alignItems: 'center' },
+  heroRight: { width: 180, height: 180, justifyContent: 'center', alignItems: 'center', marginRight: -20 },
 
   section: { marginHorizontal: 16, marginTop: 14 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },

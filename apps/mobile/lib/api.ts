@@ -1,4 +1,9 @@
-const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
+import Constants from 'expo-constants';
+
+const detectedHost = Constants.expoConfig?.hostUri?.split(':')[0];
+const BASE =
+  process.env.EXPO_PUBLIC_API_URL ??
+  (detectedHost ? `http://${detectedHost}:4000` : 'http://localhost:4000');
 
 async function request<T>(path: string, options: RequestInit & { token?: string } = {}): Promise<T> {
   const { token, ...init } = options;

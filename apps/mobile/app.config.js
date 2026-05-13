@@ -25,6 +25,13 @@ module.exports = {
           iosAppId: process.env.ADMOB_IOS_APP_ID ?? TEST_ADMOB_IOS_APP_ID,
         },
       ],
+      [
+        'expo-tracking-transparency',
+        {
+          userTrackingPermission:
+            'Lejimi i ndjekjes na ndihmon të shfaqim reklama më relevante. Ju mund të refuzoni pa humbur asnjë funksion të aplikacionit.',
+        },
+      ],
     ],
   },
 };

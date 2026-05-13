@@ -14,6 +14,7 @@ import adminRouter from './routes/admin.js';
 import pushTokensRouter from './routes/push-tokens.js';
 import reportsRouter from './routes/reports.js';
 import messagesRouter from './routes/messages.js';
+import policiesRouter from './routes/policies.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -34,6 +35,8 @@ app.use(
 app.use(express.json({ limit: '8mb' }));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'albania-rides-api' }));
+
+app.use('/', policiesRouter);
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', usersRouter);

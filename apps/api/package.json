@@ -27,6 +27,7 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "marked": "^18.0.3",
     "zod": "^4.2.1"
   },
   "devDependencies": {

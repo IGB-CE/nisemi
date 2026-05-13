@@ -46,6 +46,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "46fc22b5-77f1-4034-afb9-fe6e84e582e3"
+      }
+    },
+    "owner": "igb-ce"
   }
 }

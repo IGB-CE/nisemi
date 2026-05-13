@@ -23,7 +23,11 @@
       "Bash(ipconfig)",
       "Bash(findstr /i \"IPv4\")",
       "Bash(npm run *)",
-      "PowerShell(Copy-Item *)"
+      "PowerShell(Copy-Item *)",
+      "PowerShell(git push *)",
+      "PowerShell(git add *)",
+      "Bash(npx tsc *)",
+      "WebSearch"
     ]
   }
 }

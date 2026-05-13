@@ -14,19 +14,37 @@ const sendSchema = z.object({
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const parsed = sendSchema.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
   const { tripId, receiverId, content } = parsed.data;
 
-  if (receiverId === req.userId) { res.status(400).json({ error: 'Cannot message yourself' }); return; }
+  if (receiverId === req.userId) {
+    res.status(400).json({ error: 'Cannot message yourself' });
+    return;
+  }
 
-  const trip = await prisma.trip.findUnique({ where: { id: tripId }, select: { driverId: true, originCity: { select: { name: true } }, destCity: { select: { name: true } } } });
-  if (!trip) { res.status(404).json({ error: 'Trip not found' }); return; }
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    select: { driverId: true, originCity: { select: { name: true } }, destCity: { select: { name: true } } },
+  });
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
 
   const isDriver = trip.driverId === req.userId;
   const otherIsDriver = trip.driverId === receiverId;
-  if (!isDriver && !otherIsDriver) { res.status(403).json({ error: 'Conversation must involve the driver' }); return; }
+  if (!isDriver && !otherIsDriver) {
+    res.status(403).json({ error: 'Conversation must involve the driver' });
+    return;
+  }
 
-  const sender = await prisma.user.findUnique({ where: { id: req.userId }, select: { firstName: true, lastName: true } });
+  const sender = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { firstName: true, lastName: true },
+  });
 
   const message = await prisma.message.create({
     data: { tripId, senderId: req.userId!, receiverId, content: content.trim() },
@@ -34,7 +52,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 
   const tokens = await prisma.pushToken.findMany({ where: { userId: receiverId }, select: { token: true } });
   void sendPushNotifications(
-    tokens.map(t => t.token),
+    tokens.map((t) => t.token),
     `${sender?.firstName ?? 'Mesazh i ri'} ${sender?.lastName ?? ''}`.trim() + ' 💬',
     `${trip.originCity.name} → ${trip.destCity.name}: ${content.slice(0, 80)}`,
   );
@@ -49,7 +67,14 @@ router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
     where: { OR: [{ senderId: userId }, { receiverId: userId }] },
     orderBy: { createdAt: 'desc' },
     include: {
-      trip: { select: { id: true, originCity: { select: { name: true } }, destCity: { select: { name: true } }, departureAt: true } },
+      trip: {
+        select: {
+          id: true,
+          originCity: { select: { name: true } },
+          destCity: { select: { name: true } },
+          departureAt: true,
+        },
+      },
       sender: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
       receiver: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
     },
@@ -62,7 +87,9 @@ router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
     const key = `${m.tripId}|${other.id}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const unread = await prisma.message.count({ where: { tripId: m.tripId, senderId: other.id, receiverId: userId, read: false } });
+    const unread = await prisma.message.count({
+      where: { tripId: m.tripId, senderId: other.id, receiverId: userId, read: false },
+    });
     conversations.push({
       tripId: m.tripId,
       trip: m.trip,

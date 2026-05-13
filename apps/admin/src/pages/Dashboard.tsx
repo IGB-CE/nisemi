@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
-interface Stats { users: number; drivers: number; trips: number; reservations: number; }
+interface Stats {
+  users: number;
+  drivers: number;
+  trips: number;
+  reservations: number;
+}
 
 export default function Dashboard() {
   const { token } = useAuth();
@@ -10,8 +15,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<Stats>('/api/v1/admin/stats', token ?? undefined)
-      .then(setStats).catch(() => {}).finally(() => setLoading(false));
+    api
+      .get<Stats>('/api/v1/admin/stats', token ?? undefined)
+      .then(setStats)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [token]);
 
   const cards = [
@@ -26,10 +34,12 @@ export default function Dashboard() {
   return (
     <div>
       <div className="stats-grid">
-        {cards.map(c => (
+        {cards.map((c) => (
           <div key={c.label} className="stat-card" style={{ borderTopColor: c.color }}>
             <div className="stat-icon">{c.icon}</div>
-            <div className="stat-value" style={{ color: c.color }}>{c.value ?? 0}</div>
+            <div className="stat-value" style={{ color: c.color }}>
+              {c.value ?? 0}
+            </div>
             <div className="stat-label">{c.label}</div>
           </div>
         ))}

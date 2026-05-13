@@ -19,26 +19,36 @@ export default function CarPhotoUploader({ currentUrl, onUploaded }: Props) {
 
   const pickAndUpload = async (source: 'gallery' | 'camera') => {
     try {
-      const perm = source === 'camera'
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const perm =
+        source === 'camera'
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
         await dialog.alert('Leje e refuzuar', 'Nuk mund të hapim galerinë/kamerën.');
         return;
       }
 
-      const result = source === 'camera'
-        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, aspect: [4, 3] })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, aspect: [4, 3] });
+      const result =
+        source === 'camera'
+          ? await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.85,
+              aspect: [4, 3],
+            })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.85,
+              aspect: [4, 3],
+            });
 
       if (result.canceled || !result.assets[0]) return;
 
       setUploading(true);
-      const compressed = await manipulateAsync(
-        result.assets[0].uri,
-        [{ resize: { width: 1280 } }],
-        { compress: 0.7, format: SaveFormat.JPEG, base64: true },
-      );
+      const compressed = await manipulateAsync(result.assets[0].uri, [{ resize: { width: 1280 } }], {
+        compress: 0.7,
+        format: SaveFormat.JPEG,
+        base64: true,
+      });
 
       const base64 = compressed.base64;
       if (!base64) throw new Error('Encoding failed');
@@ -97,9 +107,27 @@ export default function CarPhotoUploader({ currentUrl, onUploaded }: Props) {
 const s = StyleSheet.create({
   wrap: { marginTop: 4 },
   image: { width: '100%', height: 180, borderRadius: 14, backgroundColor: colors.surfaceElevated },
-  overlay: { position: 'absolute', bottom: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
+  overlay: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
   overlayText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  placeholder: { height: 180, borderRadius: 14, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', backgroundColor: colors.surfaceElevated, justifyContent: 'center', alignItems: 'center', padding: 16 },
+  placeholder: {
+    height: 180,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    backgroundColor: colors.surfaceElevated,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
   placeholderIcon: { fontSize: 32, marginBottom: 8 },
   placeholderText: { ...typography.h3, color: colors.text },
   placeholderHint: { ...typography.caption, marginTop: 4 },

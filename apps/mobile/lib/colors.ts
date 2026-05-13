@@ -34,6 +34,12 @@ export const typography = {
   h3: { fontSize: 17, fontWeight: '700' as const, color: colors.text },
   body: { fontSize: 15, fontWeight: '500' as const, color: colors.text },
   bodyDim: { fontSize: 14, fontWeight: '500' as const, color: colors.textDim },
-  label: { fontSize: 11, fontWeight: '700' as const, letterSpacing: 1, color: colors.subtle, textTransform: 'uppercase' as const },
+  label: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    letterSpacing: 1,
+    color: colors.subtle,
+    textTransform: 'uppercase' as const,
+  },
   caption: { fontSize: 12, fontWeight: '500' as const, color: colors.subtle },
 };

@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Image, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +28,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) { await dialog.alert('Gabim', 'Plotëso të gjitha fushat'); return; }
+    if (!email || !password) {
+      await dialog.alert('Gabim', 'Plotëso të gjitha fushat');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post<{ token: string; user: any }>('/api/v1/auth/login', { email, password });
@@ -41,7 +54,10 @@ export default function Login() {
         pointerEvents="none"
       />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={[s.scroll, { paddingTop: insets.top + 40 }]} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[s.scroll, { paddingTop: insets.top + 40 }]}
+          keyboardShouldPersistTaps="handled"
+        >
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.brand}>IKIM</Text>
           <Text style={s.title}>Mirë se erdhe</Text>
@@ -75,7 +91,9 @@ export default function Login() {
 
             <Link href="/(auth)/register" asChild>
               <TouchableOpacity style={s.link}>
-                <Text style={s.linkText}>Nuk ke llogari? <Text style={s.linkBold}>Regjistrohu</Text></Text>
+                <Text style={s.linkText}>
+                  Nuk ke llogari? <Text style={s.linkBold}>Regjistrohu</Text>
+                </Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -95,7 +113,15 @@ const s = StyleSheet.create({
   subtitle: { ...typography.bodyDim, textAlign: 'center', marginTop: 8, marginBottom: 36 },
   form: { gap: 4 },
   fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, fontSize: 16, color: colors.text },
+  input: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+  },
   link: { marginTop: 24, alignItems: 'center' },
   linkText: { color: colors.subtle, fontSize: 14 },
   linkBold: { color: colors.primary, fontWeight: '700' },

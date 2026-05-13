@@ -36,9 +36,13 @@ export default function Profili() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    api.get<any>('/api/v1/users/me', token ?? undefined)
-      .then(p => { setProfile(p); setEditForm({ firstName: p.firstName, lastName: p.lastName, phone: p.phone ?? '' }); })
-      .catch(e => setError(e.message))
+    api
+      .get<any>('/api/v1/users/me', token ?? undefined)
+      .then((p) => {
+        setProfile(p);
+        setEditForm({ firstName: p.firstName, lastName: p.lastName, phone: p.phone ?? '' });
+      })
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -48,14 +52,17 @@ export default function Profili() {
     if (!token) return;
     const isDriver = profile?.role === 'DRIVER' || profile?.role === 'ADMIN';
     const path = isDriver ? '/api/v1/trips/my' : '/api/v1/reservations/my';
-    api.get<any[]>(path, token).then(items => {
-      const counts = new Array(12).fill(0);
-      for (const it of items) {
-        const date = new Date(isDriver ? it.departureAt : it.trip?.departureAt);
-        if (!isNaN(date.getTime())) counts[date.getMonth()]++;
-      }
-      setTripsByMonth(counts);
-    }).catch(() => {});
+    api
+      .get<any[]>(path, token)
+      .then((items) => {
+        const counts = new Array(12).fill(0);
+        for (const it of items) {
+          const date = new Date(isDriver ? it.departureAt : it.trip?.departureAt);
+          if (!isNaN(date.getTime())) counts[date.getMonth()]++;
+        }
+        setTripsByMonth(counts);
+      })
+      .catch(() => {});
   }, [token, profile?.role]);
 
   const handleLogout = async () => {
@@ -65,13 +72,15 @@ export default function Profili() {
 
   const saveProfile = async () => {
     if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
-      await dialog.alert('Gabim', 'Emri dhe mbiemri janë të detyrueshme'); return;
+      await dialog.alert('Gabim', 'Emri dhe mbiemri janë të detyrueshme');
+      return;
     }
     const body: any = { firstName: editForm.firstName.trim(), lastName: editForm.lastName.trim() };
     if (editForm.phone.trim()) {
       const normalizedPhone = normalizeAlbanianMobile(editForm.phone);
       if (!normalizedPhone) {
-        await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567'); return;
+        await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567');
+        return;
       }
       body.phone = normalizedPhone;
     }
@@ -90,7 +99,8 @@ export default function Profili() {
 
   const createDriverProfile = async () => {
     if (!driverForm.carModel || !driverForm.carColor || !driverForm.carPlate) {
-      await dialog.alert('Gabim', 'Plotëso të gjitha fushat'); return;
+      await dialog.alert('Gabim', 'Plotëso të gjitha fushat');
+      return;
     }
     setSaving(true);
     try {
@@ -99,11 +109,19 @@ export default function Profili() {
       setProfile(updated);
       await signIn(token!, { ...user!, role: 'DRIVER' });
       setShowDriverForm(false);
-    } catch (e: any) { await dialog.alert('Gabim', e.message); }
-    finally { setSaving(false); }
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
+  if (loading)
+    return (
+      <View style={s.center}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
   if (error) return <ErrorScreen message={error} onRetry={load} />;
 
   const isDriver = profile?.role === 'DRIVER' || profile?.role === 'ADMIN';
@@ -114,27 +132,40 @@ export default function Profili() {
 
   return (
     <View style={s.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 60, paddingTop: insets.top + 8 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 60, paddingTop: insets.top + 8 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={s.topBar}>
           <View style={{ width: 28 }} />
           <Text style={s.topBarTitle}>Profili</Text>
-          <TouchableOpacity onPress={() => setEditMode(v => !v)} style={s.topBarBtn}>
+          <TouchableOpacity onPress={() => setEditMode((v) => !v)} style={s.topBarBtn}>
             <Text style={s.topBarBtnText}>{editMode ? '✕' : '⋯'}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={s.hero}>
           <View style={s.heroLeft}>
-            <Text style={s.firstName} numberOfLines={1}>{profile?.firstName}</Text>
-            <Text style={s.lastName} numberOfLines={1}>{profile?.lastName}</Text>
+            <Text style={s.firstName} numberOfLines={1}>
+              {profile?.firstName}
+            </Text>
+            <Text style={s.lastName} numberOfLines={1}>
+              {profile?.lastName}
+            </Text>
             <Text style={s.memberSince}>Anëtar që nga ({memberYear})</Text>
 
             <View style={s.bigStats}>
               <View style={s.bigStat}>
-                <MegaStat value={isDriver ? (dp?.totalTrips ?? 0) : tripsByMonth.reduce((a, b) => a + b, 0)} unit="Udhëtime" />
+                <MegaStat
+                  value={isDriver ? (dp?.totalTrips ?? 0) : tripsByMonth.reduce((a, b) => a + b, 0)}
+                  unit="Udhëtime"
+                />
               </View>
               <View style={s.bigStat}>
-                <MegaStat value={isDriver ? rating.toFixed(1) : reviewsCount} unit={isDriver ? 'Vlerësim' : 'Rezervime'} />
+                <MegaStat
+                  value={isDriver ? rating.toFixed(1) : reviewsCount}
+                  unit={isDriver ? 'Vlerësim' : 'Rezervime'}
+                />
               </View>
             </View>
           </View>
@@ -171,7 +202,9 @@ export default function Profili() {
             <View style={{ height: 12 }} />
             <CarPhotoUploader
               currentUrl={dp.carPhotoUrl}
-              onUploaded={(url) => setProfile((p: any) => ({ ...p, driverProfile: { ...p.driverProfile, carPhotoUrl: url } }))}
+              onUploaded={(url) =>
+                setProfile((p: any) => ({ ...p, driverProfile: { ...p.driverProfile, carPhotoUrl: url } }))
+              }
             />
           </Card>
         )}
@@ -179,10 +212,7 @@ export default function Profili() {
         <Card style={s.section}>
           <Text style={s.cardLabel}>Aktiviteti — {new Date().getFullYear()}</Text>
           <View style={{ height: 12 }} />
-          <BarChart
-            data={MONTHS.map((m, i) => ({ label: m, value: tripsByMonth[i] }))}
-            height={100}
-          />
+          <BarChart data={MONTHS.map((m, i) => ({ label: m, value: tripsByMonth[i] }))} height={100} />
         </Card>
 
         {editMode && (
@@ -198,7 +228,7 @@ export default function Profili() {
                 <TextInput
                   style={s.input}
                   value={editForm[key as keyof typeof editForm]}
-                  onChangeText={v => setEditForm(f => ({ ...f, [key]: v }))}
+                  onChangeText={(v) => setEditForm((f) => ({ ...f, [key]: v }))}
                   placeholderTextColor={colors.subtle}
                   autoCapitalize={key === 'phone' ? 'none' : 'words'}
                   keyboardType={key === 'phone' ? 'phone-pad' : 'default'}
@@ -230,7 +260,7 @@ export default function Profili() {
                 <TextInput
                   style={s.input}
                   value={driverForm[key as keyof typeof driverForm]}
-                  onChangeText={v => setDriverForm(f => ({ ...f, [key]: v }))}
+                  onChangeText={(v) => setDriverForm((f) => ({ ...f, [key]: v }))}
                   autoCapitalize="characters"
                   placeholderTextColor={colors.subtle}
                 />
@@ -254,9 +284,24 @@ export default function Profili() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
   topBarTitle: { ...typography.h3, color: colors.textDim },
-  topBarBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  topBarBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   topBarBtnText: { color: colors.text, fontSize: 18, fontWeight: '700' },
 
   hero: { flexDirection: 'row', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, gap: 12 },
@@ -276,5 +321,13 @@ const s = StyleSheet.create({
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 8 },
 
   fieldLabel: { ...typography.label, marginBottom: 6 },
-  input: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text },
+  input: {
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    color: colors.text,
+  },
 });

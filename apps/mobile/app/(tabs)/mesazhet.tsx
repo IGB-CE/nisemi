@@ -33,22 +33,31 @@ export default function Mesazhet() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    api.get<Conversation[]>('/api/v1/messages/conversations', token ?? undefined)
+    api
+      .get<Conversation[]>('/api/v1/messages/conversations', token ?? undefined)
       .then(setConversations)
-      .catch(e => setError(e.message))
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [token]);
 
   useFocusEffect(load);
 
-  if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
+  if (loading)
+    return (
+      <View style={s.center}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
   if (error) return <ErrorScreen message={error} onRetry={load} />;
 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread, 0);
 
   return (
     <View style={s.container}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={s.headerWrap}>
           <Text style={s.brand}>IKIM</Text>
           <View style={s.titleRow}>
@@ -67,14 +76,19 @@ export default function Mesazhet() {
           </View>
         ) : (
           <View style={s.list}>
-            {conversations.map(c => {
+            {conversations.map((c) => {
               const initials = `${c.otherUser.firstName?.[0] ?? ''}${c.otherUser.lastName?.[0] ?? ''}`;
               const isUnread = c.unread > 0 && !c.lastMessage.fromMe;
               return (
                 <TouchableOpacity
                   key={`${c.tripId}-${c.otherUser.id}`}
                   style={s.card}
-                  onPress={() => router.push({ pathname: '/chat/[tripId]/[userId]', params: { tripId: c.tripId, userId: c.otherUser.id } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/chat/[tripId]/[userId]',
+                      params: { tripId: c.tripId, userId: c.otherUser.id },
+                    })
+                  }
                   activeOpacity={0.85}
                 >
                   <View style={s.avatar}>
@@ -86,16 +100,23 @@ export default function Mesazhet() {
                   </View>
                   <View style={s.body}>
                     <View style={s.topRow}>
-                      <Text style={s.name} numberOfLines={1}>{c.otherUser.firstName} {c.otherUser.lastName}</Text>
+                      <Text style={s.name} numberOfLines={1}>
+                        {c.otherUser.firstName} {c.otherUser.lastName}
+                      </Text>
                       <Text style={[s.time, isUnread && s.timeUnread]}>{formatTime(c.lastMessage.createdAt)}</Text>
                     </View>
-                    <Text style={s.route} numberOfLines={1}>{c.trip.originCity.name} → {c.trip.destCity.name}</Text>
+                    <Text style={s.route} numberOfLines={1}>
+                      {c.trip.originCity.name} → {c.trip.destCity.name}
+                    </Text>
                     <View style={s.bottomRow}>
                       <Text style={[s.preview, isUnread && s.previewUnread]} numberOfLines={1}>
-                        {c.lastMessage.fromMe ? 'Ti: ' : ''}{c.lastMessage.content}
+                        {c.lastMessage.fromMe ? 'Ti: ' : ''}
+                        {c.lastMessage.content}
                       </Text>
                       {isUnread && (
-                        <View style={s.badge}><Text style={s.badgeText}>{c.unread}</Text></View>
+                        <View style={s.badge}>
+                          <Text style={s.badgeText}>{c.unread}</Text>
+                        </View>
                       )}
                     </View>
                   </View>
@@ -117,12 +138,37 @@ const s = StyleSheet.create({
   brand: { ...typography.label, color: colors.primary, fontSize: 10 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
   title: { ...typography.h1 },
-  unreadHero: { backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, minWidth: 24, alignItems: 'center' },
+  unreadHero: {
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    minWidth: 24,
+    alignItems: 'center',
+  },
   unreadHeroText: { color: '#fff', fontWeight: '800', fontSize: 13 },
 
   list: { paddingHorizontal: 16, gap: 10 },
-  card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.border, gap: 12 },
-  avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.surfaceElevated, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: colors.borderStrong },
+  card: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 12,
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.surfaceElevated,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
   avatarImg: { width: '100%', height: '100%' },
   avatarText: { fontSize: 18, fontWeight: '800', color: colors.text },
   body: { flex: 1, justifyContent: 'center' },
@@ -134,6 +180,14 @@ const s = StyleSheet.create({
   bottomRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   preview: { flex: 1, fontSize: 13, color: colors.subtle },
   previewUnread: { color: colors.text, fontWeight: '600' },
-  badge: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, paddingHorizontal: 7, justifyContent: 'center', alignItems: 'center' },
+  badge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 7,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
 });

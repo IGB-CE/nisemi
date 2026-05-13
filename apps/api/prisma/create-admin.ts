@@ -3,10 +3,10 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-const EMAIL     = process.env.ADMIN_EMAIL    ?? 'admin@albaniarides.com';
-const PASSWORD  = process.env.ADMIN_PASSWORD ?? 'admin123';
-const FIRSTNAME = process.env.ADMIN_FNAME    ?? 'Admin';
-const LASTNAME  = process.env.ADMIN_LNAME    ?? 'Albania';
+const EMAIL = process.env.ADMIN_EMAIL ?? 'admin@albaniarides.com';
+const PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin123';
+const FIRSTNAME = process.env.ADMIN_FNAME ?? 'Admin';
+const LASTNAME = process.env.ADMIN_LNAME ?? 'Albania';
 
 async function main() {
   const passwordHash = await bcrypt.hash(PASSWORD, 12);
@@ -20,4 +20,6 @@ async function main() {
   console.log(`   Password: ${PASSWORD}`);
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());

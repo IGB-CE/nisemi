@@ -4,13 +4,22 @@ import { type ViewStyle, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { gradient, colors } from '../lib/colors';
 
-interface Props { children: ReactNode; style?: ViewStyle; variant?: 'flat' | 'glow' }
+interface Props {
+  children: ReactNode;
+  style?: ViewStyle;
+  variant?: 'flat' | 'glow';
+}
 
 export default function GradientHeader({ children, style, variant = 'flat' }: Props) {
   const insets = useSafeAreaInsets();
   if (variant === 'flat') {
     return (
-      <View style={[{ paddingTop: insets.top + 8, paddingHorizontal: 24, paddingBottom: 16, backgroundColor: colors.background }, style]}>
+      <View
+        style={[
+          { paddingTop: insets.top + 8, paddingHorizontal: 24, paddingBottom: 16, backgroundColor: colors.background },
+          style,
+        ]}
+      >
         {children}
       </View>
     );

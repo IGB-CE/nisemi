@@ -1,5 +1,16 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
@@ -16,12 +27,16 @@ const statusMap: Record<string, { label: string; color: string }> = {
   CANCELLED: { label: 'Anuluar', color: colors.subtle },
 };
 
-interface RatingTarget { tripId: string; driverId: string; driverName: string; }
+interface RatingTarget {
+  tripId: string;
+  driverId: string;
+  driverName: string;
+}
 
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <View style={s.stars}>
-      {[1, 2, 3, 4, 5].map(n => (
+      {[1, 2, 3, 4, 5].map((n) => (
         <TouchableOpacity key={n} onPress={() => onChange(n)}>
           <Text style={[s.star, n <= value && s.starFilled]}>★</Text>
         </TouchableOpacity>
@@ -45,9 +60,10 @@ export default function Rezervimet() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    api.get<any[]>('/api/v1/reservations/my', token ?? undefined)
+    api
+      .get<any[]>('/api/v1/reservations/my', token ?? undefined)
       .then(setReservations)
-      .catch(e => setError(e.message))
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -58,26 +74,41 @@ export default function Rezervimet() {
     if (!ok) return;
     try {
       await api.patch(`/api/v1/reservations/${id}/cancel`, {}, token ?? undefined);
-      setReservations(r => r.map(x => x.id === id ? { ...x, status: 'CANCELLED' } : x));
-    } catch (e: any) { await dialog.alert('Gabim', e.message); }
+      setReservations((r) => r.map((x) => (x.id === id ? { ...x, status: 'CANCELLED' } : x)));
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    }
   };
 
   const openRating = (r: any) => {
     setStars(5);
     setComment('');
-    setRatingTarget({ tripId: r.trip.id, driverId: r.trip.driver.id, driverName: `${r.trip.driver.firstName} ${r.trip.driver.lastName}` });
+    setRatingTarget({
+      tripId: r.trip.id,
+      driverId: r.trip.driver.id,
+      driverName: `${r.trip.driver.firstName} ${r.trip.driver.lastName}`,
+    });
   };
 
   const submitReview = async () => {
     if (!ratingTarget || stars === 0) return;
     setSubmitting(true);
     try {
-      await api.post('/api/v1/reviews', { tripId: ratingTarget.tripId, targetId: ratingTarget.driverId, rating: stars, comment: comment.trim() || undefined }, token ?? undefined);
-      setReservations(prev => prev.map(r =>
-        r.trip.id === ratingTarget.tripId
-          ? { ...r, trip: { ...r.trip, reviews: [{ id: 'done' }] } }
-          : r
-      ));
+      await api.post(
+        '/api/v1/reviews',
+        {
+          tripId: ratingTarget.tripId,
+          targetId: ratingTarget.driverId,
+          rating: stars,
+          comment: comment.trim() || undefined,
+        },
+        token ?? undefined,
+      );
+      setReservations((prev) =>
+        prev.map((r) =>
+          r.trip.id === ratingTarget.tripId ? { ...r, trip: { ...r.trip, reviews: [{ id: 'done' }] } } : r,
+        ),
+      );
       setRatingTarget(null);
     } catch (e: any) {
       await dialog.alert('Gabim', e.message);
@@ -86,15 +117,23 @@ export default function Rezervimet() {
     }
   };
 
-  if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
+  if (loading)
+    return (
+      <View style={s.center}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
   if (error) return <ErrorScreen message={error} onRetry={load} />;
 
-  const active = reservations.filter(r => ['PENDING', 'ACCEPTED'].includes(r.status));
+  const active = reservations.filter((r) => ['PENDING', 'ACCEPTED'].includes(r.status));
   const totalSeats = reservations.reduce((sum, r) => sum + (r.status === 'ACCEPTED' ? r.seats : 0), 0);
 
   return (
     <View style={s.container}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={s.headerWrap}>
           <Text style={s.brand}>IKIM</Text>
           <Text style={s.title}>Rezervimet</Text>
@@ -117,56 +156,72 @@ export default function Rezervimet() {
 
         {reservations.length === 0 ? (
           <View style={{ marginTop: 24 }}>
-            <EmptyState icon="🎫" title="Nuk keni rezervime ende" subtitle="Kërko një udhëtim dhe rezervo vendin tënd." />
+            <EmptyState
+              icon="🎫"
+              title="Nuk keni rezervime ende"
+              subtitle="Kërko një udhëtim dhe rezervo vendin tënd."
+            />
           </View>
-        ) : reservations.map(r => {
-          const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
-          const isPast = new Date(r.trip.departureAt) < new Date();
-          const canRate = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length === 0;
-          const hasReview = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length > 0;
-          return (
-            <View key={r.id} style={s.card}>
-              <TouchableOpacity onPress={() => router.push(`/udhetime/${r.trip.id}` as any)} activeOpacity={0.85}>
-                <View style={s.cardTop}>
-                  <View style={s.routeDots}>
-                    <View style={s.dotPrimary} />
-                    <View style={s.dotLine} />
-                    <View style={s.dotEnd} />
+        ) : (
+          reservations.map((r) => {
+            const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
+            const isPast = new Date(r.trip.departureAt) < new Date();
+            const canRate = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length === 0;
+            const hasReview = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length > 0;
+            return (
+              <View key={r.id} style={s.card}>
+                <TouchableOpacity onPress={() => router.push(`/udhetime/${r.trip.id}` as any)} activeOpacity={0.85}>
+                  <View style={s.cardTop}>
+                    <View style={s.routeDots}>
+                      <View style={s.dotPrimary} />
+                      <View style={s.dotLine} />
+                      <View style={s.dotEnd} />
+                    </View>
+                    <View style={s.routeBody}>
+                      <Text style={s.city}>{r.trip.originCity.name}</Text>
+                      <Text style={s.cityDest}>{r.trip.destCity.name}</Text>
+                    </View>
+                    <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
+                      <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
+                    </View>
                   </View>
-                  <View style={s.routeBody}>
-                    <Text style={s.city}>{r.trip.originCity.name}</Text>
-                    <Text style={s.cityDest}>{r.trip.destCity.name}</Text>
+                  <View style={s.metaRow}>
+                    <Text style={s.metaItem}>
+                      📅{' '}
+                      {new Date(r.trip.departureAt).toLocaleDateString('sq-AL', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
+                    <Text style={s.metaDot}>·</Text>
+                    <Text style={s.metaItem}>💺 {r.seats}</Text>
+                    <Text style={s.metaDot}>·</Text>
+                    <Text style={s.metaItem}>
+                      {r.trip.driver.firstName} {r.trip.driver.lastName}
+                    </Text>
                   </View>
-                  <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
-                    <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
+                </TouchableOpacity>
+                {(canRate || hasReview || (['PENDING', 'ACCEPTED'].includes(r.status) && !isPast)) && (
+                  <View style={s.actionRow}>
+                    {canRate && (
+                      <TouchableOpacity style={s.rateBtn} onPress={() => openRating(r)}>
+                        <Text style={s.rateBtnText}>★ Vlerëso</Text>
+                      </TouchableOpacity>
+                    )}
+                    {hasReview && <Text style={s.rated}>★ Vlerësuar</Text>}
+                    {['PENDING', 'ACCEPTED'].includes(r.status) && !isPast && (
+                      <TouchableOpacity style={s.cancelBtn} onPress={() => cancel(r.id)}>
+                        <Text style={s.cancelText}>Anulo</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                </View>
-                <View style={s.metaRow}>
-                  <Text style={s.metaItem}>📅 {new Date(r.trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
-                  <Text style={s.metaDot}>·</Text>
-                  <Text style={s.metaItem}>💺 {r.seats}</Text>
-                  <Text style={s.metaDot}>·</Text>
-                  <Text style={s.metaItem}>{r.trip.driver.firstName} {r.trip.driver.lastName}</Text>
-                </View>
-              </TouchableOpacity>
-              {(canRate || hasReview || (['PENDING', 'ACCEPTED'].includes(r.status) && !isPast)) && (
-                <View style={s.actionRow}>
-                  {canRate && (
-                    <TouchableOpacity style={s.rateBtn} onPress={() => openRating(r)}>
-                      <Text style={s.rateBtnText}>★ Vlerëso</Text>
-                    </TouchableOpacity>
-                  )}
-                  {hasReview && <Text style={s.rated}>★ Vlerësuar</Text>}
-                  {['PENDING', 'ACCEPTED'].includes(r.status) && !isPast && (
-                    <TouchableOpacity style={s.cancelBtn} onPress={() => cancel(r.id)}>
-                      <Text style={s.cancelText}>Anulo</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-            </View>
-          );
-        })}
+                )}
+              </View>
+            );
+          })
+        )}
       </ScrollView>
 
       <Modal visible={!!ratingTarget} transparent animationType="slide" onRequestClose={() => setRatingTarget(null)}>
@@ -208,17 +263,54 @@ const s = StyleSheet.create({
   brand: { ...typography.label, color: colors.primary, fontSize: 10 },
   title: { ...typography.h1, marginTop: 4 },
 
-  statGrid: { flexDirection: 'row', marginTop: 20, marginHorizontal: 16, paddingVertical: 16, backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, marginBottom: 14 },
-  statCell: { flex: 1, paddingHorizontal: 12, borderRightWidth: 1, borderRightColor: colors.border, alignItems: 'flex-start' },
-  statLabel: { ...typography.caption, color: colors.subtle, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statGrid: {
+    flexDirection: 'row',
+    marginTop: 20,
+    marginHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 14,
+  },
+  statCell: {
+    flex: 1,
+    paddingHorizontal: 12,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    alignItems: 'flex-start',
+  },
+  statLabel: {
+    ...typography.caption,
+    color: colors.subtle,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   statValue: { ...typography.h2, marginTop: 4 },
 
-  card: { marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
+  card: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   routeDots: { alignItems: 'center', width: 12 },
   dotPrimary: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
   dotLine: { width: 2, height: 26, backgroundColor: colors.borderStrong, marginVertical: 2 },
-  dotEnd: { width: 8, height: 8, borderRadius: 4, borderWidth: 2, borderColor: colors.primary, backgroundColor: 'transparent' },
+  dotEnd: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: 'transparent',
+  },
   routeBody: { flex: 1, justifyContent: 'space-between', height: 50 },
   city: { ...typography.h3, fontSize: 16 },
   cityDest: { ...typography.h3, fontSize: 16, color: colors.textDim },
@@ -226,24 +318,65 @@ const s = StyleSheet.create({
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1, alignSelf: 'flex-start' },
   statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
 
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, flexWrap: 'wrap' },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    flexWrap: 'wrap',
+  },
   metaItem: { ...typography.caption, color: colors.textDim, fontSize: 12 },
   metaDot: { color: colors.subtle, fontSize: 12 },
 
   actionRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 12 },
-  rateBtn: { paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.warning + '20', borderWidth: 1, borderColor: colors.warning, borderRadius: 999 },
+  rateBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: colors.warning + '20',
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: 999,
+  },
   rateBtnText: { color: colors.warning, fontSize: 12, fontWeight: '700' },
   rated: { color: colors.warning, fontSize: 12, fontWeight: '700' },
-  cancelBtn: { paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.danger, borderRadius: 999 },
+  cancelBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    borderRadius: 999,
+  },
   cancelText: { color: colors.danger, fontSize: 12, fontWeight: '700' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, borderTopWidth: 1, borderColor: colors.border },
+  modalCard: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+  },
   modalLabel: { ...typography.label },
   modalTitle: { ...typography.h2, marginTop: 4 },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 },
   star: { fontSize: 42, color: colors.borderStrong },
   starFilled: { color: colors.warning },
-  commentInput: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text, minHeight: 80, textAlignVertical: 'top', marginBottom: 16 },
+  commentInput: {
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    color: colors.text,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
   modalBtns: { flexDirection: 'row', gap: 10, marginTop: 4 },
 });

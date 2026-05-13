@@ -12,7 +12,10 @@ const tokenSchema = z.object({
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const parsed = tokenSchema.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
 
   const pushToken = await prisma.pushToken.upsert({
     where: { token: parsed.data.token },

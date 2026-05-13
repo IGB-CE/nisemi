@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function BarChart({ data, height = 120 }: Props) {
-  const max = Math.max(...data.map(d => d.value), 1);
+  const max = Math.max(...data.map((d) => d.value), 1);
   return (
     <View style={s.wrap}>
       <View style={[s.bars, { height }]}>
@@ -15,7 +15,12 @@ export default function BarChart({ data, height = 120 }: Props) {
           const h = (d.value / max) * height;
           return (
             <View key={i} style={s.col}>
-              <View style={[s.bar, { height: Math.max(h, 2), backgroundColor: d.value > 0 ? colors.primary : colors.borderStrong }]} />
+              <View
+                style={[
+                  s.bar,
+                  { height: Math.max(h, 2), backgroundColor: d.value > 0 ? colors.primary : colors.borderStrong },
+                ]}
+              />
             </View>
           );
         })}

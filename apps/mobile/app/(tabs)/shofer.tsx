@@ -18,27 +18,36 @@ export default function Shofer() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    api.get<any[]>('/api/v1/trips/my', token ?? undefined)
+    api
+      .get<any[]>('/api/v1/trips/my', token ?? undefined)
       .then(setTrips)
-      .catch(e => setError(e.message))
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [token]);
 
   useFocusEffect(load);
 
-  if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
+  if (loading)
+    return (
+      <View style={s.center}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
   if (error) return <ErrorScreen message={error} onRetry={load} />;
 
   const now = Date.now();
-  const upcoming = trips.filter(t => new Date(t.departureAt).getTime() > now && t.status === 'SCHEDULED');
+  const upcoming = trips.filter((t) => new Date(t.departureAt).getTime() > now && t.status === 'SCHEDULED');
   const totalEarnings = trips.reduce((sum, t) => {
     const accepted = (t.reservations ?? []).filter((r: any) => r.status === 'ACCEPTED');
-    return sum + accepted.reduce((s: number, r: any) => s + (r.seats * Number(t.pricePerSeat)), 0);
+    return sum + accepted.reduce((s: number, r: any) => s + r.seats * Number(t.pricePerSeat), 0);
   }, 0);
 
   return (
     <View style={s.container}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={s.headerWrap}>
           <Text style={s.brand}>IKIM</Text>
           <Text style={s.title}>Paneli i Shoferit</Text>
@@ -70,44 +79,73 @@ export default function Shofer() {
 
         {trips.length === 0 ? (
           <View style={{ marginTop: 20 }}>
-            <EmptyState icon="🚗" title="Nuk keni udhëtime të publikuara" subtitle="Shtypni butonin sipër për të publikuar udhëtimin tuaj të parë." />
+            <EmptyState
+              icon="🚗"
+              title="Nuk keni udhëtime të publikuara"
+              subtitle="Shtypni butonin sipër për të publikuar udhëtimin tuaj të parë."
+            />
           </View>
-        ) : trips.map(trip => {
-          const pendingCount = (trip.reservations ?? []).filter((r: any) => r.status === 'PENDING').length;
-          const statusColor = trip.status === 'SCHEDULED' ? colors.success : trip.status === 'CANCELLED' ? colors.danger : colors.subtle;
-          return (
-            <TouchableOpacity key={trip.id} style={s.card} onPress={() => router.push(`/driver/rezervimet/${trip.id}` as any)} activeOpacity={0.85}>
-              <View style={s.cardTop}>
-                <View style={s.routeDots}>
-                  <View style={s.dotPrimary} />
-                  <View style={s.dotLine} />
-                  <View style={s.dotEnd} />
+        ) : (
+          trips.map((trip) => {
+            const pendingCount = (trip.reservations ?? []).filter((r: any) => r.status === 'PENDING').length;
+            const statusColor =
+              trip.status === 'SCHEDULED'
+                ? colors.success
+                : trip.status === 'CANCELLED'
+                  ? colors.danger
+                  : colors.subtle;
+            return (
+              <TouchableOpacity
+                key={trip.id}
+                style={s.card}
+                onPress={() => router.push(`/driver/rezervimet/${trip.id}` as any)}
+                activeOpacity={0.85}
+              >
+                <View style={s.cardTop}>
+                  <View style={s.routeDots}>
+                    <View style={s.dotPrimary} />
+                    <View style={s.dotLine} />
+                    <View style={s.dotEnd} />
+                  </View>
+                  <View style={s.routeBody}>
+                    <Text style={s.city}>{trip.originCity.name}</Text>
+                    <Text style={s.cityDest}>{trip.destCity.name}</Text>
+                  </View>
+                  <View style={s.priceWrap}>
+                    <Text style={s.price}>
+                      {Number(trip.pricePerSeat).toFixed(0)}
+                      <Text style={s.priceUnit}>L</Text>
+                    </Text>
+                    {pendingCount > 0 && (
+                      <View style={s.pendingBadge}>
+                        <Text style={s.pendingBadgeText}>{pendingCount}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <View style={s.routeBody}>
-                  <Text style={s.city}>{trip.originCity.name}</Text>
-                  <Text style={s.cityDest}>{trip.destCity.name}</Text>
+                <View style={s.metaRow}>
+                  <Text style={s.metaItem}>
+                    📅{' '}
+                    {new Date(trip.departureAt).toLocaleDateString('sq-AL', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                  <Text style={s.metaDot}>·</Text>
+                  <Text style={s.metaItem}>
+                    💺 {trip.seatsAvailable}/{trip.totalSeats}
+                  </Text>
+                  <Text style={s.metaDot}>·</Text>
+                  <Text style={s.metaItem}>📋 {trip.reservations?.length ?? 0}</Text>
+                  <View style={{ flex: 1 }} />
+                  <View style={[s.statusDot, { backgroundColor: statusColor }]} />
                 </View>
-                <View style={s.priceWrap}>
-                  <Text style={s.price}>{Number(trip.pricePerSeat).toFixed(0)}<Text style={s.priceUnit}>L</Text></Text>
-                  {pendingCount > 0 && (
-                    <View style={s.pendingBadge}>
-                      <Text style={s.pendingBadgeText}>{pendingCount}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-              <View style={s.metaRow}>
-                <Text style={s.metaItem}>📅 {new Date(trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
-                <Text style={s.metaDot}>·</Text>
-                <Text style={s.metaItem}>💺 {trip.seatsAvailable}/{trip.totalSeats}</Text>
-                <Text style={s.metaDot}>·</Text>
-                <Text style={s.metaItem}>📋 {trip.reservations?.length ?? 0}</Text>
-                <View style={{ flex: 1 }} />
-                <View style={[s.statusDot, { backgroundColor: statusColor }]} />
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+              </TouchableOpacity>
+            );
+          })
+        )}
       </ScrollView>
     </View>
   );
@@ -121,21 +159,64 @@ const s = StyleSheet.create({
   brand: { ...typography.label, color: colors.primary, fontSize: 10 },
   title: { ...typography.h1, marginTop: 4 },
 
-  statGrid: { flexDirection: 'row', marginTop: 20, marginHorizontal: 16, paddingVertical: 16, backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
-  statCell: { flex: 1, paddingHorizontal: 12, borderRightWidth: 1, borderRightColor: colors.border, alignItems: 'flex-start' },
-  statLabel: { ...typography.caption, color: colors.subtle, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statGrid: {
+    flexDirection: 'row',
+    marginTop: 20,
+    marginHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statCell: {
+    flex: 1,
+    paddingHorizontal: 12,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    alignItems: 'flex-start',
+  },
+  statLabel: {
+    ...typography.caption,
+    color: colors.subtle,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   statValue: { ...typography.h2, marginTop: 4 },
 
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginHorizontal: 24, marginTop: 28, marginBottom: 12 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginHorizontal: 24,
+    marginTop: 28,
+    marginBottom: 12,
+  },
   sectionTitle: { ...typography.h2 },
   sectionMeta: { ...typography.caption, color: colors.textDim },
 
-  card: { marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
+  card: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   routeDots: { alignItems: 'center', width: 12 },
   dotPrimary: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
   dotLine: { width: 2, height: 26, backgroundColor: colors.borderStrong, marginVertical: 2 },
-  dotEnd: { width: 8, height: 8, borderRadius: 4, borderWidth: 2, borderColor: colors.primary, backgroundColor: 'transparent' },
+  dotEnd: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: 'transparent',
+  },
   routeBody: { flex: 1, justifyContent: 'space-between', height: 50 },
   city: { ...typography.h3, fontSize: 16 },
   cityDest: { ...typography.h3, fontSize: 16, color: colors.textDim },
@@ -143,10 +224,24 @@ const s = StyleSheet.create({
   priceWrap: { alignItems: 'flex-end', gap: 4 },
   price: { ...typography.h2, color: colors.primary, fontSize: 22 },
   priceUnit: { fontSize: 13, color: colors.textDim, fontWeight: '700' },
-  pendingBadge: { backgroundColor: colors.warning, borderRadius: 999, paddingHorizontal: 8, minWidth: 22, alignItems: 'center' },
+  pendingBadge: {
+    backgroundColor: colors.warning,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    minWidth: 22,
+    alignItems: 'center',
+  },
   pendingBadgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
 
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
   metaItem: { ...typography.caption, color: colors.textDim, fontSize: 12 },
   metaDot: { color: colors.subtle, fontSize: 12 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },

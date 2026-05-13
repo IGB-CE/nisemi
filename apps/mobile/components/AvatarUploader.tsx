@@ -21,26 +21,36 @@ export default function AvatarUploader({ currentUrl, initials, onUploaded }: Pro
 
   const pickAndUpload = async (source: 'gallery' | 'camera') => {
     try {
-      const perm = source === 'camera'
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const perm =
+        source === 'camera'
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
         await dialog.alert('Leje e refuzuar', 'Nuk mund të hapim galerinë/kamerën.');
         return;
       }
 
-      const result = source === 'camera'
-        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, aspect: [1, 1] })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, aspect: [1, 1] });
+      const result =
+        source === 'camera'
+          ? await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.85,
+              aspect: [1, 1],
+            })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.85,
+              aspect: [1, 1],
+            });
 
       if (result.canceled || !result.assets[0]) return;
 
       setUploading(true);
-      const compressed = await manipulateAsync(
-        result.assets[0].uri,
-        [{ resize: { width: 800 } }],
-        { compress: 0.8, format: SaveFormat.JPEG, base64: true },
-      );
+      const compressed = await manipulateAsync(result.assets[0].uri, [{ resize: { width: 800 } }], {
+        compress: 0.8,
+        format: SaveFormat.JPEG,
+        base64: true,
+      });
       if (!compressed.base64) throw new Error('Encoding failed');
 
       const updated = await api.post<any>(
@@ -121,10 +131,37 @@ const s = StyleSheet.create({
   touch: { width: CANVAS, height: CANVAS, justifyContent: 'center', alignItems: 'center' },
   svg: { position: 'absolute', top: 0, left: 0, width: CANVAS, height: CANVAS },
   avatarTouch: { width: AVATAR, height: AVATAR },
-  avatar: { width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2, backgroundColor: colors.surfaceElevated, borderWidth: 2, borderColor: 'rgba(225,6,0,0.6)', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+  avatar: {
+    width: AVATAR,
+    height: AVATAR,
+    borderRadius: AVATAR / 2,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 2,
+    borderColor: 'rgba(225,6,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
   image: { width: '100%', height: '100%' },
   initials: { fontSize: 44, fontWeight: '900', color: colors.text },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  editBadge: { position: 'absolute', bottom: 2, right: 2, width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: colors.background },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editBadge: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.background,
+  },
   editBadgeText: { fontSize: 16 },
 });

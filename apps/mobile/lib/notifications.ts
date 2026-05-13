@@ -21,19 +21,11 @@ export async function registerPushToken(authToken: string) {
     }
     if (finalStatus !== 'granted') return;
 
-    const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ??
-      (Constants as any).easConfig?.projectId;
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? (Constants as any).easConfig?.projectId;
 
-    const { data: pushToken } = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined
-    );
+    const { data: pushToken } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
 
-    await api.post(
-      '/api/v1/push-tokens',
-      { token: pushToken, platform: Platform.OS as 'ios' | 'android' },
-      authToken
-    );
+    await api.post('/api/v1/push-tokens', { token: pushToken, platform: Platform.OS as 'ios' | 'android' }, authToken);
   } catch {
     // Push registration is non-critical — silent fail
   }

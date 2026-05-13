@@ -12,9 +12,6 @@ module.exports = {
         },
       },
     },
-    plugins: [
-      ...(base.expo.plugins ?? []),
-      '@react-native-community/datetimepicker',
-    ],
+    plugins: [...(base.expo.plugins ?? []), '@react-native-community/datetimepicker'],
   },
 };

@@ -12,13 +12,22 @@ const reportSchema = z.object({
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const parsed = reportSchema.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
   const { reportedId, reason } = parsed.data;
 
-  if (reportedId === req.userId) { res.status(400).json({ error: 'Cannot report yourself' }); return; }
+  if (reportedId === req.userId) {
+    res.status(400).json({ error: 'Cannot report yourself' });
+    return;
+  }
 
   const reported = await prisma.user.findUnique({ where: { id: reportedId } });
-  if (!reported) { res.status(404).json({ error: 'User not found' }); return; }
+  if (!reported) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
 
   const report = await prisma.report.create({
     data: { reporterId: req.userId!, reportedId, reason },

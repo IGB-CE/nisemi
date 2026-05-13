@@ -35,7 +35,16 @@ export default function PrimaryButton({ label, onPress, variant = 'primary', loa
 }
 
 const s = StyleSheet.create({
-  btn: { flexDirection: 'row', gap: 10, paddingVertical: 16, paddingHorizontal: 24, borderRadius: 999, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  btn: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
   icon: { fontSize: 16, fontWeight: '700' },
   label: { fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
 });

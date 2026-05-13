@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,19 +27,24 @@ export default function Register() {
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '' });
   const [loading, setLoading] = useState(false);
 
-  const set = (k: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleRegister = async () => {
     if (!form.firstName || !form.lastName || !form.email || !form.password || !form.phone) {
-      await dialog.alert('Gabim', 'Plotëso fushat e detyrueshme'); return;
+      await dialog.alert('Gabim', 'Plotëso fushat e detyrueshme');
+      return;
     }
     const normalizedPhone = normalizeAlbanianMobile(form.phone);
     if (!normalizedPhone) {
-      await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567'); return;
+      await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567');
+      return;
     }
     setLoading(true);
     try {
-      const res = await api.post<{ token: string; user: any }>('/api/v1/auth/register', { ...form, phone: normalizedPhone });
+      const res = await api.post<{ token: string; user: any }>('/api/v1/auth/register', {
+        ...form,
+        phone: normalizedPhone,
+      });
       await signIn(res.token, res.user);
       router.replace('/(tabs)');
     } catch (e: any) {
@@ -49,7 +64,10 @@ export default function Register() {
         pointerEvents="none"
       />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={[s.scroll, { paddingTop: insets.top + 30 }]} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[s.scroll, { paddingTop: insets.top + 30 }]}
+          keyboardShouldPersistTaps="handled"
+        >
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.brand}>IKIM</Text>
           <Text style={s.title}>Krijo llogarinë</Text>
@@ -64,7 +82,10 @@ export default function Register() {
               { key: 'password', label: 'Fjalëkalimi', required: true, secure: true },
             ].map(({ key, label, required, keyboard, secure }) => (
               <View key={key}>
-                <Text style={s.fieldLabel}>{label}{required && ' *'}</Text>
+                <Text style={s.fieldLabel}>
+                  {label}
+                  {required && ' *'}
+                </Text>
                 <TextInput
                   style={s.input}
                   value={form[key as keyof typeof form]}
@@ -84,7 +105,9 @@ export default function Register() {
 
             <Link href="/(auth)/login" asChild>
               <TouchableOpacity style={s.link}>
-                <Text style={s.linkText}>Ke llogari? <Text style={s.linkBold}>Hyr</Text></Text>
+                <Text style={s.linkText}>
+                  Ke llogari? <Text style={s.linkBold}>Hyr</Text>
+                </Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -104,7 +127,15 @@ const s = StyleSheet.create({
   subtitle: { ...typography.bodyDim, textAlign: 'center', marginTop: 6, marginBottom: 24 },
   form: { gap: 2 },
   fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 10 },
-  input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 15, color: colors.text },
+  input: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    color: colors.text,
+  },
   link: { marginTop: 24, alignItems: 'center', marginBottom: 20 },
   linkText: { color: colors.subtle, fontSize: 14 },
   linkBold: { color: colors.primary, fontWeight: '700' },

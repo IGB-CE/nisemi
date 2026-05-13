@@ -12,10 +12,14 @@ interface Report {
 }
 
 const STATUS_CLASS: Record<string, string> = {
-  OPEN: 'badge-warning', RESOLVED: 'badge-success', DISMISSED: 'badge-neutral',
+  OPEN: 'badge-warning',
+  RESOLVED: 'badge-success',
+  DISMISSED: 'badge-neutral',
 };
 const STATUS_LABEL: Record<string, string> = {
-  OPEN: 'I hapur', RESOLVED: 'Zgjidhur', DISMISSED: 'Refuzuar',
+  OPEN: 'I hapur',
+  RESOLVED: 'Zgjidhur',
+  DISMISSED: 'Refuzuar',
 };
 
 type Filter = 'ALL' | 'OPEN' | 'RESOLVED' | 'DISMISSED';
@@ -29,8 +33,11 @@ export default function Reports() {
 
   const load = useCallback(() => {
     setLoading(true);
-    api.get<Report[]>('/api/v1/admin/reports', token ?? undefined)
-      .then(setReports).catch(() => {}).finally(() => setLoading(false));
+    api
+      .get<Report[]>('/api/v1/admin/reports', token ?? undefined)
+      .then(setReports)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [token]);
 
   useEffect(load, [load]);
@@ -40,12 +47,14 @@ export default function Reports() {
     try {
       await api.patch(`/api/v1/admin/reports/${id}/${action}`, {}, token ?? undefined);
       load();
-    } catch { /* ignore */ } finally {
+    } catch {
+      /* ignore */
+    } finally {
       setActionId(null);
     }
   };
 
-  const filtered = filter === 'ALL' ? reports : reports.filter(r => r.status === filter);
+  const filtered = filter === 'ALL' ? reports : reports.filter((r) => r.status === filter);
 
   if (loading) return <div className="loading">Duke ngarkuar...</div>;
 
@@ -55,7 +64,7 @@ export default function Reports() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span className="table-count">{filtered.length} raportime</span>
           <div style={{ display: 'flex', gap: 4, marginLeft: 12 }}>
-            {(['OPEN', 'RESOLVED', 'DISMISSED', 'ALL'] as Filter[]).map(f => (
+            {(['OPEN', 'RESOLVED', 'DISMISSED', 'ALL'] as Filter[]).map((f) => (
               <button
                 key={f}
                 className={`btn-sm ${filter === f ? 'btn-primary' : 'btn-outline'}`}
@@ -66,7 +75,9 @@ export default function Reports() {
             ))}
           </div>
         </div>
-        <button className="btn-outline btn-sm" onClick={load}>Rifresko</button>
+        <button className="btn-outline btn-sm" onClick={load}>
+          Rifresko
+        </button>
       </div>
       <table>
         <thead>
@@ -80,20 +91,42 @@ export default function Reports() {
           </tr>
         </thead>
         <tbody>
-          {filtered.map(r => (
+          {filtered.map((r) => (
             <tr key={r.id}>
-              <td className="fw-medium">{r.reporter.firstName} {r.reporter.lastName}</td>
-              <td className="fw-medium">{r.reported.firstName} {r.reported.lastName}</td>
+              <td className="fw-medium">
+                {r.reporter.firstName} {r.reporter.lastName}
+              </td>
+              <td className="fw-medium">
+                {r.reported.firstName} {r.reported.lastName}
+              </td>
               <td style={{ maxWidth: 360, whiteSpace: 'normal' }}>{r.reason}</td>
-              <td><span className={`badge ${STATUS_CLASS[r.status] ?? 'badge-neutral'}`}>{STATUS_LABEL[r.status]}</span></td>
-              <td className="text-subtle">{new Date(r.createdAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+              <td>
+                <span className={`badge ${STATUS_CLASS[r.status] ?? 'badge-neutral'}`}>{STATUS_LABEL[r.status]}</span>
+              </td>
+              <td className="text-subtle">
+                {new Date(r.createdAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </td>
               <td>
                 {r.status === 'OPEN' ? (
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn-success btn-sm" disabled={actionId === r.id} onClick={() => doAction(r.id, 'resolve')}>Zgjidh</button>
-                    <button className="btn-outline btn-sm" disabled={actionId === r.id} onClick={() => doAction(r.id, 'dismiss')}>Refuzo</button>
+                    <button
+                      className="btn-success btn-sm"
+                      disabled={actionId === r.id}
+                      onClick={() => doAction(r.id, 'resolve')}
+                    >
+                      Zgjidh
+                    </button>
+                    <button
+                      className="btn-outline btn-sm"
+                      disabled={actionId === r.id}
+                      onClick={() => doAction(r.id, 'dismiss')}
+                    >
+                      Refuzo
+                    </button>
                   </div>
-                ) : <span className="text-subtle">—</span>}
+                ) : (
+                  <span className="text-subtle">—</span>
+                )}
               </td>
             </tr>
           ))}

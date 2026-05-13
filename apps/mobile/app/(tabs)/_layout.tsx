@@ -14,20 +14,22 @@ export default function TabsLayout() {
   const isDriver = user?.role === 'DRIVER' || user?.role === 'ADMIN';
 
   return (
-    <Tabs screenOptions={{
-      headerShown: false,
-      tabBarActiveTintColor: colors.primary,
-      tabBarInactiveTintColor: colors.subtle,
-      tabBarStyle: {
-        backgroundColor: colors.background,
-        borderTopColor: colors.border,
-        borderTopWidth: 1,
-        height: 60 + insets.bottom,
-        paddingBottom: insets.bottom + 6,
-        paddingTop: 8,
-      },
-      tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
-    }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.subtle,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom + 6,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+      }}
+    >
       <Tabs.Screen name="index" options={{ title: 'Kërko', tabBarIcon: () => <TabIcon label="🔍" /> }} />
       <Tabs.Screen name="rezervimet" options={{ title: 'Rezervimet', tabBarIcon: () => <TabIcon label="🎫" /> }} />
       <Tabs.Screen name="mesazhet" options={{ title: 'Mesazhet', tabBarIcon: () => <TabIcon label="💬" /> }} />

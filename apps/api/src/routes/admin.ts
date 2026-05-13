@@ -22,24 +22,45 @@ router.get('/users', async (req, res) => {
   const users = await prisma.user.findMany({
     skip: (page - 1) * limit,
     take: limit,
-    select: { id: true, email: true, firstName: true, lastName: true, phone: true, role: true, status: true, createdAt: true },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      role: true,
+      status: true,
+      createdAt: true,
+    },
     orderBy: { createdAt: 'desc' },
   });
   res.json(users);
 });
 
 router.patch('/users/:id/block', async (req, res) => {
-  const user = await prisma.user.update({ where: { id: req.params.id }, data: { status: 'BLOCKED' }, select: { id: true, status: true } });
+  const user = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { status: 'BLOCKED' },
+    select: { id: true, status: true },
+  });
   res.json(user);
 });
 
 router.patch('/users/:id/unblock', async (req, res) => {
-  const user = await prisma.user.update({ where: { id: req.params.id }, data: { status: 'ACTIVE' }, select: { id: true, status: true } });
+  const user = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { status: 'ACTIVE' },
+    select: { id: true, status: true },
+  });
   res.json(user);
 });
 
 router.patch('/users/:id/approve', async (req, res) => {
-  const user = await prisma.user.update({ where: { id: req.params.id }, data: { status: 'ACTIVE' }, select: { id: true, status: true } });
+  const user = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { status: 'ACTIVE' },
+    select: { id: true, status: true },
+  });
   res.json(user);
 });
 
@@ -50,7 +71,9 @@ router.get('/drivers', async (req, res) => {
     skip: (page - 1) * limit,
     take: limit,
     include: {
-      user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, status: true, createdAt: true } },
+      user: {
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true, status: true, createdAt: true },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });

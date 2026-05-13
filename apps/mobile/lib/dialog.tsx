@@ -43,28 +43,42 @@ export function DialogProvider({ children }: { children: ReactNode }) {
   const show = useCallback(async (cfg: DialogConfig) => {
     setConfig(cfg);
     setVisible(true);
-    await new Promise<void>(resolve => setResolver(() => resolve));
+    await new Promise<void>((resolve) => setResolver(() => resolve));
   }, []);
 
-  const alert = useCallback(async (title: string, message?: string) => {
-    await show({ title, message, buttons: [{ label: 'OK', variant: 'primary' }] });
-  }, [show]);
+  const alert = useCallback(
+    async (title: string, message?: string) => {
+      await show({ title, message, buttons: [{ label: 'OK', variant: 'primary' }] });
+    },
+    [show],
+  );
 
-  const confirm = useCallback(async (title: string, message?: string, confirmLabel = 'Po', destructive = false) => {
-    let result = false;
-    await show({
-      title,
-      message,
-      buttons: [
-        { label: 'Anulo', variant: 'cancel' },
-        { label: confirmLabel, variant: destructive ? 'destructive' : 'primary', onPress: () => { result = true; } },
-      ],
-    });
-    return result;
-  }, [show]);
+  const confirm = useCallback(
+    async (title: string, message?: string, confirmLabel = 'Po', destructive = false) => {
+      let result = false;
+      await show({
+        title,
+        message,
+        buttons: [
+          { label: 'Anulo', variant: 'cancel' },
+          {
+            label: confirmLabel,
+            variant: destructive ? 'destructive' : 'primary',
+            onPress: () => {
+              result = true;
+            },
+          },
+        ],
+      });
+      return result;
+    },
+    [show],
+  );
 
   const handleButton = async (btn: DialogButton) => {
-    try { await btn.onPress?.(); } catch {}
+    try {
+      await btn.onPress?.();
+    } catch {}
     close();
   };
 
@@ -124,7 +138,15 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 
 const s = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 32 },
-  card: { width: '100%', maxWidth: 360, backgroundColor: colors.surface, borderRadius: 18, padding: 24, borderWidth: 1, borderColor: colors.border },
+  card: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   title: { ...typography.h2, fontSize: 19 },
   message: { ...typography.bodyDim, marginTop: 8, lineHeight: 20 },
   btnRow: { flexDirection: 'row', gap: 10, marginTop: 22 },

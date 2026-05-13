@@ -1,5 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../../lib/api';
@@ -29,12 +39,14 @@ export default function Chat() {
   const fetchMessages = useCallback(async () => {
     try {
       const data = await api.get<Message[]>(`/api/v1/messages/trip/${tripId}/with/${userId}`, token ?? undefined);
-      setMessages(prev => {
+      setMessages((prev) => {
         if (prev.length === data.length && prev[prev.length - 1]?.id === data[data.length - 1]?.id) return prev;
         return data;
       });
-    } catch {}
-    finally { setLoading(false); }
+    } catch {
+    } finally {
+      setLoading(false);
+    }
   }, [tripId, userId, token]);
 
   useEffect(() => {
@@ -45,8 +57,9 @@ export default function Chat() {
 
   useEffect(() => {
     if (otherUser) return;
-    api.get<any>(`/api/v1/users/${userId}`, token ?? undefined)
-      .then(u => setOtherUser({ firstName: u.firstName, lastName: u.lastName }))
+    api
+      .get<any>(`/api/v1/users/${userId}`, token ?? undefined)
+      .then((u) => setOtherUser({ firstName: u.firstName, lastName: u.lastName }))
       .catch(() => {});
   }, [userId, token, otherUser]);
 
@@ -60,8 +73,12 @@ export default function Chat() {
     setSending(true);
     setText('');
     try {
-      const m = await api.post<Message>('/api/v1/messages', { tripId, receiverId: userId, content }, token ?? undefined);
-      setMessages(prev => [...prev, m]);
+      const m = await api.post<Message>(
+        '/api/v1/messages',
+        { tripId, receiverId: userId, content },
+        token ?? undefined,
+      );
+      setMessages((prev) => [...prev, m]);
     } catch {
       setText(content);
     } finally {
@@ -85,7 +102,9 @@ export default function Chat() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {loading ? (
-          <View style={s.center}><ActivityIndicator color={colors.primary} /></View>
+          <View style={s.center}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
         ) : (
           <ScrollView
             ref={scrollRef}
@@ -98,17 +117,19 @@ export default function Chat() {
                 <Text style={s.emptyIcon}>💬</Text>
                 <Text style={s.emptyText}>Filloni bisedën</Text>
               </View>
-            ) : messages.map(m => {
-              const mine = m.senderId === user?.id;
-              return (
-                <View key={m.id} style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
-                  <Text style={[s.bubbleText, mine && s.bubbleTextMine]}>{m.content}</Text>
-                  <Text style={[s.bubbleTime, mine && s.bubbleTimeMine]}>
-                    {new Date(m.createdAt).toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </View>
-              );
-            })}
+            ) : (
+              messages.map((m) => {
+                const mine = m.senderId === user?.id;
+                return (
+                  <View key={m.id} style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
+                    <Text style={[s.bubbleText, mine && s.bubbleTextMine]}>{m.content}</Text>
+                    <Text style={[s.bubbleTime, mine && s.bubbleTimeMine]}>
+                      {new Date(m.createdAt).toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </View>
+                );
+              })
+            )}
           </ScrollView>
         )}
 
@@ -122,7 +143,11 @@ export default function Chat() {
             multiline
             maxLength={2000}
           />
-          <TouchableOpacity style={[s.sendBtn, (!text.trim() || sending) && s.sendBtnDisabled]} onPress={send} disabled={!text.trim() || sending}>
+          <TouchableOpacity
+            style={[s.sendBtn, (!text.trim() || sending) && s.sendBtnDisabled]}
+            onPress={send}
+            disabled={!text.trim() || sending}
+          >
             <Text style={s.sendBtnText}>{sending ? '...' : '➤'}</Text>
           </TouchableOpacity>
         </View>
@@ -134,7 +159,16 @@ export default function Chat() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
+  },
   back: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: colors.text },
   headerTitle: { fontSize: 17, fontWeight: '700', color: colors.text, flex: 1, textAlign: 'center' },
@@ -144,14 +178,46 @@ const s = StyleSheet.create({
   emptyText: { color: colors.subtle, fontSize: 15 },
   bubble: { maxWidth: '78%', borderRadius: 16, padding: 12, marginBottom: 2 },
   bubbleMine: { alignSelf: 'flex-end', backgroundColor: colors.primary, borderBottomRightRadius: 4 },
-  bubbleTheirs: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
+  bubbleTheirs: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderBottomLeftRadius: 4,
+  },
   bubbleText: { color: colors.text, fontSize: 15 },
   bubbleTextMine: { color: '#fff' },
   bubbleTime: { fontSize: 10, color: colors.subtle, marginTop: 4, alignSelf: 'flex-end' },
   bubbleTimeMine: { color: 'rgba(255,255,255,0.7)' },
-  inputBar: { flexDirection: 'row', alignItems: 'flex-end', padding: 10, gap: 8, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface },
-  input: { flex: 1, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: colors.text, maxHeight: 120 },
-  sendBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
+  inputBar: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    padding: 10,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: colors.text,
+    maxHeight: 120,
+  },
+  sendBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   sendBtnDisabled: { opacity: 0.4 },
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
 });

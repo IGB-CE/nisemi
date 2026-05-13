@@ -15,7 +15,9 @@ interface Trip {
 }
 
 const STATUS_CLASS: Record<string, string> = {
-  ACTIVE: 'badge-success', CANCELLED: 'badge-danger', COMPLETED: 'badge-info',
+  ACTIVE: 'badge-success',
+  CANCELLED: 'badge-danger',
+  COMPLETED: 'badge-info',
 };
 
 export default function Trips() {
@@ -25,8 +27,11 @@ export default function Trips() {
 
   const load = useCallback(() => {
     setLoading(true);
-    api.get<Trip[]>('/api/v1/admin/trips', token ?? undefined)
-      .then(setTrips).catch(() => {}).finally(() => setLoading(false));
+    api
+      .get<Trip[]>('/api/v1/admin/trips', token ?? undefined)
+      .then(setTrips)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [token]);
 
   useEffect(load, [load]);
@@ -37,7 +42,9 @@ export default function Trips() {
     <div className="table-wrap">
       <div className="table-header">
         <span className="table-count">{trips.length} udhëtime</span>
-        <button className="btn-outline btn-sm" onClick={load}>Rifresko</button>
+        <button className="btn-outline btn-sm" onClick={load}>
+          Rifresko
+        </button>
       </div>
       <table>
         <thead>
@@ -51,19 +58,30 @@ export default function Trips() {
           </tr>
         </thead>
         <tbody>
-          {trips.map(t => (
+          {trips.map((t) => (
             <tr key={t.id}>
-              <td className="fw-medium">{t.originCity.name} → {t.destCity.name}</td>
-              <td>{t.driver.firstName} {t.driver.lastName}</td>
+              <td className="fw-medium">
+                {t.originCity.name} → {t.destCity.name}
+              </td>
+              <td>
+                {t.driver.firstName} {t.driver.lastName}
+              </td>
               <td className="text-subtle">
                 {new Date(t.departureAt).toLocaleDateString('sq-AL', {
-                  day: 'numeric', month: 'short', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
                 })}
               </td>
               <td>{Number(t.pricePerSeat).toFixed(0)} L</td>
-              <td>{t.seatsAvailable}/{t.totalSeats}</td>
-              <td><span className={`badge ${STATUS_CLASS[t.status] ?? 'badge-neutral'}`}>{t.status}</span></td>
+              <td>
+                {t.seatsAvailable}/{t.totalSeats}
+              </td>
+              <td>
+                <span className={`badge ${STATUS_CLASS[t.status] ?? 'badge-neutral'}`}>{t.status}</span>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -23,7 +23,10 @@ const searchSchema = z.object({
 
 router.get('/', async (req, res) => {
   const parsed = searchSchema.safeParse(req.query);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
   const { from, to, date, seats } = parsed.data;
 
   const where: Record<string, unknown> = {
@@ -45,7 +48,15 @@ router.get('/', async (req, res) => {
     include: {
       originCity: true,
       destCity: true,
-      driver: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, driverProfile: { select: { rating: true } } } },
+      driver: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          driverProfile: { select: { rating: true } },
+        },
+      },
     },
     orderBy: { departureAt: 'asc' },
   });
@@ -54,14 +65,26 @@ router.get('/', async (req, res) => {
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const parsed = tripSchema.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
 
   const driverProfile = await prisma.driverProfile.findUnique({ where: { userId: req.userId } });
-  if (!driverProfile) { res.status(403).json({ error: 'Must have a driver profile to publish trips' }); return; }
+  if (!driverProfile) {
+    res.status(403).json({ error: 'Must have a driver profile to publish trips' });
+    return;
+  }
 
   const { totalSeats, ...rest } = parsed.data;
   const trip = await prisma.trip.create({
-    data: { ...rest, totalSeats, seatsAvailable: totalSeats, driverId: req.userId!, departureAt: new Date(rest.departureAt) },
+    data: {
+      ...rest,
+      totalSeats,
+      seatsAvailable: totalSeats,
+      driverId: req.userId!,
+      departureAt: new Date(rest.departureAt),
+    },
     include: { originCity: true, destCity: true },
   });
   res.status(201).json(trip);
@@ -70,7 +93,13 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 router.get('/my', requireAuth, async (req: AuthRequest, res) => {
   const trips = await prisma.trip.findMany({
     where: { driverId: req.userId },
-    include: { originCity: true, destCity: true, reservations: { include: { passenger: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } } } },
+    include: {
+      originCity: true,
+      destCity: true,
+      reservations: {
+        include: { passenger: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+      },
+    },
     orderBy: { departureAt: 'desc' },
   });
   res.json(trips);
@@ -83,17 +112,34 @@ router.get('/:id', async (req, res) => {
       originCity: true,
       destCity: true,
       driver: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, driverProfile: true } },
-      reservations: { where: { status: { in: ['PENDING', 'ACCEPTED'] } }, select: { id: true, seats: true, status: true, passenger: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } } },
+      reservations: {
+        where: { status: { in: ['PENDING', 'ACCEPTED'] } },
+        select: {
+          id: true,
+          seats: true,
+          status: true,
+          passenger: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        },
+      },
     },
   });
-  if (!trip) { res.status(404).json({ error: 'Trip not found' }); return; }
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
   res.json(trip);
 });
 
 router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
   const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
-  if (!trip) { res.status(404).json({ error: 'Trip not found' }); return; }
-  if (trip.driverId !== req.userId) { res.status(403).json({ error: 'Forbidden' }); return; }
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
+  if (trip.driverId !== req.userId) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
   const updated = await prisma.trip.update({ where: { id: req.params.id }, data: { status: 'CANCELLED' } });
   res.json(updated);
 });

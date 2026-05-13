@@ -3,15 +3,25 @@ import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
 interface User {
-  id: string; email: string; firstName: string; lastName: string;
-  phone: string | null; role: string; status: string; createdAt: string;
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  role: string;
+  status: string;
+  createdAt: string;
 }
 
 const STATUS_CLASS: Record<string, string> = {
-  ACTIVE: 'badge-success', BLOCKED: 'badge-danger', PENDING: 'badge-warning',
+  ACTIVE: 'badge-success',
+  BLOCKED: 'badge-danger',
+  PENDING: 'badge-warning',
 };
 const ROLE_CLASS: Record<string, string> = {
-  ADMIN: 'badge-primary', DRIVER: 'badge-info', PASSENGER: 'badge-neutral',
+  ADMIN: 'badge-primary',
+  DRIVER: 'badge-info',
+  PASSENGER: 'badge-neutral',
 };
 
 export default function Users() {
@@ -22,8 +32,11 @@ export default function Users() {
 
   const load = useCallback(() => {
     setLoading(true);
-    api.get<User[]>('/api/v1/admin/users', token ?? undefined)
-      .then(setUsers).catch(() => {}).finally(() => setLoading(false));
+    api
+      .get<User[]>('/api/v1/admin/users', token ?? undefined)
+      .then(setUsers)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [token]);
 
   useEffect(load, [load]);
@@ -33,7 +46,9 @@ export default function Users() {
     try {
       await api.patch(`/api/v1/admin/users/${id}/${action}`, {}, token ?? undefined);
       load();
-    } catch { /* ignore */ } finally {
+    } catch {
+      /* ignore */
+    } finally {
       setActionId(null);
     }
   };
@@ -44,7 +59,9 @@ export default function Users() {
     <div className="table-wrap">
       <div className="table-header">
         <span className="table-count">{users.length} përdorues</span>
-        <button className="btn-outline btn-sm" onClick={load}>Rifresko</button>
+        <button className="btn-outline btn-sm" onClick={load}>
+          Rifresko
+        </button>
       </div>
       <table>
         <thead>
@@ -59,23 +76,49 @@ export default function Users() {
           </tr>
         </thead>
         <tbody>
-          {users.map(u => (
+          {users.map((u) => (
             <tr key={u.id}>
-              <td className="fw-medium">{u.firstName} {u.lastName}</td>
+              <td className="fw-medium">
+                {u.firstName} {u.lastName}
+              </td>
               <td className="text-subtle">{u.email}</td>
               <td className="text-subtle">{u.phone ?? '—'}</td>
-              <td><span className={`badge ${ROLE_CLASS[u.role] ?? 'badge-neutral'}`}>{u.role}</span></td>
-              <td><span className={`badge ${STATUS_CLASS[u.status] ?? 'badge-neutral'}`}>{u.status}</span></td>
+              <td>
+                <span className={`badge ${ROLE_CLASS[u.role] ?? 'badge-neutral'}`}>{u.role}</span>
+              </td>
+              <td>
+                <span className={`badge ${STATUS_CLASS[u.status] ?? 'badge-neutral'}`}>{u.status}</span>
+              </td>
               <td className="text-subtle">{new Date(u.createdAt).toLocaleDateString('sq-AL')}</td>
               <td>
                 {u.role !== 'ADMIN' && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {u.status === 'PENDING' && (
-                      <button className="btn-success btn-sm" disabled={actionId === u.id} onClick={() => doAction(u.id, 'approve')}>Aprovo</button>
+                      <button
+                        className="btn-success btn-sm"
+                        disabled={actionId === u.id}
+                        onClick={() => doAction(u.id, 'approve')}
+                      >
+                        Aprovo
+                      </button>
                     )}
-                    {u.status === 'BLOCKED'
-                      ? <button className="btn-success btn-sm" disabled={actionId === u.id} onClick={() => doAction(u.id, 'unblock')}>Zhblloko</button>
-                      : <button className="btn-danger btn-sm" disabled={actionId === u.id} onClick={() => doAction(u.id, 'block')}>Blloko</button>}
+                    {u.status === 'BLOCKED' ? (
+                      <button
+                        className="btn-success btn-sm"
+                        disabled={actionId === u.id}
+                        onClick={() => doAction(u.id, 'unblock')}
+                      >
+                        Zhblloko
+                      </button>
+                    ) : (
+                      <button
+                        className="btn-danger btn-sm"
+                        disabled={actionId === u.id}
+                        onClick={() => doAction(u.id, 'block')}
+                      >
+                        Blloko
+                      </button>
+                    )}
                   </div>
                 )}
               </td>

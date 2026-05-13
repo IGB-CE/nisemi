@@ -13,8 +13,7 @@ async function request<T>(path: string, options: RequestInit & { token?: string 
 export const api = {
   post: <T>(path: string, body: unknown, token?: string) =>
     request<T>(path, { method: 'POST', body: JSON.stringify(body), token }),
-  get: <T>(path: string, token?: string) =>
-    request<T>(path, { method: 'GET', token }),
+  get: <T>(path: string, token?: string) => request<T>(path, { method: 'GET', token }),
   patch: <T>(path: string, body: unknown, token?: string) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body), token }),
 };

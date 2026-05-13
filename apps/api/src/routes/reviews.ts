@@ -14,13 +14,22 @@ const reviewSchema = z.object({
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const parsed = reviewSchema.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
   const { tripId, targetId, rating, comment } = parsed.data;
 
-  if (targetId === req.userId) { res.status(400).json({ error: 'Cannot review yourself' }); return; }
+  if (targetId === req.userId) {
+    res.status(400).json({ error: 'Cannot review yourself' });
+    return;
+  }
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
-  if (!trip) { res.status(404).json({ error: 'Trip not found' }); return; }
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
 
   try {
     const review = await prisma.review.create({

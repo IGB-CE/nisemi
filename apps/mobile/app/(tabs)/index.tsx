@@ -39,8 +39,14 @@ export default function Search() {
   const [showTo, setShowTo] = useState(false);
 
   useEffect(() => {
-    api.get<City[]>('/api/v1/cities').then(setCities).catch(() => setCitiesError(true));
-    api.get<Trip[]>('/api/v1/trips').then(setAllTrips).catch(() => {});
+    api
+      .get<City[]>('/api/v1/cities')
+      .then(setCities)
+      .catch(() => setCitiesError(true));
+    api
+      .get<Trip[]>('/api/v1/trips')
+      .then(setAllTrips)
+      .catch(() => {});
   }, []);
 
   const search = async () => {
@@ -61,15 +67,32 @@ export default function Search() {
     }
   };
 
-  const tripsToday = allTrips.filter(t => new Date(t.departureAt).toDateString() === new Date().toDateString()).length;
-  const lowestPrice = allTrips.length ? Math.min(...allTrips.map(t => Number(t.pricePerSeat))) : 0;
+  const tripsToday = allTrips.filter(
+    (t) => new Date(t.departureAt).toDateString() === new Date().toDateString(),
+  ).length;
+  const lowestPrice = allTrips.length ? Math.min(...allTrips.map((t) => Number(t.pricePerSeat))) : 0;
 
   return (
     <View style={s.container}>
-      <CityMapPicker visible={showFrom} cities={cities} onSelect={setFrom} onClose={() => setShowFrom(false)} title="Qyteti i nisjes" />
-      <CityMapPicker visible={showTo} cities={cities} onSelect={setTo} onClose={() => setShowTo(false)} title="Destinacioni" />
+      <CityMapPicker
+        visible={showFrom}
+        cities={cities}
+        onSelect={setFrom}
+        onClose={() => setShowFrom(false)}
+        title="Qyteti i nisjes"
+      />
+      <CityMapPicker
+        visible={showTo}
+        cities={cities}
+        onSelect={setTo}
+        onClose={() => setShowTo(false)}
+        title="Destinacioni"
+      />
 
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 80 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={s.headerWrap}>
           <Text style={s.brand}>IKIM</Text>
           <Text style={s.title}>Kërko</Text>
@@ -136,26 +159,44 @@ export default function Search() {
           </View>
         )}
 
-        {!loading && (searched ? trips : allTrips.slice(0, 8)).map(trip => (
-          <TouchableOpacity key={trip.id} style={s.tripCard} onPress={() => router.push(`/udhetime/${trip.id}` as any)} activeOpacity={0.85}>
-            <View style={s.tripLeft}>
-              <View style={s.routeDots}>
-                <View style={s.dotPrimary} />
-                <View style={s.dotLine} />
-                <View style={s.dotEnd} />
+        {!loading &&
+          (searched ? trips : allTrips.slice(0, 8)).map((trip) => (
+            <TouchableOpacity
+              key={trip.id}
+              style={s.tripCard}
+              onPress={() => router.push(`/udhetime/${trip.id}` as any)}
+              activeOpacity={0.85}
+            >
+              <View style={s.tripLeft}>
+                <View style={s.routeDots}>
+                  <View style={s.dotPrimary} />
+                  <View style={s.dotLine} />
+                  <View style={s.dotEnd} />
+                </View>
+                <View style={s.tripRoute}>
+                  <Text style={s.tripCity}>{trip.originCity.name}</Text>
+                  <Text style={s.tripCityDest}>{trip.destCity.name}</Text>
+                </View>
               </View>
-              <View style={s.tripRoute}>
-                <Text style={s.tripCity}>{trip.originCity.name}</Text>
-                <Text style={s.tripCityDest}>{trip.destCity.name}</Text>
+              <View style={s.tripRight}>
+                <Text style={s.tripPrice}>
+                  {Number(trip.pricePerSeat).toFixed(0)}
+                  <Text style={s.tripPriceUnit}>L</Text>
+                </Text>
+                <Text style={s.tripTime}>
+                  {new Date(trip.departureAt).toLocaleDateString('sq-AL', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+                <Text style={s.tripSeats}>
+                  💺 {trip.seatsAvailable}/{trip.totalSeats}
+                </Text>
               </View>
-            </View>
-            <View style={s.tripRight}>
-              <Text style={s.tripPrice}>{Number(trip.pricePerSeat).toFixed(0)}<Text style={s.tripPriceUnit}>L</Text></Text>
-              <Text style={s.tripTime}>{new Date(trip.departureAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
-              <Text style={s.tripSeats}>💺 {trip.seatsAvailable}/{trip.totalSeats}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))}
       </ScrollView>
     </View>
   );
@@ -168,32 +209,95 @@ const s = StyleSheet.create({
   brand: { ...typography.label, color: colors.primary, fontSize: 10 },
   title: { ...typography.h1, marginTop: 4 },
 
-  statGrid: { flexDirection: 'row', marginTop: 20, marginHorizontal: 16, paddingVertical: 16, backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
-  statCell: { flex: 1, paddingHorizontal: 12, borderRightWidth: 1, borderRightColor: colors.border, alignItems: 'flex-start' },
-  statLabel: { ...typography.caption, color: colors.subtle, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statGrid: {
+    flexDirection: 'row',
+    marginTop: 20,
+    marginHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statCell: {
+    flex: 1,
+    paddingHorizontal: 12,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    alignItems: 'flex-start',
+  },
+  statLabel: {
+    ...typography.caption,
+    color: colors.subtle,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   statValue: { ...typography.h2, marginTop: 4 },
 
-  warn: { marginHorizontal: 16, marginTop: 12, padding: 12, backgroundColor: 'rgba(245,158,11,0.15)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.3)' },
+  warn: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: 'rgba(245,158,11,0.15)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.3)',
+  },
   warnText: { color: colors.warning, fontSize: 13 },
 
   filterCard: { marginHorizontal: 16, marginTop: 14 },
   cardLabel: { ...typography.label },
   fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 12 },
-  picker: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  picker: {
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   pickerValue: { color: colors.text, fontSize: 15, fontWeight: '600' },
   pickerPlaceholder: { color: colors.subtle, fontSize: 15 },
   pickerArrow: { color: colors.subtle, fontSize: 22, fontWeight: '300' },
 
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginHorizontal: 24, marginTop: 28, marginBottom: 12 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginHorizontal: 24,
+    marginTop: 28,
+    marginBottom: 12,
+  },
   sectionTitle: { ...typography.h2 },
   sectionMeta: { ...typography.caption, color: colors.textDim },
 
-  tripCard: { marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  tripCard: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   tripLeft: { flexDirection: 'row', flex: 1, alignItems: 'center', gap: 12 },
   routeDots: { alignItems: 'center', width: 12 },
   dotPrimary: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
   dotLine: { width: 2, height: 26, backgroundColor: colors.borderStrong, marginVertical: 2 },
-  dotEnd: { width: 8, height: 8, borderRadius: 4, borderWidth: 2, borderColor: colors.primary, backgroundColor: 'transparent' },
+  dotEnd: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: 'transparent',
+  },
   tripRoute: { flex: 1, justifyContent: 'space-between', height: 50 },
   tripCity: { ...typography.h3, fontSize: 16 },
   tripCityDest: { ...typography.h3, fontSize: 16, color: colors.textDim },

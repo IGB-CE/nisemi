@@ -1,3 +1,3 @@
-export const supportedCountry = "AL";
+export const supportedCountry = 'AL';
 
-export const appName = "Albania Rides";
+export const appName = 'Albania Rides';

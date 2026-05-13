@@ -11,13 +11,7 @@ export default function Card({ variant = 'default', padding = 16, style, childre
   const bg = variant === 'elevated' ? colors.surfaceElevated : variant === 'flat' ? 'transparent' : colors.surface;
   const borderColor = variant === 'flat' ? 'transparent' : colors.border;
   return (
-    <View
-      {...rest}
-      style={[
-        { backgroundColor: bg, borderRadius: 18, padding, borderWidth: 1, borderColor },
-        style,
-      ]}
-    >
+    <View {...rest} style={[{ backgroundColor: bg, borderRadius: 18, padding, borderWidth: 1, borderColor }, style]}>
       {children}
     </View>
   );

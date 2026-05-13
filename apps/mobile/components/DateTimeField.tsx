@@ -74,7 +74,12 @@ export default function DateTimeField({ value, onChange, mode = 'date', placehol
                 <TouchableOpacity onPress={() => setShow(false)}>
                   <Text style={s.cancel}>Anulo</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => { onChange(tempDate); setShow(false); }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    onChange(tempDate);
+                    setShow(false);
+                  }}
+                >
                   <Text style={s.confirm}>Konfirmo</Text>
                 </TouchableOpacity>
               </View>
@@ -96,13 +101,34 @@ export default function DateTimeField({ value, onChange, mode = 'date', placehol
 }
 
 const s = StyleSheet.create({
-  field: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  field: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   value: { color: colors.text, fontSize: 15 },
   placeholder: { color: colors.subtle, fontSize: 15 },
   icon: { fontSize: 16 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderTopWidth: 1, borderColor: colors.border },
-  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   cancel: { color: colors.subtle, fontSize: 16 },
   confirm: { color: colors.primary, fontSize: 16, fontWeight: '700' },
   iosPicker: { height: 220 },

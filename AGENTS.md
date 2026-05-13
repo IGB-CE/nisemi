@@ -35,7 +35,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Login
 - [x] Logout
 - [x] Edit profile
-- [ ] Upload profile picture
+- [x] Upload profile picture
 - [x] Search rides by departure city
 - [x] Search rides by destination city
 - [x] Search rides by date
@@ -100,7 +100,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Admin trips endpoint
 - [x] Admin reports endpoint
 - [x] Push notification integration
-- [ ] Image upload integration
+- [x] Image upload integration (Supabase Storage: avatars + car photos)
 
 ### Database
 
@@ -118,10 +118,18 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 
 - [x] Restrict supported routes to Albania
 - [x] Add Albanian city list
-- [x] Use ALL or EUR pricing decision (EUR chosen)
-- [ ] Add phone number format validation for Albania
+- [x] Use ALL or EUR pricing decision (ALL/Lek chosen)
+- [x] Add phone number format validation for Albania (format-only — OTP verification deferred until post-MVP)
 - [x] Albanian language support decision (Albanian only)
 - [x] English language support decision (not included in MVP)
+
+### Extra Features Shipped (beyond original checklist)
+
+- [x] In-app chat between passenger and driver
+- [x] Report driver feature
+- [x] Map-based city picker with route visualization (Google Maps)
+- [x] Date/time picker on search and driver post screens
+- [x] Auto-detect API host from Expo so mobile works on any LAN
 
 ### Ads And Monetization
 
@@ -203,18 +211,18 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 
 ### Phase 5 - Polish And Launch Prep
 
-- [ ] Push notifications
-- [ ] Image uploads
-- [ ] Ratings and reviews
+- [x] Push notifications
+- [x] Image uploads
+- [x] Ratings and reviews
 - [ ] Optional minimal AdMob banner integration
 - [ ] Optional limited AdMob interstitial integration
 - [ ] Confirm AdMob test ads are used in development builds
 - [ ] Confirm real ad unit IDs are used only in production builds
 - [ ] Update Privacy Policy for advertising and data collection
 - [ ] Complete Google Play and App Store ad/privacy declarations
-- [ ] Error states
-- [ ] Loading states
-- [ ] Empty states
+- [x] Error states
+- [x] Loading states
+- [x] Empty states
 - [ ] Basic QA testing
 - [ ] Android build
 - [ ] iOS build
@@ -275,3 +283,9 @@ Better long-term monetization options may include featured drivers, promoted tri
 - [x] Phase 3 mobile complete (Expo Router + all screens in Albanian)
 - [x] Phase 4 admin dashboard complete (login, stats, users/trips/reservations, block/unblock)
 - [x] Ratings and reviews mobile UI complete (passenger rates driver after completed trip)
+- [x] Push notifications wired (Expo Notifications for reservation accept/reject)
+- [x] Image uploads wired (Supabase Storage for avatars and driver car photos)
+- [x] In-app chat, report driver, map city picker, date/time picker shipped
+- [x] Currency switched from EUR to Lek (ALL)
+- [x] F1-inspired design system rollout (dark/red theme, themed dialogs, avatar halo)
+- [x] Albanian phone format validation shipped (server + client validators, phone @unique constraint, required at register, hidden from all non-owner API responses)

@@ -7,6 +7,7 @@ interface Props { page: Page; setPage: (p: Page) => void; children: ReactNode; }
 const NAV: { id: Page; label: string; icon: string }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
   { id: 'users', label: 'Përdoruesit', icon: '👥' },
+  { id: 'drivers', label: 'Shoferët', icon: '🪪' },
   { id: 'trips', label: 'Udhëtimet', icon: '🚗' },
   { id: 'reservations', label: 'Rezervimet', icon: '🎫' },
 ];

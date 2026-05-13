@@ -43,6 +43,29 @@ router.patch('/users/:id/approve', async (req, res) => {
   res.json(user);
 });
 
+router.get('/drivers', async (req, res) => {
+  const page = Number(req.query.page ?? 1);
+  const limit = 20;
+  const drivers = await prisma.driverProfile.findMany({
+    skip: (page - 1) * limit,
+    take: limit,
+    include: {
+      user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, status: true, createdAt: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json(drivers);
+});
+
+router.patch('/drivers/:userId/demote', async (req, res) => {
+  const { userId } = req.params;
+  await prisma.$transaction([
+    prisma.driverProfile.delete({ where: { userId } }),
+    prisma.user.update({ where: { id: userId }, data: { role: 'PASSENGER' } }),
+  ]);
+  res.json({ ok: true });
+});
+
 router.get('/trips', async (req, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = 20;

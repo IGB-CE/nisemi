@@ -4,10 +4,11 @@ import Login from './pages/Login';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
+import Drivers from './pages/Drivers';
 import Trips from './pages/Trips';
 import Reservations from './pages/Reservations';
 
-export type Page = 'dashboard' | 'users' | 'trips' | 'reservations';
+export type Page = 'dashboard' | 'users' | 'drivers' | 'trips' | 'reservations';
 
 export default function App() {
   const { token } = useAuth();
@@ -19,6 +20,7 @@ export default function App() {
     <Layout page={page} setPage={setPage}>
       {page === 'dashboard' && <Dashboard />}
       {page === 'users' && <Users />}
+      {page === 'drivers' && <Drivers />}
       {page === 'trips' && <Trips />}
       {page === 'reservations' && <Reservations />}
     </Layout>

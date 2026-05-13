@@ -71,7 +71,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Admin login
 - [x] Dashboard statistics
 - [x] Manage users
-- [ ] Manage drivers
+- [x] Manage drivers
 - [x] Manage trips
 - [x] Manage reservations
 - [ ] Manage reports

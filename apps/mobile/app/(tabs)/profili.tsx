@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
@@ -273,6 +273,21 @@ export default function Profili() {
           </Card>
         )}
 
+        <Card style={s.section}>
+          <Text style={s.cardLabel}>Të dhëna ligjore</Text>
+          <TouchableOpacity style={s.legalRow} onPress={() => router.push('/policy/terms' as any)}>
+            <Text style={s.legalIcon}>📄</Text>
+            <Text style={s.legalLabel}>Kushtet e Përdorimit</Text>
+            <Text style={s.legalChevron}>›</Text>
+          </TouchableOpacity>
+          <View style={s.divider} />
+          <TouchableOpacity style={s.legalRow} onPress={() => router.push('/policy/privacy' as any)}>
+            <Text style={s.legalIcon}>🔒</Text>
+            <Text style={s.legalLabel}>Politika e Privatësisë</Text>
+            <Text style={s.legalChevron}>›</Text>
+          </TouchableOpacity>
+        </Card>
+
         <View style={s.section}>
           <PrimaryButton label="Dil nga llogaria" onPress={handleLogout} variant="ghost" />
         </View>
@@ -330,4 +345,9 @@ const s = StyleSheet.create({
     fontSize: 15,
     color: colors.text,
   },
+
+  legalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  legalIcon: { fontSize: 18, marginRight: 12 },
+  legalLabel: { ...typography.body, flex: 1 },
+  legalChevron: { color: colors.subtle, fontSize: 22, fontWeight: '700' },
 });

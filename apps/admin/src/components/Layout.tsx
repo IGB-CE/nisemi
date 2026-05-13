@@ -10,6 +10,7 @@ const NAV: { id: Page; label: string; icon: string }[] = [
   { id: 'drivers', label: 'Shoferët', icon: '🪪' },
   { id: 'trips', label: 'Udhëtimet', icon: '🚗' },
   { id: 'reservations', label: 'Rezervimet', icon: '🎫' },
+  { id: 'reports', label: 'Raportimet', icon: '🚩' },
 ];
 
 export default function Layout({ page, setPage, children }: Props) {

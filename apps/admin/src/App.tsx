@@ -7,8 +7,9 @@ import Users from './pages/Users';
 import Drivers from './pages/Drivers';
 import Trips from './pages/Trips';
 import Reservations from './pages/Reservations';
+import Reports from './pages/Reports';
 
-export type Page = 'dashboard' | 'users' | 'drivers' | 'trips' | 'reservations';
+export type Page = 'dashboard' | 'users' | 'drivers' | 'trips' | 'reservations' | 'reports';
 
 export default function App() {
   const { token } = useAuth();
@@ -23,6 +24,7 @@ export default function App() {
       {page === 'drivers' && <Drivers />}
       {page === 'trips' && <Trips />}
       {page === 'reservations' && <Reservations />}
+      {page === 'reports' && <Reports />}
     </Layout>
   );
 }

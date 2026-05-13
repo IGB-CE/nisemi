@@ -75,7 +75,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Manage trips
 - [x] Manage reservations
 - [x] Manage reports
-- [ ] Approve users
+- [x] Approve users (admin button; new signups still auto-activate — gated registration not enabled)
 - [x] Block users
 - [x] Unblock users
 

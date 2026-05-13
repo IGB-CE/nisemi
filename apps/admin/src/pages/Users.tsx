@@ -28,7 +28,7 @@ export default function Users() {
 
   useEffect(load, [load]);
 
-  const doAction = async (id: string, action: 'block' | 'unblock') => {
+  const doAction = async (id: string, action: 'block' | 'unblock' | 'approve') => {
     setActionId(id);
     try {
       await api.patch(`/api/v1/admin/users/${id}/${action}`, {}, token ?? undefined);
@@ -69,9 +69,14 @@ export default function Users() {
               <td className="text-subtle">{new Date(u.createdAt).toLocaleDateString('sq-AL')}</td>
               <td>
                 {u.role !== 'ADMIN' && (
-                  u.status === 'BLOCKED'
-                    ? <button className="btn-success btn-sm" disabled={actionId === u.id} onClick={() => doAction(u.id, 'unblock')}>Zhblloko</button>
-                    : <button className="btn-danger btn-sm" disabled={actionId === u.id} onClick={() => doAction(u.id, 'block')}>Blloko</button>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {u.status === 'PENDING' && (
+                      <button className="btn-success btn-sm" disabled={actionId === u.id} onClick={() => doAction(u.id, 'approve')}>Aprovo</button>
+                    )}
+                    {u.status === 'BLOCKED'
+                      ? <button className="btn-success btn-sm" disabled={actionId === u.id} onClick={() => doAction(u.id, 'unblock')}>Zhblloko</button>
+                      : <button className="btn-danger btn-sm" disabled={actionId === u.id} onClick={() => doAction(u.id, 'block')}>Blloko</button>}
+                  </div>
                 )}
               </td>
             </tr>

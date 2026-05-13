@@ -6,6 +6,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
 import { colors, typography } from '../../lib/colors';
+import { normalizeAlbanianMobile } from '../../lib/phone';
 import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
 import StatRow from '../../components/ui/StatRow';
@@ -66,10 +67,16 @@ export default function Profili() {
     if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
       await dialog.alert('Gabim', 'Emri dhe mbiemri janë të detyrueshme'); return;
     }
+    const body: any = { firstName: editForm.firstName.trim(), lastName: editForm.lastName.trim() };
+    if (editForm.phone.trim()) {
+      const normalizedPhone = normalizeAlbanianMobile(editForm.phone);
+      if (!normalizedPhone) {
+        await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567'); return;
+      }
+      body.phone = normalizedPhone;
+    }
     setSaving(true);
     try {
-      const body: any = { firstName: editForm.firstName.trim(), lastName: editForm.lastName.trim() };
-      if (editForm.phone.trim()) body.phone = editForm.phone.trim();
       const updated = await api.patch<any>('/api/v1/users/me', body, token ?? undefined);
       setProfile((p: any) => ({ ...p, ...updated }));
       await signIn(token!, { ...user!, firstName: updated.firstName, lastName: updated.lastName });

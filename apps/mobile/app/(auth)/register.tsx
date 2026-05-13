@@ -7,6 +7,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
 import { colors, typography, gradient } from '../../lib/colors';
+import { normalizeAlbanianMobile } from '../../lib/phone';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 
 export default function Register() {
@@ -19,12 +20,16 @@ export default function Register() {
   const set = (k: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
   const handleRegister = async () => {
-    if (!form.firstName || !form.lastName || !form.email || !form.password) {
+    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.phone) {
       await dialog.alert('Gabim', 'Plotëso fushat e detyrueshme'); return;
+    }
+    const normalizedPhone = normalizeAlbanianMobile(form.phone);
+    if (!normalizedPhone) {
+      await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567'); return;
     }
     setLoading(true);
     try {
-      const res = await api.post<{ token: string; user: any }>('/api/v1/auth/register', form);
+      const res = await api.post<{ token: string; user: any }>('/api/v1/auth/register', { ...form, phone: normalizedPhone });
       await signIn(res.token, res.user);
       router.replace('/(tabs)');
     } catch (e: any) {
@@ -55,7 +60,7 @@ export default function Register() {
               { key: 'firstName', label: 'Emri', required: true },
               { key: 'lastName', label: 'Mbiemri', required: true },
               { key: 'email', label: 'Email', required: true, keyboard: 'email-address' as const },
-              { key: 'phone', label: 'Telefoni' },
+              { key: 'phone', label: 'Telefoni', required: true, keyboard: 'phone-pad' as const },
               { key: 'password', label: 'Fjalëkalimi', required: true, secure: true },
             ].map(({ key, label, required, keyboard, secure }) => (
               <View key={key}>

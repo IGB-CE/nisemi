@@ -176,7 +176,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Create Expo mobile app
 - [x] Create backend API
 - [x] Create admin dashboard
-- [ ] Add shared linting/formatting conventions
+- [x] Add shared linting/formatting conventions
 - [x] Add initial README
 - [x] Add environment variable examples
 - [x] Add placeholder environment variables for AdMob app IDs and ad unit IDs

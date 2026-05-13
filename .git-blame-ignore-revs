@@ -1,0 +1,4 @@
+# Bulk-format passes — run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once locally to skip these in blame.
+
+# Apply Prettier formatting across the monorepo
+667327e

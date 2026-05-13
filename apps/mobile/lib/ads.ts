@@ -4,6 +4,9 @@ import mobileAds, {
   MaxAdContentRating,
   AdsConsent,
   AdsConsentStatus,
+  RewardedAd,
+  RewardedAdEventType,
+  AdEventType,
 } from 'react-native-google-mobile-ads';
 import {
   getTrackingPermissionsAsync,
@@ -91,4 +94,32 @@ export async function bootstrapAds(): Promise<void> {
   if (canRequestAds || AdsConsentStatus.NOT_REQUIRED) {
     await initializeAds();
   }
+}
+
+export function showRewardedAd(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const ad = RewardedAd.createForAdRequest(adUnitIds.rewarded, {
+      requestNonPersonalizedAdsOnly: !isTrackingAllowed(),
+    });
+    let earned = false;
+    const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => ad.show());
+    const unsubReward = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+      earned = true;
+    });
+    const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
+      cleanup();
+      resolve(earned);
+    });
+    const unsubError = ad.addAdEventListener(AdEventType.ERROR, () => {
+      cleanup();
+      resolve(false);
+    });
+    const cleanup = () => {
+      unsubLoaded();
+      unsubReward();
+      unsubClosed();
+      unsubError();
+    };
+    ad.load();
+  });
 }

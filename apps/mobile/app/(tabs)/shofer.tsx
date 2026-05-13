@@ -4,16 +4,48 @@ import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { useDialog } from '../../lib/dialog';
 import { colors, typography } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import { showRewardedAd } from '../../lib/ads';
 
 export default function Shofer() {
   const { token } = useAuth();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [boostingId, setBoostingId] = useState<string | null>(null);
+
+  const boostTrip = useCallback(
+    async (tripId: string) => {
+      const ok = await dialog.confirm(
+        'Promovo udhëtimin',
+        'Shiko një reklamë të shkurtër për ta vendosur udhëtimin tuaj në krye të kërkimeve për 12 orë.',
+        'Vazhdo',
+      );
+      if (!ok) return;
+      setBoostingId(tripId);
+      try {
+        const earned = await showRewardedAd();
+        if (!earned) {
+          await dialog.alert('Reklama nuk u përfundua', 'Udhëtimi nuk u promovua. Provo përsëri më vonë.');
+          return;
+        }
+        await api.post(`/api/v1/trips/${tripId}/boost`, {}, token ?? undefined);
+        await dialog.alert('U promovua', 'Udhëtimi do të shfaqet në krye të kërkimeve për 12 orë.');
+        const updated = await api.get<any[]>('/api/v1/trips/my', token ?? undefined);
+        setTrips(updated);
+      } catch (e: any) {
+        await dialog.alert('Gabim', e.message);
+      } finally {
+        setBoostingId(null);
+      }
+    },
+    [dialog, token],
+  );
 
   const load = useCallback(() => {
     setLoading(true);
@@ -94,13 +126,27 @@ export default function Shofer() {
                 : trip.status === 'CANCELLED'
                   ? colors.danger
                   : colors.subtle;
+            const isBoosted = trip.boostedUntil && new Date(trip.boostedUntil).getTime() > now;
+            const isUpcoming = new Date(trip.departureAt).getTime() > now && trip.status === 'SCHEDULED';
+            const canBoost = isUpcoming && !isBoosted;
             return (
               <TouchableOpacity
                 key={trip.id}
-                style={s.card}
+                style={[s.card, isBoosted && s.cardBoosted]}
                 onPress={() => router.push(`/driver/rezervimet/${trip.id}` as any)}
                 activeOpacity={0.85}
               >
+                {isBoosted && (
+                  <View style={s.boostPill}>
+                    <Text style={s.boostPillText}>
+                      ⚡ Promovuar deri{' '}
+                      {new Date(trip.boostedUntil).toLocaleTimeString('sq-AL', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
+                  </View>
+                )}
                 <View style={s.cardTop}>
                   <View style={s.routeDots}>
                     <View style={s.dotPrimary} />
@@ -142,6 +188,20 @@ export default function Shofer() {
                   <View style={{ flex: 1 }} />
                   <View style={[s.statusDot, { backgroundColor: statusColor }]} />
                 </View>
+                {canBoost && (
+                  <TouchableOpacity
+                    style={s.boostButton}
+                    disabled={boostingId === trip.id}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      boostTrip(trip.id);
+                    }}
+                  >
+                    <Text style={s.boostButtonText}>
+                      {boostingId === trip.id ? 'Po ngarkohet…' : '⚡ Promovo udhëtimin 12h'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </TouchableOpacity>
             );
           })
@@ -245,4 +305,24 @@ const s = StyleSheet.create({
   metaItem: { ...typography.caption, color: colors.textDim, fontSize: 12 },
   metaDot: { color: colors.subtle, fontSize: 12 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
+
+  cardBoosted: { borderColor: colors.primary },
+  boostPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 10,
+  },
+  boostPillText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.3 },
+  boostButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+  },
+  boostButtonText: { color: colors.primary, fontSize: 13, fontWeight: '800', letterSpacing: 0.3 },
 });

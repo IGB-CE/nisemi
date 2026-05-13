@@ -6,6 +6,7 @@ import mobileAds, {
   AdsConsentStatus,
   RewardedAd,
   RewardedAdEventType,
+  InterstitialAd,
   AdEventType,
 } from 'react-native-google-mobile-ads';
 import {
@@ -94,6 +95,35 @@ export async function bootstrapAds(): Promise<void> {
   if (canRequestAds || AdsConsentStatus.NOT_REQUIRED) {
     await initializeAds();
   }
+}
+
+let sessionBookingCount = 0;
+let interstitialShownThisSession = false;
+
+export function maybeShowInterstitialAfterBooking(): void {
+  sessionBookingCount += 1;
+  if (sessionBookingCount < 2) return;
+  if (interstitialShownThisSession) return;
+  if (!initialized) return;
+
+  const ad = InterstitialAd.createForAdRequest(adUnitIds.interstitial, {
+    requestNonPersonalizedAdsOnly: !isTrackingAllowed(),
+  });
+  const unsubLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
+    interstitialShownThisSession = true;
+    ad.show();
+  });
+  const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
+    unsubLoaded();
+    unsubClosed();
+    unsubError();
+  });
+  const unsubError = ad.addAdEventListener(AdEventType.ERROR, () => {
+    unsubLoaded();
+    unsubClosed();
+    unsubError();
+  });
+  ad.load();
 }
 
 export function showRewardedAd(): Promise<boolean> {

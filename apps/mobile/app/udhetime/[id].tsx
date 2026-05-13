@@ -22,6 +22,7 @@ import { colors, typography } from '../../lib/colors';
 import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import { maybeShowInterstitialAfterBooking } from '../../lib/ads';
 
 export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,6 +58,7 @@ export default function TripDetail() {
     try {
       await api.post('/api/v1/reservations', { tripId: id, seats: 1 }, token);
       await dialog.alert('Sukses', 'Rezervimi u dërgua. Prit konfirmimin e shoferit.');
+      maybeShowInterstitialAfterBooking();
       router.push('/(tabs)/rezervimet');
     } catch (e: any) {
       await dialog.alert('Gabim', e.message);

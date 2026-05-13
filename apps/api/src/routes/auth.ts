@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/jwt.js';
+import { albanianMobileSchema } from '../lib/phone.js';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const registerSchema = z.object({
   password: z.string().min(8),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  phone: z.string().optional(),
+  phone: albanianMobileSchema,
 });
 
 const loginSchema = z.object({

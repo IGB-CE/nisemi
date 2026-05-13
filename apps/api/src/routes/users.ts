@@ -3,13 +3,14 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { supabase, CAR_PHOTOS_BUCKET } from '../lib/supabase.js';
+import { albanianMobileSchema } from '../lib/phone.js';
 
 const router = Router();
 
 const updateSchema = z.object({
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
-  phone: z.string().optional(),
+  phone: albanianMobileSchema.optional(),
   avatarUrl: z.string().url().optional(),
 });
 

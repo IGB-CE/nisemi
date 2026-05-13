@@ -1,5 +1,8 @@
 const base = require('./app.json');
 
+const TEST_ADMOB_ANDROID_APP_ID = 'ca-app-pub-3940256099942544~3347511713';
+const TEST_ADMOB_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
+
 module.exports = {
   ...base,
   expo: {
@@ -12,6 +15,16 @@ module.exports = {
         },
       },
     },
-    plugins: [...(base.expo.plugins ?? []), '@react-native-community/datetimepicker'],
+    plugins: [
+      ...(base.expo.plugins ?? []),
+      '@react-native-community/datetimepicker',
+      [
+        'react-native-google-mobile-ads',
+        {
+          androidAppId: process.env.ADMOB_ANDROID_APP_ID ?? TEST_ADMOB_ANDROID_APP_ID,
+          iosAppId: process.env.ADMOB_IOS_APP_ID ?? TEST_ADMOB_IOS_APP_ID,
+        },
+      ],
+    ],
   },
 };

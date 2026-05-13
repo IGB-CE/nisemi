@@ -1,5 +1,10 @@
 import { Platform } from 'react-native';
-import mobileAds, { TestIds, MaxAdContentRating } from 'react-native-google-mobile-ads';
+import mobileAds, {
+  TestIds,
+  MaxAdContentRating,
+  AdsConsent,
+  AdsConsentStatus,
+} from 'react-native-google-mobile-ads';
 import {
   getTrackingPermissionsAsync,
   requestTrackingPermissionsAsync,
@@ -29,6 +34,26 @@ export const adUnitIds = {
 
 let trackingStatus: PermissionStatus | null = null;
 let initialized = false;
+let canRequestAds = false;
+let privacyOptionsRequired = false;
+
+export async function gatherUmpConsent(): Promise<void> {
+  try {
+    const info = await AdsConsent.gatherConsent();
+    canRequestAds = info.canRequestAds;
+    privacyOptionsRequired = info.privacyOptionsRequirementStatus === 'REQUIRED';
+  } catch {
+    canRequestAds = true;
+  }
+}
+
+export function isPrivacyOptionsRequired(): boolean {
+  return privacyOptionsRequired;
+}
+
+export async function showPrivacyOptionsForm(): Promise<void> {
+  await AdsConsent.showPrivacyOptionsForm();
+}
 
 export async function requestTrackingPermission(): Promise<PermissionStatus> {
   if (Platform.OS !== 'ios') {
@@ -52,11 +77,18 @@ export function isTrackingAllowed(): boolean {
 export async function initializeAds(): Promise<void> {
   if (initialized) return;
   initialized = true;
-  await mobileAds()
-    .setRequestConfiguration({
-      maxAdContentRating: MaxAdContentRating.PG,
-      tagForChildDirectedTreatment: false,
-      tagForUnderAgeOfConsent: false,
-    })
-    .then(() => mobileAds().initialize());
+  await mobileAds().setRequestConfiguration({
+    maxAdContentRating: MaxAdContentRating.PG,
+    tagForChildDirectedTreatment: false,
+    tagForUnderAgeOfConsent: false,
+  });
+  await mobileAds().initialize();
+}
+
+export async function bootstrapAds(): Promise<void> {
+  await gatherUmpConsent();
+  await requestTrackingPermission();
+  if (canRequestAds || AdsConsentStatus.NOT_REQUIRED) {
+    await initializeAds();
+  }
 }

@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { DialogProvider } from '../lib/dialog';
 import { registerPushToken } from '../lib/notifications';
-import { requestTrackingPermission, initializeAds } from '../lib/ads';
+import { bootstrapAds } from '../lib/ads';
 
 function PushRegistrar() {
   const { token } = useAuth();
@@ -19,10 +19,7 @@ function AdsBootstrap() {
   const { token } = useAuth();
   useEffect(() => {
     if (!token) return;
-    (async () => {
-      await requestTrackingPermission();
-      await initializeAds();
-    })();
+    bootstrapAds();
   }, [token]);
   return null;
 }

@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
 import { colors, typography } from '../../lib/colors';
 import { normalizeAlbanianMobile } from '../../lib/phone';
+import { isPrivacyOptionsRequired, showPrivacyOptionsForm } from '../../lib/ads';
 import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
 import StatRow from '../../components/ui/StatRow';
@@ -286,6 +287,16 @@ export default function Profili() {
             <Text style={s.legalLabel}>Politika e Privatësisë</Text>
             <Text style={s.legalChevron}>›</Text>
           </TouchableOpacity>
+          {isPrivacyOptionsRequired() && (
+            <>
+              <View style={s.divider} />
+              <TouchableOpacity style={s.legalRow} onPress={() => showPrivacyOptionsForm().catch(() => {})}>
+                <Text style={s.legalIcon}>⚙️</Text>
+                <Text style={s.legalLabel}>Opsionet e reklamave</Text>
+                <Text style={s.legalChevron}>›</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </Card>
 
         <View style={s.section}>

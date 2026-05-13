@@ -84,6 +84,7 @@ model Trip {
   seatsAvailable Int
   status         TripStatus @default(SCHEDULED)
   notes          String?
+  boostedUntil   DateTime?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 

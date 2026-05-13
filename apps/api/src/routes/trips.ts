@@ -60,7 +60,38 @@ router.get('/', async (req, res) => {
     },
     orderBy: { departureAt: 'asc' },
   });
-  res.json(trips);
+
+  const now = Date.now();
+  const sorted = [...trips].sort((a, b) => {
+    const aBoosted = a.boostedUntil && a.boostedUntil.getTime() > now ? 1 : 0;
+    const bBoosted = b.boostedUntil && b.boostedUntil.getTime() > now ? 1 : 0;
+    if (aBoosted !== bBoosted) return bBoosted - aBoosted;
+    return a.departureAt.getTime() - b.departureAt.getTime();
+  });
+  res.json(sorted);
+});
+
+router.post('/:id/boost', requireAuth, async (req: AuthRequest, res) => {
+  const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
+  if (trip.driverId !== req.userId) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  if (trip.status !== 'SCHEDULED') {
+    res.status(400).json({ error: 'Vetëm udhëtimet aktive mund të promovohen' });
+    return;
+  }
+  const boostedUntil = new Date(Date.now() + 12 * 60 * 60 * 1000);
+  const updated = await prisma.trip.update({
+    where: { id: req.params.id },
+    data: { boostedUntil },
+    select: { id: true, boostedUntil: true },
+  });
+  res.json(updated);
 });
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {

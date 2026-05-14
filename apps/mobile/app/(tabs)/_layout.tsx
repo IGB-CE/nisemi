@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/colors';
 import { Text } from 'react-native';
@@ -9,9 +9,12 @@ function TabIcon({ label }: { label: string }) {
 }
 
 export default function TabsLayout() {
-  const { user } = useAuth();
+  const { token, user, loading } = useAuth();
   const insets = useSafeAreaInsets();
   const isDriver = user?.role === 'DRIVER' || user?.role === 'ADMIN';
+
+  if (loading) return null;
+  if (!token) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs

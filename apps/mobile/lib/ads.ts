@@ -90,10 +90,15 @@ export async function initializeAds(): Promise<void> {
 }
 
 export async function bootstrapAds(): Promise<void> {
+  console.log('[ads] bootstrap start');
   await gatherUmpConsent();
+  console.log('[ads] UMP done, canRequestAds =', canRequestAds);
   await requestTrackingPermission();
   if (canRequestAds || AdsConsentStatus.NOT_REQUIRED) {
     await initializeAds();
+    console.log('[ads] SDK initialized');
+  } else {
+    console.log('[ads] skipping init — consent denied');
   }
 }
 
@@ -126,21 +131,37 @@ export function maybeShowInterstitialAfterBooking(): void {
   ad.load();
 }
 
-export function showRewardedAd(): Promise<boolean> {
+export async function showRewardedAd(): Promise<boolean> {
+  if (!initialized) {
+    console.log('[ads] SDK not initialized — initializing now');
+    try {
+      await initializeAds();
+    } catch (e) {
+      console.log('[ads] init failed:', e);
+      return false;
+    }
+  }
+  console.log('[ads] requesting rewarded ad with unit:', adUnitIds.rewarded);
   return new Promise((resolve) => {
     const ad = RewardedAd.createForAdRequest(adUnitIds.rewarded, {
       requestNonPersonalizedAdsOnly: !isTrackingAllowed(),
     });
     let earned = false;
-    const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => ad.show());
+    const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+      console.log('[ads] rewarded LOADED, showing');
+      ad.show();
+    });
     const unsubReward = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+      console.log('[ads] EARNED_REWARD');
       earned = true;
     });
     const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
+      console.log('[ads] CLOSED, earned =', earned);
       cleanup();
       resolve(earned);
     });
-    const unsubError = ad.addAdEventListener(AdEventType.ERROR, () => {
+    const unsubError = ad.addAdEventListener(AdEventType.ERROR, (error) => {
+      console.log('[ads] ERROR loading rewarded:', error);
       cleanup();
       resolve(false);
     });

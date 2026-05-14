@@ -104,7 +104,7 @@ export default function TripDetail() {
   return (
     <View style={s.container}>
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
         <View style={s.headerWrap}>

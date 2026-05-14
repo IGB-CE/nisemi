@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { colors } from '../../../lib/colors';
@@ -29,6 +29,7 @@ const POLL_MS = 3000;
 export default function Chat() {
   const { tripId, userId } = useLocalSearchParams<{ tripId: string; userId: string }>();
   const { token, user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -133,7 +134,7 @@ export default function Chat() {
           </ScrollView>
         )}
 
-        <View style={s.inputBar}>
+        <View style={[s.inputBar, { paddingBottom: 10 + insets.bottom }]}>
           <TextInput
             style={s.input}
             placeholder="Shkruaj një mesazh..."

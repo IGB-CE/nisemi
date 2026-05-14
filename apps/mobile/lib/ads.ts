@@ -107,23 +107,30 @@ let interstitialShownThisSession = false;
 
 export function maybeShowInterstitialAfterBooking(): void {
   sessionBookingCount += 1;
+  console.log('[ads] booking #', sessionBookingCount, 'shown?', interstitialShownThisSession);
   if (sessionBookingCount < 2) return;
   if (interstitialShownThisSession) return;
-  if (!initialized) return;
-
+  if (!initialized) {
+    console.log('[ads] interstitial skipped — SDK not initialized');
+    return;
+  }
+  console.log('[ads] requesting interstitial');
   const ad = InterstitialAd.createForAdRequest(adUnitIds.interstitial, {
     requestNonPersonalizedAdsOnly: !isTrackingAllowed(),
   });
   const unsubLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
+    console.log('[ads] interstitial LOADED, showing');
     interstitialShownThisSession = true;
     ad.show();
   });
   const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
+    console.log('[ads] interstitial CLOSED');
     unsubLoaded();
     unsubClosed();
     unsubError();
   });
-  const unsubError = ad.addAdEventListener(AdEventType.ERROR, () => {
+  const unsubError = ad.addAdEventListener(AdEventType.ERROR, (error) => {
+    console.log('[ads] interstitial ERROR:', error);
     unsubLoaded();
     unsubClosed();
     unsubError();

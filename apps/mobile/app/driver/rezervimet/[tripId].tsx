@@ -8,6 +8,13 @@ import { useDialog } from '../../../lib/dialog';
 import { colors, typography } from '../../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../../components/States';
 import PrimaryButton from '../../../components/ui/PrimaryButton';
+import {
+  requestDriverLocationPermissions,
+  startDriverTracking,
+  stopDriverTracking,
+} from '../../../lib/location';
+
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
 const statusMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Në pritje', color: colors.warning },
@@ -24,6 +31,7 @@ export default function TripReservations() {
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tripActionLoading, setTripActionLoading] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -46,6 +54,55 @@ export default function TripReservations() {
     }
   };
 
+  const startTrip = async () => {
+    if (!token || !trip) return;
+    setTripActionLoading(true);
+    try {
+      const perms = await requestDriverLocationPermissions();
+      if (!perms.foreground) {
+        await dialog.alert(
+          'Leje e nevojshme',
+          'Për të nisur udhëtimin duhet të lejoni aksesin në vendndodhje.',
+        );
+        return;
+      }
+      if (!perms.background) {
+        const proceed = await dialog.confirm(
+          'Leja në sfond',
+          'Pa lejen "Lejo gjithmonë" vendndodhja do të ndahet vetëm kur aplikacioni është i hapur. Vazhdo?',
+        );
+        if (!proceed) return;
+      }
+      await api.post(`/api/v1/trips/${trip.id}/start`, {}, token);
+      await startDriverTracking(trip.id, token);
+      load();
+    } catch (e: any) {
+      await stopDriverTracking();
+      await dialog.alert('Gabim', e.message ?? 'Nuk u arrit të nisej udhëtimi.');
+    } finally {
+      setTripActionLoading(false);
+    }
+  };
+
+  const endTrip = async () => {
+    if (!token || !trip) return;
+    const proceed = await dialog.confirm(
+      'Përfundo udhëtimin',
+      'A jeni i sigurt që udhëtimi ka mbaruar?',
+    );
+    if (!proceed) return;
+    setTripActionLoading(true);
+    try {
+      await api.post(`/api/v1/trips/${trip.id}/end`, {}, token);
+      await stopDriverTracking();
+      load();
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message ?? 'Nuk u arrit të përfundohej udhëtimi.');
+    } finally {
+      setTripActionLoading(false);
+    }
+  };
+
   if (loading)
     return (
       <View style={s.center}>
@@ -58,6 +115,10 @@ export default function TripReservations() {
   const reservations = trip.reservations ?? [];
   const pending = reservations.filter((r: any) => r.status === 'PENDING').length;
   const accepted = reservations.filter((r: any) => r.status === 'ACCEPTED').length;
+
+  const msUntilDeparture = new Date(trip.departureAt).getTime() - Date.now();
+  const canStart = trip.status === 'SCHEDULED' && msUntilDeparture < TWO_HOURS_MS;
+  const isInProgress = trip.status === 'IN_PROGRESS';
 
   return (
     <View style={s.container}>
@@ -85,6 +146,24 @@ export default function TripReservations() {
             })}
           </Text>
         </View>
+
+        {(canStart || isInProgress) && (
+          <View style={s.tripActionWrap}>
+            {isInProgress && (
+              <View style={s.livePill}>
+                <View style={s.liveDot} />
+                <Text style={s.liveText}>Udhëtimi në vazhdim</Text>
+              </View>
+            )}
+            <PrimaryButton
+              label={isInProgress ? 'Përfundo udhëtimin' : 'Fillo udhëtimin'}
+              icon={isInProgress ? '🏁' : '🚗'}
+              onPress={isInProgress ? endTrip : startTrip}
+              loading={tripActionLoading}
+              variant={isInProgress ? 'outline' : 'primary'}
+            />
+          </View>
+        )}
 
         <View style={s.statGrid}>
           <View style={s.statCell}>
@@ -261,4 +340,19 @@ const s = StyleSheet.create({
   statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
 
   actionRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
+
+  tripActionWrap: { marginHorizontal: 16, marginTop: 20 },
+  livePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.success + '20',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 10,
+    gap: 8,
+  },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
+  liveText: { ...typography.caption, color: colors.success, fontWeight: '700' },
 });

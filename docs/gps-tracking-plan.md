@@ -6,7 +6,7 @@ Branch: `feat/gps-tracking`
 
 While a driver is actively running a trip, passengers with an accepted reservation see the driver's live position on a map inside the app. Tracking is **opt-in per-trip** (driver presses "Fillo udhëtimin"), runs in the **foreground and background** on the driver's phone, and stops when the driver presses "Përfundo".
 
-No GPS coordinates are persisted server-side. Position is relayed live and forgotten.
+GPS coordinates are persisted server-side with **90-day retention** so disputes, incidents, and admin investigations have an evidence trail.
 
 ## Scope
 
@@ -17,10 +17,10 @@ In scope:
 - Socket.io transport through the existing Express API (JWT auth)
 
 Out of scope (deferred):
-- Persisted GPS trace / breadcrumbs / replay
 - Passenger-side ETA / route prediction
 - Multi-driver fleet tracking views for admin
 - iOS Live Activities or Android persistent notification UI
+- Automated cron-based pruning (manual / scripted purge until volume justifies cron)
 
 ## Transport
 
@@ -33,7 +33,7 @@ Socket.io on the existing Express HTTP server. One namespace, one room per trip 
 - Server broadcasts to the trip room (sender excluded).
 - Driver emits `trip:end` (or `POST /trips/:id/end` triggers a server-side broadcast) → server closes the room.
 
-No coordinates are written to the database.
+The server batches incoming ticks in memory and flushes to `TripLocation` every ~10s (or on room close), so we don't pay a DB write per 5s tick.
 
 ## Trip lifecycle (Phase A)
 
@@ -54,12 +54,34 @@ model Trip {
 }
 ```
 
+New table for the persisted trace:
+
+```prisma
+model TripLocation {
+  id         String   @id @default(cuid())
+  tripId     String
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  lat        Float
+  lng        Float
+  heading    Float?
+  speed      Float?
+  accuracy   Float?
+  recordedAt DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([tripId, recordedAt])
+}
+```
+
+`recordedAt` is the client-reported timestamp (so replays line up with reality even if writes are batched). `createdAt` is server insertion time.
+
 Endpoints:
 
 - `POST /api/v1/trips/:id/start` — driver only, `SCHEDULED → IN_PROGRESS`, sets `startedAt = now()`.
 - `POST /api/v1/trips/:id/end` — driver only, `IN_PROGRESS → COMPLETED`, sets `endedAt = now()`.
+- `GET /api/v1/trips/:id/locations` — returns `TripLocation[]` ordered by `recordedAt`. Authorized for the trip's driver, accepted passengers on that trip, and admins.
 
-Both reject the transition if the trip is in any other state. Push notification fires to accepted passengers when a trip starts.
+Both lifecycle endpoints reject the transition if the trip is in any other state. Push notification fires to accepted passengers when a trip starts.
 
 ## Socket.io server (Phase B)
 
@@ -71,7 +93,8 @@ Both reject the transition if the trip is in any other state. Push notification 
   - Allow if `trip.driverId === userId` (and trip is `IN_PROGRESS`), or if caller has a reservation on `tripId` with status `ACCEPTED` (and trip is `IN_PROGRESS`).
   - Otherwise reject.
 - Relay event names: `location` (driver→server→passengers), `trip:ended` (server→all).
-- No persistence.
+- Persistence: server accumulates ticks per-trip in memory; flushes a batch insert to `TripLocation` every ~10s and on room close.
+- Persistence is best-effort — if a write fails, log and drop. The live relay must not stall on DB latency.
 
 ## Mobile location plumbing (Phase C)
 
@@ -113,7 +136,8 @@ On `apps/mobile/app/udhetime/[id].tsx` for users with `ACCEPTED` reservations:
 
 - Collected only from drivers, only while a trip is `IN_PROGRESS`.
 - Shared only with passengers who have an accepted reservation on that trip.
-- Not stored — relayed in memory and discarded.
+- Stored for **90 days** so disputes and incidents have an evidence trail; then deleted.
+- Visible to the trip's driver, accepted passengers, and admins via `GET /trips/:id/locations`.
 - Driver can revoke at any time by ending the trip or denying the permission.
 
 `AGENTS.md` updates:
@@ -145,6 +169,6 @@ Total active engineering: **~2–3 days**.
 
 - **Transport:** Socket.io over the existing Express API (not Supabase Realtime, not polling).
 - **Background:** Yes — driver's phone keeps streaming with the screen off.
-- **Persistence:** No GPS trace stored.
+- **Persistence:** Batched inserts to `TripLocation`, 90-day retention.
 - **Visibility:** Only accepted passengers on the same trip.
 - **Start/end trigger:** Manual driver buttons, no automatic start from `departureAt`.

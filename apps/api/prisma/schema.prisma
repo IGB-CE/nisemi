@@ -93,6 +93,7 @@ model Trip {
   reservations Reservation[]
   messages     Message[]
   reviews      Review[]
+  locations    TripLocation[]
 }
 
 enum TripStatus {
@@ -100,6 +101,21 @@ enum TripStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+model TripLocation {
+  id         String   @id @default(cuid())
+  tripId     String
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  lat        Float
+  lng        Float
+  heading    Float?
+  speed      Float?
+  accuracy   Float?
+  recordedAt DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([tripId, recordedAt])
 }
 
 model Reservation {

@@ -17,7 +17,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.albaniarides.app",
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "Nisemi dërgon njoftime për rezervimet tuaja."
+        "NSUserNotificationUsageDescription": "Nisemi dërgon njoftime për rezervimet tuaja.",
+        "NSLocationWhenInUseUsageDescription": "Nisemi përdor vendndodhjen tuaj për të ndarë pozicionin tuaj me pasagjerët gjatë udhëtimit.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Nisemi vazhdon të ndajë vendndodhjen tuaj me pasagjerët edhe kur aplikacioni është në sfond gjatë udhëtimit.",
+        "UIBackgroundModes": ["location", "fetch"]
       }
     },
     "android": {
@@ -26,7 +29,14 @@
         "backgroundColor": "#0D0D0D"
       },
       "package": "com.albaniarides.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -41,6 +51,16 @@
           "icon": "./assets/icon.png",
           "color": "#DC2626",
           "androidMode": "default"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Nisemi vazhdon të ndajë vendndodhjen tuaj me pasagjerët edhe kur aplikacioni është në sfond gjatë udhëtimit.",
+          "locationWhenInUsePermission": "Nisemi përdor vendndodhjen tuaj për të ndarë pozicionin tuaj me pasagjerët gjatë udhëtimit.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ]
     ],

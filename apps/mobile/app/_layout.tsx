@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from '../lib/auth';
 import { DialogProvider } from '../lib/dialog';
 import { registerPushToken } from '../lib/notifications';
 import { bootstrapAds } from '../lib/ads';
+import '../lib/location';
 
 function PushRegistrar() {
   const { token } = useAuth();

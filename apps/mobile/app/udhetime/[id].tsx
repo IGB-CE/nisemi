@@ -23,6 +23,7 @@ import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { maybeShowInterstitialAfterBooking } from '../../lib/ads';
+import LiveTripMap from '../../components/LiveTripMap';
 
 export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -78,6 +79,37 @@ export default function TripDetail() {
 
   const isOwnTrip = trip.driver.id === user?.id;
   const dp = trip.driver.driverProfile;
+
+  const hasAcceptedReservation =
+    user &&
+    (trip.reservations ?? []).some(
+      (r: any) => r.passenger?.id === user.id && r.status === 'ACCEPTED',
+    );
+  const isLive =
+    trip.status === 'IN_PROGRESS' &&
+    !!token &&
+    trip.originCity.lat &&
+    trip.originCity.lng &&
+    trip.destCity.lat &&
+    trip.destCity.lng &&
+    (hasAcceptedReservation || isOwnTrip);
+
+  const statusLabel =
+    trip.status === 'SCHEDULED'
+      ? 'Aktiv'
+      : trip.status === 'IN_PROGRESS'
+        ? 'Në rrugë'
+        : trip.status === 'CANCELLED'
+          ? 'Anulluar'
+          : 'Përfunduar';
+  const statusColor =
+    trip.status === 'SCHEDULED'
+      ? colors.success
+      : trip.status === 'IN_PROGRESS'
+        ? colors.primary
+        : trip.status === 'CANCELLED'
+          ? colors.danger
+          : colors.textDim;
 
   const submitReport = async () => {
     if (reportReason.trim().length < 10) {
@@ -145,21 +177,7 @@ export default function TripDetail() {
           </View>
           <View style={[s.statCell, { borderRightWidth: 0 }]}>
             <Text style={s.statLabel}>Status</Text>
-            <Text
-              style={[
-                s.statValue,
-                {
-                  color:
-                    trip.status === 'SCHEDULED'
-                      ? colors.success
-                      : trip.status === 'CANCELLED'
-                        ? colors.danger
-                        : colors.textDim,
-                },
-              ]}
-            >
-              {trip.status === 'SCHEDULED' ? 'Aktiv' : trip.status === 'CANCELLED' ? 'Anulluar' : 'Përfunduar'}
-            </Text>
+            <Text style={[s.statValue, { color: statusColor }]}>{statusLabel}</Text>
           </View>
         </View>
 
@@ -170,7 +188,17 @@ export default function TripDetail() {
           </Card>
         )}
 
-        {trip.originCity.lat && trip.originCity.lng && trip.destCity.lat && trip.destCity.lng && (
+        {isLive ? (
+          <View style={[s.cardFlush, { overflow: 'hidden' }]}>
+            <LiveTripMap
+              tripId={trip.id}
+              token={token!}
+              origin={{ lat: trip.originCity.lat, lng: trip.originCity.lng, name: trip.originCity.name }}
+              destination={{ lat: trip.destCity.lat, lng: trip.destCity.lng, name: trip.destCity.name }}
+              onTripEnded={load}
+            />
+          </View>
+        ) : trip.originCity.lat && trip.originCity.lng && trip.destCity.lat && trip.destCity.lng ? (
           <View style={[s.cardFlush, { overflow: 'hidden' }]}>
             <MapView
               style={s.routeMap}
@@ -205,7 +233,7 @@ export default function TripDetail() {
               />
             </MapView>
           </View>
-        )}
+        ) : null}
 
         {dp?.carPhotoUrl && (
           <View style={[s.cardFlush, { overflow: 'hidden' }]}>

@@ -127,6 +127,6 @@ Total active engineering time: **~1.5–2 days**.
 
 ## Decisions Locked In
 
-- **Contact email:** `support@ikim.al` (mailbox must be created/forwarded before app submission)
-- **Legal entity name:** Ikim (the app brand)
+- **Contact email:** `support@nisemi.al` (mailbox must be created/forwarded before app submission)
+- **Legal entity name:** Nisemi (the app brand)
 - **Privacy policy hosting:** API server — `GET /privacy` and `GET /terms` routes that render markdown to HTML

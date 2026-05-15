@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Ikim",
+    "name": "Nisemi",
     "slug": "albania-rides",
     "scheme": "albaniarides",
     "version": "1.0.0",
@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.albaniarides.app",
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "Ikim dërgon njoftime për rezervimet tuaja."
+        "NSUserNotificationUsageDescription": "Nisemi dërgon njoftime për rezervimet tuaja."
       }
     },
     "android": {

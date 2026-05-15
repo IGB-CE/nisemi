@@ -21,8 +21,8 @@ async function loadPolicy(slug: 'privacy' | 'terms') {
 }
 
 const PAGE_TITLES: Record<string, string> = {
-  privacy: 'Politika e Privatësisë – Ikim',
-  terms: 'Kushtet e Përdorimit – Ikim',
+  privacy: 'Politika e Privatësisë – Nisemi',
+  terms: 'Kushtet e Përdorimit – Nisemi',
 };
 
 function htmlShell(title: string, body: string) {

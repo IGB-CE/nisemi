@@ -1,16 +1,16 @@
-# Politika e Privatësisë – Ikim
+# Politika e Privatësisë – Nisemi
 
 _Përditësuar më 13 Maj 2026_
 
-Kjo Politikë e Privatësisë shpjegon se cilat të dhëna personale mbledh Ikim, si i përdorim ato, me kë i ndajmë dhe çfarë të drejtash keni ju mbi to.
+Kjo Politikë e Privatësisë shpjegon se cilat të dhëna personale mbledh Nisemi, si i përdorim ato, me kë i ndajmë dhe çfarë të drejtash keni ju mbi to.
 
-Duke përdorur aplikacionin Ikim, ju pranoni mbledhjen dhe përdorimin e të dhënave tuaja sipas kësaj politike.
+Duke përdorur aplikacionin Nisemi, ju pranoni mbledhjen dhe përdorimin e të dhënave tuaja sipas kësaj politike.
 
 ## 1. Të dhënat që mbledhim
 
 ### Të dhënat që ju jepni drejtpërdrejt
 
-Kur regjistroheni dhe përdorni Ikim, ju jepni:
+Kur regjistroheni dhe përdorni Nisemi, ju jepni:
 
 - **Emri dhe mbiemri** – për identifikimin tuaj në platformë
 - **Adresa email** – për autentifikim dhe komunikim
@@ -47,7 +47,7 @@ Të dhënat tuaja përdoren për:
 
 ## 3. Me kë i ndajmë të dhënat tuaja
 
-Ikim **nuk shet** dhe **nuk i kalon** të dhënat tuaja palëve të treta për qëllime marketingu të pavarura. Megjithatë, për të ofruar shërbimin, ne përdorim disa ofrues teknologjikë të besueshëm:
+Nisemi **nuk shet** dhe **nuk i kalon** të dhënat tuaja palëve të treta për qëllime marketingu të pavarura. Megjithatë, për të ofruar shërbimin, ne përdorim disa ofrues teknologjikë të besueshëm:
 
 | Shërbimi | Qëllimi | Të dhënat e ndara |
 |----------|---------|-------------------|
@@ -65,7 +65,7 @@ Pjesë e ndarë drejtpërdrejt mes përdoruesve:
 
 ## 4. Reklamat (Google AdMob)
 
-Ikim përdor Google AdMob për të shfaqur reklama të kufizuara brenda aplikacionit. AdMob mund të mbledhë:
+Nisemi përdor Google AdMob për të shfaqur reklama të kufizuara brenda aplikacionit. AdMob mund të mbledhë:
 
 - Identifikuesin tuaj të reklamave (Advertising ID / IDFA)
 - Adresën IP
@@ -95,7 +95,7 @@ Sipas legjislacionit shqiptar dhe parimeve të GDPR, ju keni të drejtën:
 - **Të kundërshtoni** përpunimin për qëllime të caktuara (p.sh. reklamat)
 - **Të tërhiqni pëlqimin** për reklamat e personalizuara në çdo kohë
 
-Për të ushtruar këto të drejta, na kontaktoni në `support@ikim.al`.
+Për të ushtruar këto të drejta, na kontaktoni në `support@nisemi.al`.
 
 ## 7. Siguria
 
@@ -110,7 +110,7 @@ Asnjë sistem nuk është 100% i sigurt. Në rast të një shkeljeje sigurie që
 
 ## 8. Mosha minimale
 
-Ikim është i destinuar **vetëm për personat mbi 18 vjeç**. Ne nuk mbledhim me vetëdije të dhëna nga të mitur. Nëse jeni prind ose kujdestar dhe besoni se fëmija juaj na ka dhënë të dhëna, ju lutemi na kontaktoni dhe ne do t'i fshijmë menjëherë.
+Nisemi është i destinuar **vetëm për personat mbi 18 vjeç**. Ne nuk mbledhim me vetëdije të dhëna nga të mitur. Nëse jeni prind ose kujdestar dhe besoni se fëmija juaj na ka dhënë të dhëna, ju lutemi na kontaktoni dhe ne do t'i fshijmë menjëherë.
 
 ## 9. Transferimi ndërkombëtar i të dhënave
 
@@ -118,15 +118,15 @@ Disa nga ofruesit tanë teknologjikë (Supabase, Google) mund të ruajnë të dh
 
 ## 10. Ndryshimet në këtë politikë
 
-Ne mund të përditësojmë këtë politikë herë pas here. Versioni i fundit do të jetë gjithmonë i disponueshëm brenda aplikacionit dhe në `support@ikim.al`. Për ndryshime të rëndësishme, do t'ju njoftojmë përmes aplikacionit ose me email.
+Ne mund të përditësojmë këtë politikë herë pas here. Versioni i fundit do të jetë gjithmonë i disponueshëm brenda aplikacionit dhe në `support@nisemi.al`. Për ndryshime të rëndësishme, do t'ju njoftojmë përmes aplikacionit ose me email.
 
 ## 11. Kontakti
 
 Për çdo pyetje, ankesë ose kërkesë në lidhje me të dhënat tuaja personale:
 
-**Email:** support@ikim.al
+**Email:** support@nisemi.al
 
 ---
 
-_Ikim – platformë digjitale shqiptare për udhëtime të përbashkëta_
+_Nisemi – platformë digjitale shqiptare për udhëtime të përbashkëta_
 _Themeluesi: B.D_

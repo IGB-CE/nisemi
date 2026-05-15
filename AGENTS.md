@@ -130,6 +130,7 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Map-based city picker with route visualization (Google Maps)
 - [x] Date/time picker on search and driver post screens
 - [x] Auto-detect API host from Expo so mobile works on any LAN
+- [x] Real-time GPS tracking (driver shares live location with accepted passengers during active trip; socket.io relay + 90-day persisted trace)
 
 ### Ads And Monetization
 
@@ -154,7 +155,6 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 ## Not Included In MVP
 
 - [ ] Online payments
-- [ ] Real-time GPS tracking
 - [ ] Full live chat system
 - [ ] Advanced analytics
 - [ ] Complex fraud detection

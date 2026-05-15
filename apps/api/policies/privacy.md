@@ -33,6 +33,18 @@ Kur regjistroheni dhe përdorni Nisemi, ju jepni:
 - **Adresa IP** dhe informacion bazë i pajisjes (sistemi operativ, versioni i aplikacionit) – për qëllime sigurie dhe zgjidhjen e problemeve teknike
 - **Identifikuesi i reklamave** (Advertising ID në Android, IDFA në iOS) – vetëm nëse jepni leje për reklama të personalizuara
 
+### Vendndodhja në kohë reale gjatë udhëtimit
+
+Kur jeni shofer dhe nisni një udhëtim duke shtypur **"Fillo udhëtimin"**, aplikacioni fillon të lexojë vendndodhjen tuaj GPS dhe ta dërgojë në server. Ky funksion ka rregulla strikte:
+
+- **Mblidhet vetëm nga shoferët**, dhe vetëm nga momenti që ju vetë nisni udhëtimin deri kur shtypni **"Përfundo udhëtimin"** ose udhëtimi anulohet.
+- **Ndahet vetëm me pasagjerët që kanë një rezervim të pranuar** për të njëjtin udhëtim, që mund ta shohin lëvizjen tuaj në hartë gjatë rrugës.
+- **Ruhet për 90 ditë** pas përfundimit të udhëtimit dhe pastaj fshihet automatikisht. Ruajtja shërben për zgjidhjen e mosmarrëveshjeve, hetimin e incidenteve dhe sigurinë e platformës.
+- **Mund të shihet edhe nga administratori i platformës** kur kjo është e nevojshme për të hetuar një raport ose incident.
+- **Ju mund të anuloni në çdo kohë** duke shtypur "Përfundo udhëtimin" ose duke ndaluar lejen e vendndodhjes në cilësimet e telefonit. Pa këtë leje, funksioni i ndarjes së vendndodhjes thjesht nuk funksionon — pjesa tjetër e aplikacionit vazhdon normalisht.
+
+Pasagjerët nuk i ndajnë asnjëherë vendndodhjen e tyre përmes këtij funksioni.
+
 ## 2. Si i përdorim të dhënat tuaja
 
 Të dhënat tuaja përdoren për:

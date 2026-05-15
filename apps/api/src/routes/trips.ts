@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { sendPushNotifications } from '../lib/push.js';
+import { endTripRoom } from '../realtime/index.js';
 
 const router = Router();
 
@@ -215,7 +216,41 @@ router.post('/:id/end', requireAuth, async (req: AuthRequest, res) => {
     where: { id: req.params.id },
     data: { status: 'COMPLETED', endedAt: new Date() },
   });
+  await endTripRoom(req.params.id);
   res.json(updated);
+});
+
+router.get('/:id/locations', requireAuth, async (req: AuthRequest, res) => {
+  const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
+  const isDriver = trip.driverId === req.userId;
+  let isAcceptedPassenger = false;
+  if (!isDriver) {
+    const reservation = await prisma.reservation.findFirst({
+      where: { tripId: req.params.id, passengerId: req.userId, status: 'ACCEPTED' },
+    });
+    isAcceptedPassenger = Boolean(reservation);
+  }
+  if (!isDriver && !isAcceptedPassenger && req.userRole !== 'ADMIN') {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  const locations = await prisma.tripLocation.findMany({
+    where: { tripId: req.params.id },
+    orderBy: { recordedAt: 'asc' },
+    select: {
+      lat: true,
+      lng: true,
+      heading: true,
+      speed: true,
+      accuracy: true,
+      recordedAt: true,
+    },
+  });
+  res.json(locations);
 });
 
 router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
@@ -228,7 +263,11 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
+  const wasInProgress = trip.status === 'IN_PROGRESS';
   const updated = await prisma.trip.update({ where: { id: req.params.id }, data: { status: 'CANCELLED' } });
+  if (wasInProgress) {
+    await endTripRoom(req.params.id);
+  }
   res.json(updated);
 });
 

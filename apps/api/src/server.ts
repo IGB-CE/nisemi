@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { createServer } from 'http';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -15,6 +16,7 @@ import pushTokensRouter from './routes/push-tokens.js';
 import reportsRouter from './routes/reports.js';
 import messagesRouter from './routes/messages.js';
 import policiesRouter from './routes/policies.js';
+import { attachRealtime } from './realtime/index.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -50,4 +52,7 @@ app.use('/api/v1/push-tokens', pushTokensRouter);
 app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/messages', messagesRouter);
 
-app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+const httpServer = createServer(app);
+attachRealtime(httpServer);
+
+httpServer.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));

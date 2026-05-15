@@ -21,10 +21,12 @@ interface SocketData {
   user: SocketUser;
   tripId?: string;
   isDriver?: boolean;
+  lastTickAt?: number;
 }
 
 const FLUSH_INTERVAL_MS = 10_000;
 const ENDED_GRACE_MS = 250;
+const MIN_TICK_GAP_MS = 1_000;
 
 const tripBuffers = new Map<string, LocationTick[]>();
 const tripFlushers = new Map<string, NodeJS.Timeout>();
@@ -160,6 +162,9 @@ export function attachRealtime(httpServer: HTTPServer) {
       ) {
         return;
       }
+      const now = Date.now();
+      if (data.lastTickAt && now - data.lastTickAt < MIN_TICK_GAP_MS) return;
+      data.lastTickAt = now;
       socket.to(room(data.tripId)).emit('location', tick);
 
       let buf = tripBuffers.get(data.tripId);

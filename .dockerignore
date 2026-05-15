@@ -1,0 +1,34 @@
+**/node_modules
+**/dist
+**/.expo
+**/.next
+**/.cache
+**/coverage
+**/.turbo
+
+# secrets
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+
+# editor / OS
+.git
+.gitignore
+.DS_Store
+**/Thumbs.db
+**/.idea
+**/.vscode
+
+# claude / docs not needed in image
+.claude
+docs
+
+# apps that don't belong in the api image
+apps/mobile
+apps/admin
+
+# misc
+**/*.log
+**/npm-debug.log*
+**/*.tsbuildinfo

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { sendPushNotifications } from '../lib/push.js';
 
 const router = Router();
 
@@ -159,6 +160,62 @@ router.get('/:id', async (req, res) => {
     return;
   }
   res.json(trip);
+});
+
+router.post('/:id/start', requireAuth, async (req: AuthRequest, res) => {
+  const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
+  if (trip.driverId !== req.userId) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  if (trip.status !== 'SCHEDULED') {
+    res.status(400).json({ error: 'Udhëtimi nuk mund të fillojë në këtë gjendje' });
+    return;
+  }
+  const updated = await prisma.trip.update({
+    where: { id: req.params.id },
+    data: { status: 'IN_PROGRESS', startedAt: new Date() },
+  });
+
+  const accepted = await prisma.reservation.findMany({
+    where: { tripId: req.params.id, status: 'ACCEPTED' },
+    include: { passenger: { include: { pushTokens: true } } },
+  });
+  const tokens = accepted.flatMap((r) => r.passenger.pushTokens.map((t) => t.token));
+  if (tokens.length) {
+    await sendPushNotifications(
+      tokens,
+      'Udhëtimi nisi',
+      'Shoferi nisi udhëtimin. Mund të ndiqni vendndodhjen në kohë reale.',
+    );
+  }
+
+  res.json(updated);
+});
+
+router.post('/:id/end', requireAuth, async (req: AuthRequest, res) => {
+  const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
+  if (trip.driverId !== req.userId) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  if (trip.status !== 'IN_PROGRESS') {
+    res.status(400).json({ error: 'Udhëtimi nuk është në vazhdim' });
+    return;
+  }
+  const updated = await prisma.trip.update({
+    where: { id: req.params.id },
+    data: { status: 'COMPLETED', endedAt: new Date() },
+  });
+  res.json(updated);
 });
 
 router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {

@@ -85,6 +85,8 @@ model Trip {
   status         TripStatus @default(SCHEDULED)
   notes          String?
   boostedUntil   DateTime?
+  startedAt      DateTime?
+  endedAt        DateTime?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -95,6 +97,7 @@ model Trip {
 
 enum TripStatus {
   SCHEDULED
+  IN_PROGRESS
   COMPLETED
   CANCELLED
 }

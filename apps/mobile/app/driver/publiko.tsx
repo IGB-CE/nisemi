@@ -104,7 +104,7 @@ export default function Publiko() {
           <TouchableOpacity onPress={() => router.back()} style={s.back}>
             <Text style={s.backText}>← Kthehu</Text>
           </TouchableOpacity>
-          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.brand}>NISEMI</Text>
           <Text style={s.title}>Publiko</Text>
         </View>
 

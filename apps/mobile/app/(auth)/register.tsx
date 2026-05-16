@@ -69,7 +69,7 @@ export default function Register() {
           keyboardShouldPersistTaps="handled"
         >
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
-          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.brand}>NISEMI</Text>
           <Text style={s.title}>Krijo llogarinë</Text>
           <Text style={s.subtitle}>Filloni në më pak se një minutë</Text>
 

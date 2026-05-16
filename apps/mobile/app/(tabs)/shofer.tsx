@@ -81,7 +81,7 @@ export default function Shofer() {
         showsVerticalScrollIndicator={false}
       >
         <View style={s.headerWrap}>
-          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.brand}>NISEMI</Text>
           <Text style={s.title}>Paneli i Shoferit</Text>
         </View>
 

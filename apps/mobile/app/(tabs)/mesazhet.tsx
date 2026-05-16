@@ -59,7 +59,7 @@ export default function Mesazhet() {
         showsVerticalScrollIndicator={false}
       >
         <View style={s.headerWrap}>
-          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.brand}>NISEMI</Text>
           <View style={s.titleRow}>
             <Text style={s.title}>Mesazhet</Text>
             {totalUnread > 0 && (

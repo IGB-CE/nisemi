@@ -59,7 +59,7 @@ export default function Login() {
           keyboardShouldPersistTaps="handled"
         >
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
-          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.brand}>NISEMI</Text>
           <Text style={s.title}>Mirë se erdhe</Text>
           <Text style={s.subtitle}>Hyr për të vazhduar</Text>
 

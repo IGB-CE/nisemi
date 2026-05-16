@@ -143,7 +143,7 @@ export default function TripDetail() {
           <TouchableOpacity onPress={() => router.back()} style={s.back}>
             <Text style={s.backText}>← Kthehu</Text>
           </TouchableOpacity>
-          <Text style={s.brand}>IKIM</Text>
+          <Text style={s.brand}>NISEMI</Text>
           <View style={s.route}>
             <Text style={s.city}>{trip.originCity.name}</Text>
             <Text style={s.arrow}>→</Text>

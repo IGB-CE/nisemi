@@ -132,9 +132,13 @@ export default function TripReservations() {
           </TouchableOpacity>
           <Text style={s.brand}>NISEMI</Text>
           <View style={s.route}>
-            <Text style={s.city}>{trip.originCity.name}</Text>
+            <Text style={s.city} numberOfLines={2}>
+              {trip.originLabel ?? trip.originCity?.name ?? '?'}
+            </Text>
             <Text style={s.arrow}>→</Text>
-            <Text style={s.city}>{trip.destCity.name}</Text>
+            <Text style={s.city} numberOfLines={2}>
+              {trip.destLabel ?? trip.destCity?.name ?? '?'}
+            </Text>
           </View>
           <Text style={s.date}>
             {new Date(trip.departureAt).toLocaleDateString('sq-AL', {
@@ -223,6 +227,21 @@ export default function TripReservations() {
                     <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
                   </View>
                 </View>
+
+                {(r.pickupLabel || r.dropoffLabel) && (
+                  <View style={s.pickupBlock}>
+                    {r.pickupLabel && (
+                      <Text style={s.pickupLine} numberOfLines={2}>
+                        📍 Marrja: {r.pickupLabel}
+                      </Text>
+                    )}
+                    {r.dropoffLabel && (
+                      <Text style={s.pickupLine} numberOfLines={2}>
+                        🏁 Lëshimi: {r.dropoffLabel}
+                      </Text>
+                    )}
+                  </View>
+                )}
 
                 <View style={s.actionRow}>
                   {r.status === 'PENDING' && (
@@ -340,6 +359,8 @@ const s = StyleSheet.create({
   statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
 
   actionRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  pickupBlock: { marginTop: 10, gap: 4 },
+  pickupLine: { ...typography.caption, color: colors.textDim, fontSize: 12 },
 
   tripActionWrap: { marginHorizontal: 16, marginTop: 20 },
   livePill: {

@@ -154,8 +154,8 @@ export default function Shofer() {
                     <View style={s.dotEnd} />
                   </View>
                   <View style={s.routeBody}>
-                    <Text style={s.city}>{trip.originCity.name}</Text>
-                    <Text style={s.cityDest}>{trip.destCity.name}</Text>
+                    <Text style={s.city} numberOfLines={1}>{trip.originLabel ?? trip.originCity?.name ?? '?'}</Text>
+                    <Text style={s.cityDest} numberOfLines={1}>{trip.destLabel ?? trip.destCity?.name ?? '?'}</Text>
                   </View>
                   <View style={s.priceWrap}>
                     <Text style={s.price}>

@@ -6,43 +6,61 @@ import { api } from '../../lib/api';
 import { colors, typography } from '../../lib/colors';
 import { useAuth } from '../../lib/auth';
 import { EmptyState } from '../../components/States';
-import CityMapPicker, { type City } from '../../components/CityMapPicker';
 import DateTimeField from '../../components/DateTimeField';
 import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import PlacesAutocomplete from '../../components/PlacesAutocomplete';
+import type { PlaceDetail } from '../../lib/places';
+import { formatDistanceKm, formatDurationMin } from '../../lib/directions';
 
 interface Trip {
   id: string;
-  originCity: City;
-  destCity: City;
+  originCity?: { name: string } | null;
+  destCity?: { name: string } | null;
+  originLabel?: string | null;
+  destLabel?: string | null;
   departureAt: string;
   pricePerSeat: string;
   seatsAvailable: number;
   totalSeats: number;
+  routeDistanceM?: number | null;
+  routeDurationS?: number | null;
+  tripType?: 'INTERCITY' | 'INTRACITY' | null;
   driver: { firstName: string; lastName: string; driverProfile: { rating: number } | null };
+}
+
+type TripTypeFilter = 'ANY' | 'INTERCITY' | 'INTRACITY';
+
+const RADIUS_OPTIONS = [
+  { value: 100, label: '100 m' },
+  { value: 300, label: '300 m' },
+  { value: 500, label: '500 m' },
+  { value: 1000, label: '1 km' },
+  { value: 2000, label: '2 km' },
+];
+
+function tripOriginText(t: Trip): string {
+  return t.originLabel ?? t.originCity?.name ?? '?';
+}
+function tripDestText(t: Trip): string {
+  return t.destLabel ?? t.destCity?.name ?? '?';
 }
 
 export default function Search() {
   const { token } = useAuth();
   const insets = useSafeAreaInsets();
-  const [cities, setCities] = useState<City[]>([]);
-  const [from, setFrom] = useState<City | null>(null);
-  const [to, setTo] = useState<City | null>(null);
+  const [from, setFrom] = useState<PlaceDetail | null>(null);
+  const [to, setTo] = useState<PlaceDetail | null>(null);
   const [date, setDate] = useState<Date | null>(null);
+  const [tripTypeFilter, setTripTypeFilter] = useState<TripTypeFilter>('ANY');
+  const [searchRadiusM, setSearchRadiusM] = useState(500);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [allTrips, setAllTrips] = useState<Trip[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [citiesError, setCitiesError] = useState(false);
-  const [showFrom, setShowFrom] = useState(false);
-  const [showTo, setShowTo] = useState(false);
 
   useEffect(() => {
-    api
-      .get<City[]>('/api/v1/cities')
-      .then(setCities)
-      .catch(() => setCitiesError(true));
     api
       .get<Trip[]>('/api/v1/trips')
       .then(setAllTrips)
@@ -55,8 +73,14 @@ export default function Search() {
     setSearchError(null);
     try {
       const params = new URLSearchParams();
-      if (from) params.set('from', from.id);
-      if (to) params.set('to', to.id);
+      if (from && to) {
+        params.set('originLat', String(from.lat));
+        params.set('originLng', String(from.lng));
+        params.set('destLat', String(to.lat));
+        params.set('destLng', String(to.lng));
+        params.set('searchRadiusM', String(searchRadiusM));
+      }
+      if (tripTypeFilter !== 'ANY') params.set('tripType', tripTypeFilter);
       if (date) params.set('date', date.toISOString().split('T')[0]);
       const data = await api.get<Trip[]>(`/api/v1/trips?${params}`, token ?? undefined);
       setTrips(data);
@@ -67,31 +91,30 @@ export default function Search() {
     }
   };
 
-  const tripsToday = allTrips.filter(
-    (t) => new Date(t.departureAt).toDateString() === new Date().toDateString(),
-  ).length;
+  const openTrip = (trip: Trip) => {
+    const params: Record<string, string> = {};
+    if (from) {
+      params.pickupLat = String(from.lat);
+      params.pickupLng = String(from.lng);
+      params.pickupLabel = from.label;
+    }
+    if (to) {
+      params.dropoffLat = String(to.lat);
+      params.dropoffLng = String(to.lng);
+      params.dropoffLabel = to.label;
+    }
+    router.push({ pathname: '/udhetime/[id]', params: { id: trip.id, ...params } });
+  };
+
+  const tripsToday = allTrips.filter((t) => new Date(t.departureAt).toDateString() === new Date().toDateString()).length;
   const lowestPrice = allTrips.length ? Math.min(...allTrips.map((t) => Number(t.pricePerSeat))) : 0;
 
   return (
     <View style={s.container}>
-      <CityMapPicker
-        visible={showFrom}
-        cities={cities}
-        onSelect={setFrom}
-        onClose={() => setShowFrom(false)}
-        title="Qyteti i nisjes"
-      />
-      <CityMapPicker
-        visible={showTo}
-        cities={cities}
-        onSelect={setTo}
-        onClose={() => setShowTo(false)}
-        title="Destinacioni"
-      />
-
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={s.headerWrap}>
           <Text style={s.brand}>NISEMI</Text>
@@ -113,29 +136,63 @@ export default function Search() {
           </View>
         </View>
 
-        {citiesError && (
-          <View style={s.warn}>
-            <Text style={s.warnText}>⚠️ Nuk u ngarkuan qytetet. Kontrollo lidhjen.</Text>
-          </View>
-        )}
-
         <Card style={s.filterCard}>
           <Text style={s.cardLabel}>Filtro</Text>
           <View style={{ marginTop: 14 }}>
             <Text style={s.fieldLabel}>Nga</Text>
-            <TouchableOpacity style={s.picker} onPress={() => setShowFrom(true)}>
-              <Text style={from ? s.pickerValue : s.pickerPlaceholder}>{from?.name ?? 'Zgjidh qytetin e nisjes'}</Text>
-              <Text style={s.pickerArrow}>›</Text>
-            </TouchableOpacity>
+            <PlacesAutocomplete
+              value={from}
+              onChange={setFrom}
+              placeholder="Adresa e nisjes"
+              token={token ?? undefined}
+            />
 
             <Text style={s.fieldLabel}>Deri</Text>
-            <TouchableOpacity style={s.picker} onPress={() => setShowTo(true)}>
-              <Text style={to ? s.pickerValue : s.pickerPlaceholder}>{to?.name ?? 'Zgjidh destinacionin'}</Text>
-              <Text style={s.pickerArrow}>›</Text>
-            </TouchableOpacity>
+            <PlacesAutocomplete
+              value={to}
+              onChange={setTo}
+              placeholder="Adresa e destinacionit"
+              token={token ?? undefined}
+            />
 
             <Text style={s.fieldLabel}>Data</Text>
             <DateTimeField value={date} onChange={setDate} placeholder="Zgjidh datën (opsionale)" />
+
+            <Text style={s.fieldLabel}>Lloji</Text>
+            <View style={s.typeRow}>
+              {(['ANY', 'INTERCITY', 'INTRACITY'] as TripTypeFilter[]).map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  style={[s.typeBtn, tripTypeFilter === t && s.typeBtnActive]}
+                  onPress={() => setTripTypeFilter(t)}
+                >
+                  <Text style={[s.typeBtnText, tripTypeFilter === t && s.typeBtnTextActive]}>
+                    {t === 'ANY' ? 'Të gjitha' : t === 'INTERCITY' ? 'Mes qyteteve' : 'Brenda qytetit'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {from && to && (
+              <>
+                <Text style={s.fieldLabel}>Sa larg pranoj të eci?</Text>
+                <View style={s.radiusRow}>
+                  {RADIUS_OPTIONS.map((opt) => (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[s.radiusBtn, searchRadiusM === opt.value && s.radiusBtnActive]}
+                      onPress={() => setSearchRadiusM(opt.value)}
+                    >
+                      <Text
+                        style={[s.radiusBtnText, searchRadiusM === opt.value && s.radiusBtnTextActive]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
           </View>
           <View style={{ marginTop: 18 }}>
             <PrimaryButton label="Kërko udhëtime" icon="🔍" onPress={search} loading={loading} />
@@ -154,19 +211,14 @@ export default function Search() {
             <EmptyState
               icon={searched ? '🔍' : '🚗'}
               title={searchError ? 'Kërkimi dështoi' : searched ? 'Nuk u gjetën udhëtime' : 'Nuk ka udhëtime aktive'}
-              subtitle={searchError ?? (searched ? 'Provo me data ose qytete të ndryshme.' : 'Provo më vonë.')}
+              subtitle={searchError ?? (searched ? 'Provo me adresë ose rreze tjetër.' : 'Provo më vonë.')}
             />
           </View>
         )}
 
         {!loading &&
           (searched ? trips : allTrips.slice(0, 8)).map((trip) => (
-            <TouchableOpacity
-              key={trip.id}
-              style={s.tripCard}
-              onPress={() => router.push(`/udhetime/${trip.id}` as any)}
-              activeOpacity={0.85}
-            >
+            <TouchableOpacity key={trip.id} style={s.tripCard} onPress={() => openTrip(trip)} activeOpacity={0.85}>
               <View style={s.tripLeft}>
                 <View style={s.routeDots}>
                   <View style={s.dotPrimary} />
@@ -174,8 +226,12 @@ export default function Search() {
                   <View style={s.dotEnd} />
                 </View>
                 <View style={s.tripRoute}>
-                  <Text style={s.tripCity}>{trip.originCity.name}</Text>
-                  <Text style={s.tripCityDest}>{trip.destCity.name}</Text>
+                  <Text style={s.tripCity} numberOfLines={1}>
+                    {tripOriginText(trip)}
+                  </Text>
+                  <Text style={s.tripCityDest} numberOfLines={1}>
+                    {tripDestText(trip)}
+                  </Text>
                 </View>
               </View>
               <View style={s.tripRight}>
@@ -193,6 +249,9 @@ export default function Search() {
                 </Text>
                 <Text style={s.tripSeats}>
                   💺 {trip.seatsAvailable}/{trip.totalSeats}
+                  {trip.routeDistanceM != null && trip.routeDurationS != null
+                    ? ` · ${formatDistanceKm(trip.routeDistanceM)} · ${formatDurationMin(trip.routeDurationS)}`
+                    : ''}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -235,33 +294,35 @@ const s = StyleSheet.create({
   },
   statValue: { ...typography.h2, marginTop: 4 },
 
-  warn: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: 'rgba(245,158,11,0.15)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.3)',
-  },
-  warnText: { color: colors.warning, fontSize: 13 },
-
   filterCard: { marginHorizontal: 16, marginTop: 14 },
   cardLabel: { ...typography.label },
-  fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 12 },
-  picker: {
-    backgroundColor: colors.surfaceElevated,
+  fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 14 },
+
+  typeRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6 },
+  typeBtn: {
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    padding: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: colors.surfaceElevated,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  pickerValue: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  pickerPlaceholder: { color: colors.subtle, fontSize: 15 },
-  pickerArrow: { color: colors.subtle, fontSize: 22, fontWeight: '300' },
+  typeBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  typeBtnText: { fontSize: 13, color: colors.text, fontWeight: '600' },
+  typeBtnTextActive: { color: '#fff' },
+
+  radiusRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6 },
+  radiusBtn: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  radiusBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  radiusBtnText: { fontSize: 13, color: colors.text, fontWeight: '700' },
+  radiusBtnTextActive: { color: '#fff' },
 
   sectionHeader: {
     flexDirection: 'row',
@@ -302,9 +363,9 @@ const s = StyleSheet.create({
   tripCity: { ...typography.h3, fontSize: 16 },
   tripCityDest: { ...typography.h3, fontSize: 16, color: colors.textDim },
 
-  tripRight: { alignItems: 'flex-end' },
+  tripRight: { alignItems: 'flex-end', maxWidth: '40%' },
   tripPrice: { ...typography.h2, color: colors.primary, fontSize: 22 },
   tripPriceUnit: { fontSize: 13, color: colors.textDim, fontWeight: '700' },
   tripTime: { ...typography.caption, marginTop: 2, color: colors.textDim },
-  tripSeats: { ...typography.caption, marginTop: 2, fontSize: 11 },
+  tripSeats: { ...typography.caption, marginTop: 2, fontSize: 11, textAlign: 'right' },
 });

@@ -9,7 +9,14 @@ import { ErrorScreen, EmptyState } from '../../components/States';
 
 interface Conversation {
   tripId: string;
-  trip: { id: string; originCity: { name: string }; destCity: { name: string }; departureAt: string };
+  trip: {
+    id: string;
+    originCity?: { name: string } | null;
+    destCity?: { name: string } | null;
+    originLabel?: string | null;
+    destLabel?: string | null;
+    departureAt: string;
+  };
   otherUser: { id: string; firstName: string; lastName: string; avatarUrl: string | null };
   lastMessage: { content: string; createdAt: string; fromMe: boolean };
   unread: number;
@@ -106,7 +113,8 @@ export default function Mesazhet() {
                       <Text style={[s.time, isUnread && s.timeUnread]}>{formatTime(c.lastMessage.createdAt)}</Text>
                     </View>
                     <Text style={s.route} numberOfLines={1}>
-                      {c.trip.originCity.name} → {c.trip.destCity.name}
+                      {c.trip.originLabel ?? c.trip.originCity?.name ?? '?'} →{' '}
+                      {c.trip.destLabel ?? c.trip.destCity?.name ?? '?'}
                     </Text>
                     <View style={s.bottomRow}>
                       <Text style={[s.preview, isUnread && s.previewUnread]} numberOfLines={1}>

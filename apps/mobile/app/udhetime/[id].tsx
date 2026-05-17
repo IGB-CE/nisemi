@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import polyline from '@mapbox/polyline';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
@@ -24,9 +25,19 @@ import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { maybeShowInterstitialAfterBooking } from '../../lib/ads';
 import LiveTripMap from '../../components/LiveTripMap';
+import { formatDistanceKm, formatDurationMin } from '../../lib/directions';
 
 export default function TripDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{
+    id: string;
+    pickupLat?: string;
+    pickupLng?: string;
+    pickupLabel?: string;
+    dropoffLat?: string;
+    dropoffLng?: string;
+    dropoffLabel?: string;
+  }>();
+  const { id } = params;
   const { token, user } = useAuth();
   const dialog = useDialog();
   const insets = useSafeAreaInsets();
@@ -37,6 +48,20 @@ export default function TripDetail() {
   const [showReport, setShowReport] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reporting, setReporting] = useState(false);
+
+  const pickup = useMemo(() => {
+    if (params.pickupLat && params.pickupLng && params.pickupLabel) {
+      return { lat: Number(params.pickupLat), lng: Number(params.pickupLng), label: params.pickupLabel };
+    }
+    return null;
+  }, [params.pickupLat, params.pickupLng, params.pickupLabel]);
+
+  const dropoff = useMemo(() => {
+    if (params.dropoffLat && params.dropoffLng && params.dropoffLabel) {
+      return { lat: Number(params.dropoffLat), lng: Number(params.dropoffLng), label: params.dropoffLabel };
+    }
+    return null;
+  }, [params.dropoffLat, params.dropoffLng, params.dropoffLabel]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -57,7 +82,16 @@ export default function TripDetail() {
     }
     setBooking(true);
     try {
-      await api.post('/api/v1/reservations', { tripId: id, seats: 1 }, token);
+      const body: Record<string, unknown> = { tripId: id, seats: 1 };
+      if (pickup && dropoff) {
+        body.pickupLat = pickup.lat;
+        body.pickupLng = pickup.lng;
+        body.pickupLabel = pickup.label;
+        body.dropoffLat = dropoff.lat;
+        body.dropoffLng = dropoff.lng;
+        body.dropoffLabel = dropoff.label;
+      }
+      await api.post('/api/v1/reservations', body, token);
       await dialog.alert('Sukses', 'Rezervimi u dërgua. Prit konfirmimin e shoferit.');
       maybeShowInterstitialAfterBooking();
       router.push('/(tabs)/rezervimet');
@@ -80,6 +114,17 @@ export default function TripDetail() {
   const isOwnTrip = trip.driver.id === user?.id;
   const dp = trip.driver.driverProfile;
 
+  const originLat = trip.originLat ?? trip.originCity?.lat ?? null;
+  const originLng = trip.originLng ?? trip.originCity?.lng ?? null;
+  const destLat = trip.destLat ?? trip.destCity?.lat ?? null;
+  const destLng = trip.destLng ?? trip.destCity?.lng ?? null;
+  const originText = trip.originLabel ?? trip.originCity?.name ?? '';
+  const destText = trip.destLabel ?? trip.destCity?.name ?? '';
+
+  const routeCoords: { latitude: number; longitude: number }[] = trip.routePolyline
+    ? polyline.decode(trip.routePolyline).map(([lat, lng]: [number, number]) => ({ latitude: lat, longitude: lng }))
+    : [];
+
   const hasAcceptedReservation =
     user &&
     (trip.reservations ?? []).some(
@@ -88,10 +133,10 @@ export default function TripDetail() {
   const isLive =
     trip.status === 'IN_PROGRESS' &&
     !!token &&
-    trip.originCity.lat &&
-    trip.originCity.lng &&
-    trip.destCity.lat &&
-    trip.destCity.lng &&
+    originLat != null &&
+    originLng != null &&
+    destLat != null &&
+    destLng != null &&
     (hasAcceptedReservation || isOwnTrip);
 
   const statusLabel =
@@ -145,9 +190,13 @@ export default function TripDetail() {
           </TouchableOpacity>
           <Text style={s.brand}>NISEMI</Text>
           <View style={s.route}>
-            <Text style={s.city}>{trip.originCity.name}</Text>
+            <Text style={s.city} numberOfLines={2}>
+              {originText}
+            </Text>
             <Text style={s.arrow}>→</Text>
-            <Text style={s.city}>{trip.destCity.name}</Text>
+            <Text style={s.city} numberOfLines={2}>
+              {destText}
+            </Text>
           </View>
           <Text style={s.date}>
             {new Date(trip.departureAt).toLocaleDateString('sq-AL', {
@@ -159,6 +208,12 @@ export default function TripDetail() {
               minute: '2-digit',
             })}
           </Text>
+          {trip.routeDistanceM != null && trip.routeDurationS != null && (
+            <Text style={s.routeMeta}>
+              {trip.tripType === 'INTRACITY' ? '🏙️ Brenda qytetit' : '🛣️ Mes qyteteve'} ·{' '}
+              {formatDistanceKm(trip.routeDistanceM)} · {formatDurationMin(trip.routeDurationS)}
+            </Text>
+          )}
         </View>
 
         <View style={s.statGrid}>
@@ -193,20 +248,20 @@ export default function TripDetail() {
             <LiveTripMap
               tripId={trip.id}
               token={token!}
-              origin={{ lat: trip.originCity.lat, lng: trip.originCity.lng, name: trip.originCity.name }}
-              destination={{ lat: trip.destCity.lat, lng: trip.destCity.lng, name: trip.destCity.name }}
+              origin={{ lat: originLat!, lng: originLng!, name: originText }}
+              destination={{ lat: destLat!, lng: destLng!, name: destText }}
               onTripEnded={load}
             />
           </View>
-        ) : trip.originCity.lat && trip.originCity.lng && trip.destCity.lat && trip.destCity.lng ? (
+        ) : originLat != null && originLng != null && destLat != null && destLng != null ? (
           <View style={[s.cardFlush, { overflow: 'hidden' }]}>
             <MapView
               style={s.routeMap}
               initialRegion={{
-                latitude: (trip.originCity.lat + trip.destCity.lat) / 2,
-                longitude: (trip.originCity.lng + trip.destCity.lng) / 2,
-                latitudeDelta: Math.abs(trip.originCity.lat - trip.destCity.lat) * 2 + 0.5,
-                longitudeDelta: Math.abs(trip.originCity.lng - trip.destCity.lng) * 2 + 0.5,
+                latitude: (originLat + destLat) / 2,
+                longitude: (originLng + destLng) / 2,
+                latitudeDelta: Math.abs(originLat - destLat) * 2 + 0.05,
+                longitudeDelta: Math.abs(originLng - destLng) * 2 + 0.05,
               }}
               scrollEnabled={false}
               zoomEnabled={false}
@@ -214,26 +269,62 @@ export default function TripDetail() {
               rotateEnabled={false}
             >
               <Marker
-                coordinate={{ latitude: trip.originCity.lat, longitude: trip.originCity.lng }}
-                title={trip.originCity.name}
+                coordinate={{ latitude: originLat, longitude: originLng }}
+                title={originText}
                 pinColor={colors.success}
               />
               <Marker
-                coordinate={{ latitude: trip.destCity.lat, longitude: trip.destCity.lng }}
-                title={trip.destCity.name}
+                coordinate={{ latitude: destLat, longitude: destLng }}
+                title={destText}
                 pinColor={colors.primary}
               />
+              {pickup && (
+                <Marker
+                  coordinate={{ latitude: pickup.lat, longitude: pickup.lng }}
+                  title={`Marrja: ${pickup.label}`}
+                  pinColor={colors.warning}
+                />
+              )}
+              {dropoff && (
+                <Marker
+                  coordinate={{ latitude: dropoff.lat, longitude: dropoff.lng }}
+                  title={`Lëshimi: ${dropoff.label}`}
+                  pinColor={colors.warning}
+                />
+              )}
               <Polyline
-                coordinates={[
-                  { latitude: trip.originCity.lat, longitude: trip.originCity.lng },
-                  { latitude: trip.destCity.lat, longitude: trip.destCity.lng },
-                ]}
+                coordinates={
+                  routeCoords.length >= 2
+                    ? routeCoords
+                    : [
+                        { latitude: originLat, longitude: originLng },
+                        { latitude: destLat, longitude: destLng },
+                      ]
+                }
                 strokeColor={colors.primary}
-                strokeWidth={3}
+                strokeWidth={4}
               />
             </MapView>
           </View>
         ) : null}
+
+        {pickup && dropoff && (
+          <Card style={s.card}>
+            <Text style={s.cardLabel}>Marrja dhe lëshimi</Text>
+            <View style={s.pickupRow}>
+              <View style={[s.pickupDot, { backgroundColor: colors.warning }]} />
+              <Text style={s.pickupLabel} numberOfLines={2}>
+                {pickup.label}
+              </Text>
+            </View>
+            <View style={s.pickupRow}>
+              <View style={[s.pickupDot, { borderColor: colors.warning, backgroundColor: 'transparent', borderWidth: 2 }]} />
+              <Text style={s.pickupLabel} numberOfLines={2}>
+                {dropoff.label}
+              </Text>
+            </View>
+          </Card>
+        )}
 
         {dp?.carPhotoUrl && (
           <View style={[s.cardFlush, { overflow: 'hidden' }]}>
@@ -351,9 +442,10 @@ const s = StyleSheet.create({
   backText: { color: colors.textDim, fontSize: 14 },
   brand: { ...typography.label, color: colors.primary, fontSize: 10 },
   route: { flexDirection: 'row', alignItems: 'baseline', marginTop: 8, flexWrap: 'wrap' },
-  city: { ...typography.display, fontSize: 32, lineHeight: 36 },
-  arrow: { ...typography.h2, color: colors.primary, marginHorizontal: 10 },
+  city: { ...typography.h2, fontSize: 22, lineHeight: 26, flex: 1 },
+  arrow: { ...typography.h2, color: colors.primary, marginHorizontal: 8 },
   date: { ...typography.caption, marginTop: 6, color: colors.textDim },
+  routeMeta: { ...typography.caption, marginTop: 4, color: colors.textDim },
 
   statGrid: {
     flexDirection: 'row',
@@ -453,4 +545,8 @@ const s = StyleSheet.create({
     marginBottom: 16,
   },
   modalBtns: { flexDirection: 'row', gap: 10 },
+
+  pickupRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
+  pickupDot: { width: 10, height: 10, borderRadius: 5 },
+  pickupLabel: { ...typography.body, flex: 1 },
 });

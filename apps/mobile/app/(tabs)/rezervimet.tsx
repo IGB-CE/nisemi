@@ -178,8 +178,8 @@ export default function Rezervimet() {
                       <View style={s.dotEnd} />
                     </View>
                     <View style={s.routeBody}>
-                      <Text style={s.city}>{r.trip.originCity.name}</Text>
-                      <Text style={s.cityDest}>{r.trip.destCity.name}</Text>
+                      <Text style={s.city} numberOfLines={1}>{r.trip.originLabel ?? r.trip.originCity?.name ?? '?'}</Text>
+                      <Text style={s.cityDest} numberOfLines={1}>{r.trip.destLabel ?? r.trip.destCity?.name ?? '?'}</Text>
                     </View>
                     <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
                       <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>

@@ -131,12 +131,6 @@ router.get('/details', requireAuth, async (req, res) => {
   }
 });
 
-function parseDurationToSeconds(d: string | undefined): number {
-  if (!d) return 0;
-  const m = /^(\d+)s$/.exec(d);
-  return m ? Number(m[1]) : 0;
-}
-
 router.post('/directions', requireAuth, async (req, res) => {
   const body = z
     .object({
@@ -155,44 +149,40 @@ router.post('/directions', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not configured' });
     return;
   }
-  const reqBody = {
-    origin: { location: { latLng: { latitude: body.data.originLat, longitude: body.data.originLng } } },
-    destination: { location: { latLng: { latitude: body.data.destLat, longitude: body.data.destLng } } },
-    travelMode: 'DRIVE',
-    computeAlternativeRoutes: true,
-    languageCode: 'sq',
-    regionCode: 'AL',
-  };
-  const fieldMask = 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.description';
+  const params = new URLSearchParams({
+    origin: `${body.data.originLat},${body.data.originLng}`,
+    destination: `${body.data.destLat},${body.data.destLng}`,
+    alternatives: 'true',
+    region: 'al',
+    language: 'sq',
+    key,
+  });
+  const url = `https://maps.googleapis.com/maps/api/directions/json?${params.toString()}`;
   try {
-    const r = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': fieldMask,
-      },
-      body: JSON.stringify(reqBody),
-    });
+    const r = await fetch(url);
     const data = (await r.json()) as {
-      routes?: {
-        duration?: string;
-        distanceMeters?: number;
-        polyline?: { encodedPolyline?: string };
-        description?: string;
+      status: string;
+      routes: {
+        overview_polyline: { points: string };
+        legs: { distance: { value: number }; duration: { value: number } }[];
+        summary?: string;
       }[];
-      error?: { message?: string };
+      error_message?: string;
     };
-    if (!r.ok) {
-      res.status(502).json({ error: data.error?.message ?? `Routes API HTTP ${r.status}` });
+    if (data.status !== 'OK') {
+      res.status(502).json({ error: data.error_message ?? data.status });
       return;
     }
-    const routes = (data.routes ?? []).slice(0, 3).map((rt) => ({
-      polyline: rt.polyline?.encodedPolyline ?? '',
-      distanceM: rt.distanceMeters ?? 0,
-      durationS: parseDurationToSeconds(rt.duration),
-      summary: rt.description ?? '',
-    }));
+    const routes = data.routes.slice(0, 3).map((rt) => {
+      const distanceM = rt.legs.reduce((s, l) => s + l.distance.value, 0);
+      const durationS = rt.legs.reduce((s, l) => s + l.duration.value, 0);
+      return {
+        polyline: rt.overview_polyline.points,
+        distanceM,
+        durationS,
+        summary: rt.summary ?? '',
+      };
+    });
     res.json({ routes });
   } catch (e) {
     res.status(502).json({ error: (e as Error).message });

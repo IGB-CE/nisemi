@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { DialogProvider } from '../lib/dialog';
-import { registerPushToken } from '../lib/notifications';
+import { registerPushToken, setupNotificationTapHandler } from '../lib/notifications';
 import { bootstrapAds } from '../lib/ads';
 import '../lib/location';
 
@@ -25,6 +25,11 @@ function AdsBootstrap() {
   return null;
 }
 
+function NotificationTapHandler() {
+  useEffect(() => setupNotificationTapHandler(), []);
+  return null;
+}
+
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
@@ -33,6 +38,7 @@ export default function RootLayout() {
           <StatusBar style="light" />
           <PushRegistrar />
           <AdsBootstrap />
+          <NotificationTapHandler />
           <Stack screenOptions={{ headerShown: false }} />
         </DialogProvider>
       </AuthProvider>

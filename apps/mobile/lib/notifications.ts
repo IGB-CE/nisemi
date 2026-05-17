@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { router } from 'expo-router';
 import { api } from './api';
 
 Notifications.setNotificationHandler({
@@ -10,6 +11,16 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
   }),
 });
+
+export function setupNotificationTapHandler() {
+  const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+    const data = response.notification.request.content.data as { tripId?: string } | undefined;
+    if (data?.tripId) {
+      router.push(`/udhetime/${data.tripId}` as any);
+    }
+  });
+  return () => sub.remove();
+}
 
 export async function registerPushToken(authToken: string) {
   try {

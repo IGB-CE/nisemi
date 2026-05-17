@@ -214,6 +214,28 @@ export default function Search() {
               title={searchError ? 'Kërkimi dështoi' : searched ? 'Nuk u gjetën udhëtime' : 'Nuk ka udhëtime aktive'}
               subtitle={searchError ?? (searched ? 'Provo me adresë ose rreze tjetër.' : 'Provo më vonë.')}
             />
+            {searched && !searchError && from && to && token && (
+              <View style={{ marginHorizontal: 16, marginTop: 10 }}>
+                <PrimaryButton
+                  label="Më njofto kur publikohet"
+                  icon="🔔"
+                  onPress={() => {
+                    const qp: Record<string, string> = {
+                      originLat: String(from.lat),
+                      originLng: String(from.lng),
+                      originLabel: from.label,
+                      destLat: String(to.lat),
+                      destLng: String(to.lng),
+                      destLabel: to.label,
+                      searchRadiusM: String(searchRadiusM),
+                    };
+                    if (date) qp.date = date.toISOString();
+                    router.push({ pathname: '/njoftimet' as any, params: qp });
+                  }}
+                  variant="outline"
+                />
+              </View>
+            )}
           </View>
         )}
 

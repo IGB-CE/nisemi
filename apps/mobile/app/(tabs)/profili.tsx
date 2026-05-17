@@ -275,6 +275,15 @@ export default function Profili() {
         )}
 
         <Card style={s.section}>
+          <Text style={s.cardLabel}>Njoftimet</Text>
+          <TouchableOpacity style={s.legalRow} onPress={() => router.push('/njoftimet' as any)}>
+            <Text style={s.legalIcon}>🔔</Text>
+            <Text style={s.legalLabel}>Njoftimet e udhëtimeve</Text>
+            <Text style={s.legalChevron}>›</Text>
+          </TouchableOpacity>
+        </Card>
+
+        <Card style={s.section}>
           <Text style={s.cardLabel}>Të dhëna ligjore</Text>
           <TouchableOpacity style={s.legalRow} onPress={() => router.push('/policy/terms' as any)}>
             <Text style={s.legalIcon}>📄</Text>

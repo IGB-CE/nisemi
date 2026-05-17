@@ -5,6 +5,7 @@ import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { sendPushNotifications } from '../lib/push.js';
 import { endTripRoom } from '../realtime/index.js';
 import { matchesRoute, validatePolylineEndpoints } from '../lib/routeMatch.js';
+import { notifyMatchingAlerts } from '../lib/rideAlerts.js';
 
 const router = Router();
 
@@ -197,6 +198,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     },
     include: { originCity: true, destCity: true },
   });
+  notifyMatchingAlerts(trip.id).catch((e) => console.error('[rideAlert] notify failed', e));
   res.status(201).json(trip);
 });
 

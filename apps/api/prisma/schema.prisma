@@ -32,6 +32,29 @@ model User {
   reportsAgainst   Report[]       @relation("ReportsAgainst")
   messagesSent     Message[]      @relation("MessagesSent")
   messagesReceived Message[]      @relation("MessagesReceived")
+  rideAlerts       RideAlert[]
+}
+
+model RideAlert {
+  id              String    @id @default(cuid())
+  passengerId     String
+  passenger       User      @relation(fields: [passengerId], references: [id])
+  originLat       Float
+  originLng       Float
+  originLabel     String
+  destLat         Float
+  destLng         Float
+  destLabel       String
+  date            DateTime?
+  searchRadiusM   Int       @default(500)
+  tripType        TripType?
+  active          Boolean   @default(true)
+  expiresAt       DateTime
+  notifiedTripIds String[]  @default([])
+  createdAt       DateTime  @default(now())
+
+  @@index([passengerId, active])
+  @@index([active, expiresAt])
 }
 
 enum Role {

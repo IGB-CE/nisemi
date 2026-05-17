@@ -191,10 +191,10 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const departureAt = new Date(data.departureAt);
 
   if (!isAdmin(req.userRole)) {
-    const overlap = await driverHasOverlappingTrip(req.userId!, departureAt);
+    const overlap = await driverHasOverlappingTrip(req.userId!, departureAt, data.routeDurationS ?? null);
     if (overlap) {
       res.status(400).json({
-        error: 'Keni një udhëtim tjetër aktiv brenda 1 orë nga kjo orë nisjeje',
+        error: 'Keni një udhëtim tjetër aktiv që mbivendoset me këtë orë nisjeje',
       });
       return;
     }

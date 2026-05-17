@@ -79,17 +79,25 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   }
 
   if (!isAdmin(req.userRole)) {
-    const overlapRes = await passengerHasOverlappingReservation(req.userId!, trip.departureAt);
+    const overlapRes = await passengerHasOverlappingReservation(
+      req.userId!,
+      trip.departureAt,
+      trip.routeDurationS,
+    );
     if (overlapRes) {
       res.status(400).json({
-        error: 'Keni një rezervim tjetër aktiv brenda 1 orë nga kjo orë nisjeje',
+        error: 'Keni një rezervim tjetër aktiv që mbivendoset me këtë udhëtim',
       });
       return;
     }
-    const overlapOwn = await passengerHasOverlappingOwnTrip(req.userId!, trip.departureAt);
+    const overlapOwn = await passengerHasOverlappingOwnTrip(
+      req.userId!,
+      trip.departureAt,
+      trip.routeDurationS,
+    );
     if (overlapOwn) {
       res.status(400).json({
-        error: 'Keni një udhëtim të publikuar brenda 1 orë nga kjo orë nisjeje',
+        error: 'Keni një udhëtim të publikuar që mbivendoset me këtë udhëtim',
       });
       return;
     }

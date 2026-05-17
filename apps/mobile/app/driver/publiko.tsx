@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,36 +16,92 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
 import { colors, typography } from '../../lib/colors';
-import CityMapPicker, { type City } from '../../components/CityMapPicker';
 import DateTimeField from '../../components/DateTimeField';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import Card from '../../components/ui/Card';
+import PlacesAutocomplete from '../../components/PlacesAutocomplete';
+import RoutePicker from '../../components/RoutePicker';
+import { fetchDirections, formatDistanceKm, formatDurationMin, type RouteAlt } from '../../lib/directions';
+import type { PlaceDetail } from '../../lib/places';
+
+const DETOUR_OPTIONS = [
+  { value: 100, label: '100 m' },
+  { value: 300, label: '300 m' },
+  { value: 500, label: '500 m' },
+  { value: 1000, label: '1 km' },
+  { value: 2000, label: '2 km' },
+];
 
 export default function Publiko() {
   const { token } = useAuth();
   const dialog = useDialog();
   const insets = useSafeAreaInsets();
-  const [cities, setCities] = useState<City[]>([]);
-  const [form, setForm] = useState({ originCityId: '', destCityId: '', pricePerSeat: '', totalSeats: '3', notes: '' });
-  const [departureAt, setDepartureAt] = useState<Date | null>(null);
-  const [originCity, setOriginCity] = useState<City | null>(null);
-  const [destCity, setDestCity] = useState<City | null>(null);
-  const [showFrom, setShowFrom] = useState(false);
-  const [showTo, setShowTo] = useState(false);
-  const [saving, setSaving] = useState(false);
+
+  const [origin, setOrigin] = useState<PlaceDetail | null>(null);
+  const [dest, setDest] = useState<PlaceDetail | null>(null);
+  const [routes, setRoutes] = useState<RouteAlt[]>([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [routesLoading, setRoutesLoading] = useState(false);
+  const [routesError, setRoutesError] = useState<string | null>(null);
+
+  const tripType = useMemo<'INTRACITY' | 'INTERCITY'>(() => {
+    if (origin?.cityName && dest?.cityName && origin.cityName === dest.cityName) return 'INTRACITY';
+    return 'INTERCITY';
+  }, [origin, dest]);
+
+  const [maxDetourM, setMaxDetourM] = useState(500);
 
   useEffect(() => {
-    api
-      .get<City[]>('/api/v1/cities')
-      .then(setCities)
-      .catch(() => {});
-  }, []);
+    setMaxDetourM(tripType === 'INTRACITY' ? 200 : 500);
+  }, [tripType]);
 
-  const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  useEffect(() => {
+    if (!origin || !dest) {
+      setRoutes([]);
+      setRoutesError(null);
+      return;
+    }
+    let cancelled = false;
+    setRoutesLoading(true);
+    setRoutesError(null);
+    fetchDirections({ lat: origin.lat, lng: origin.lng }, { lat: dest.lat, lng: dest.lng }, token ?? undefined)
+      .then((r) => {
+        if (cancelled) return;
+        setRoutes(r);
+        setSelectedRouteIndex(0);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setRoutesError(e.message ?? 'Nuk u gjet rrugë');
+        setRoutes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRoutesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [origin, dest, token]);
+
+  const [departureAt, setDepartureAt] = useState<Date | null>(null);
+  const [pricePerSeat, setPricePerSeat] = useState('');
+  const [totalSeats, setTotalSeats] = useState('3');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const selectedRoute = routes[selectedRouteIndex];
 
   const publish = async () => {
-    if (!form.originCityId || !form.destCityId || !departureAt || !form.pricePerSeat) {
-      await dialog.alert('Gabim', 'Plotëso të gjitha fushat e detyrueshme');
+    if (!origin || !dest) {
+      await dialog.alert('Gabim', 'Zgjidhni adresën e nisjes dhe destinacionin');
+      return;
+    }
+    if (!selectedRoute) {
+      await dialog.alert('Gabim', 'Zgjidhni një rrugë');
+      return;
+    }
+    if (!departureAt || !pricePerSeat) {
+      await dialog.alert('Gabim', 'Plotëso datën dhe çmimin');
       return;
     }
     setSaving(true);
@@ -52,12 +109,22 @@ export default function Publiko() {
       await api.post(
         '/api/v1/trips',
         {
-          originCityId: form.originCityId,
-          destCityId: form.destCityId,
-          departureAt: departureAt!.toISOString(),
-          pricePerSeat: Number(form.pricePerSeat),
-          totalSeats: Number(form.totalSeats),
-          notes: form.notes || undefined,
+          originLat: origin.lat,
+          originLng: origin.lng,
+          originLabel: origin.label,
+          destLat: dest.lat,
+          destLng: dest.lng,
+          destLabel: dest.label,
+          routePolyline: selectedRoute.polyline,
+          routeDistanceM: selectedRoute.distanceM,
+          routeDurationS: selectedRoute.durationS,
+          routeAltIndex: selectedRouteIndex,
+          tripType,
+          maxDetourM,
+          departureAt: departureAt.toISOString(),
+          pricePerSeat: Number(pricePerSeat),
+          totalSeats: Number(totalSeats),
+          notes: notes || undefined,
         },
         token ?? undefined,
       );
@@ -75,30 +142,10 @@ export default function Publiko() {
       style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <CityMapPicker
-        visible={showFrom}
-        cities={cities}
-        onSelect={(c) => {
-          setOriginCity(c);
-          setForm((f) => ({ ...f, originCityId: c.id }));
-        }}
-        onClose={() => setShowFrom(false)}
-        title="Qyteti i nisjes"
-      />
-      <CityMapPicker
-        visible={showTo}
-        cities={cities}
-        onSelect={(c) => {
-          setDestCity(c);
-          setForm((f) => ({ ...f, destCityId: c.id }));
-        }}
-        onClose={() => setShowTo(false)}
-        title="Destinacioni"
-      />
-
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={s.headerWrap}>
           <TouchableOpacity onPress={() => router.back()} style={s.back}>
@@ -109,23 +156,75 @@ export default function Publiko() {
         </View>
 
         <Card style={s.card}>
-          <Text style={s.cardLabel}>Rruga</Text>
+          <Text style={s.cardLabel}>Adresat</Text>
           <Text style={s.fieldLabel}>Nga *</Text>
-          <TouchableOpacity style={s.picker} onPress={() => setShowFrom(true)}>
-            <Text style={originCity ? s.pickerValue : s.pickerPlaceholder}>
-              {originCity?.name ?? 'Zgjidhni qytetin e nisjes'}
-            </Text>
-            <Text style={s.pickerArrow}>›</Text>
-          </TouchableOpacity>
+          <PlacesAutocomplete
+            value={origin}
+            onChange={setOrigin}
+            placeholder="Adresa e nisjes"
+            token={token ?? undefined}
+          />
 
           <Text style={s.fieldLabel}>Deri *</Text>
-          <TouchableOpacity style={s.picker} onPress={() => setShowTo(true)}>
-            <Text style={destCity ? s.pickerValue : s.pickerPlaceholder}>
-              {destCity?.name ?? 'Zgjidhni destinacionin'}
-            </Text>
-            <Text style={s.pickerArrow}>›</Text>
-          </TouchableOpacity>
+          <PlacesAutocomplete
+            value={dest}
+            onChange={setDest}
+            placeholder="Adresa e destinacionit"
+            token={token ?? undefined}
+          />
+
+          {origin && dest && (
+            <View style={s.typePill}>
+              <Text style={s.typePillText}>
+                {tripType === 'INTRACITY' ? '🏙️ Brenda qytetit' : '🛣️ Mes qyteteve'}
+              </Text>
+            </View>
+          )}
         </Card>
+
+        {origin && dest && (
+          <Card style={s.card}>
+            <Text style={s.cardLabel}>Rruga</Text>
+            {routesLoading ? (
+              <View style={s.center}>
+                <ActivityIndicator color={colors.primary} />
+                <Text style={s.hint}>Po ngarkohen rrugët…</Text>
+              </View>
+            ) : routesError ? (
+              <Text style={s.error}>{routesError}</Text>
+            ) : routes.length === 0 ? (
+              <Text style={s.hint}>Nuk u gjet rrugë midis këtyre dy pikave.</Text>
+            ) : (
+              <RoutePicker
+                origin={{ lat: origin.lat, lng: origin.lng }}
+                dest={{ lat: dest.lat, lng: dest.lng }}
+                routes={routes}
+                selectedIndex={selectedRouteIndex}
+                onSelect={setSelectedRouteIndex}
+              />
+            )}
+          </Card>
+        )}
+
+        {origin && dest && routes.length > 0 && (
+          <Card style={s.card}>
+            <Text style={s.cardLabel}>Sa larg pranoj pasagjerë?</Text>
+            <Text style={s.hint}>Sa larg nga rruga jeni gati të devijoni për t&apos;i marrë pasagjerët.</Text>
+            <View style={s.detourRow}>
+              {DETOUR_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[s.detourBtn, maxDetourM === opt.value && s.detourBtnActive]}
+                  onPress={() => setMaxDetourM(opt.value)}
+                >
+                  <Text style={[s.detourBtnText, maxDetourM === opt.value && s.detourBtnTextActive]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Card>
+        )}
 
         <Card style={s.card}>
           <Text style={s.cardLabel}>Ora dhe çmimi</Text>
@@ -141,11 +240,16 @@ export default function Publiko() {
           <TextInput
             style={s.input}
             placeholder="1000"
-            value={form.pricePerSeat}
-            onChangeText={set('pricePerSeat')}
+            value={pricePerSeat}
+            onChangeText={setPricePerSeat}
             keyboardType="numeric"
             placeholderTextColor={colors.subtle}
           />
+          {selectedRoute && (
+            <Text style={s.hint}>
+              Distanca: {formatDistanceKm(selectedRoute.distanceM)} · Kohë: {formatDurationMin(selectedRoute.durationS)}
+            </Text>
+          )}
         </Card>
 
         <Card style={s.card}>
@@ -154,10 +258,10 @@ export default function Publiko() {
             {['1', '2', '3', '4', '5', '6', '7', '8'].map((n) => (
               <TouchableOpacity
                 key={n}
-                style={[s.seatBtn, form.totalSeats === n && s.seatBtnActive]}
-                onPress={() => set('totalSeats')(n)}
+                style={[s.seatBtn, totalSeats === n && s.seatBtnActive]}
+                onPress={() => setTotalSeats(n)}
               >
-                <Text style={[s.seatBtnText, form.totalSeats === n && s.seatBtnTextActive]}>{n}</Text>
+                <Text style={[s.seatBtnText, totalSeats === n && s.seatBtnTextActive]}>{n}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -168,8 +272,8 @@ export default function Publiko() {
           <TextInput
             style={[s.input, { height: 90, textAlignVertical: 'top' }]}
             placeholder="P.sh. takimi te stacioni, bagazh i kufizuar..."
-            value={form.notes}
-            onChangeText={set('notes')}
+            value={notes}
+            onChangeText={setNotes}
             multiline
             placeholderTextColor={colors.subtle}
           />
@@ -193,19 +297,6 @@ const s = StyleSheet.create({
   card: { marginHorizontal: 16, marginTop: 14 },
   cardLabel: { ...typography.label },
   fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 14 },
-  picker: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  pickerValue: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  pickerPlaceholder: { color: colors.subtle, fontSize: 15 },
-  pickerArrow: { color: colors.subtle, fontSize: 22, fontWeight: '300' },
   input: {
     backgroundColor: colors.surfaceElevated,
     borderWidth: 1,
@@ -216,6 +307,34 @@ const s = StyleSheet.create({
     color: colors.text,
     marginTop: 6,
   },
+  hint: { ...typography.caption, marginTop: 8 },
+  error: { ...typography.caption, color: colors.danger, marginTop: 8 },
+  center: { alignItems: 'center', paddingVertical: 16 },
+
+  typePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 14,
+  },
+  typePillText: { ...typography.caption, color: colors.text, fontWeight: '600' },
+
+  detourRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 12 },
+  detourBtn: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  detourBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  detourBtnText: { fontSize: 14, color: colors.text, fontWeight: '700' },
+  detourBtnTextActive: { color: '#fff' },
 
   seatRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 14 },
   seatBtn: {

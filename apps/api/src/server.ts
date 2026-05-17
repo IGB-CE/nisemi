@@ -16,6 +16,7 @@ import pushTokensRouter from './routes/push-tokens.js';
 import reportsRouter from './routes/reports.js';
 import messagesRouter from './routes/messages.js';
 import policiesRouter from './routes/policies.js';
+import placesRouter from './routes/places.js';
 import { attachRealtime } from './realtime/index.js';
 
 const app = express();
@@ -51,6 +52,7 @@ app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/push-tokens', pushTokensRouter);
 app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/messages', messagesRouter);
+app.use('/api/v1/places', placesRouter);
 
 const httpServer = createServer(app);
 attachRealtime(httpServer);

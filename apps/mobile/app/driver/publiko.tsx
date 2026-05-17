@@ -39,6 +39,9 @@ export default function Publiko() {
 
   const [origin, setOrigin] = useState<PlaceDetail | null>(null);
   const [dest, setDest] = useState<PlaceDetail | null>(null);
+  const [waypoints, setWaypoints] = useState<PlaceDetail[]>([]);
+  const [showAddWaypoint, setShowAddWaypoint] = useState(false);
+  const [pendingWaypoint, setPendingWaypoint] = useState<PlaceDetail | null>(null);
   const [routes, setRoutes] = useState<RouteAlt[]>([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [routesLoading, setRoutesLoading] = useState(false);
@@ -64,7 +67,12 @@ export default function Publiko() {
     let cancelled = false;
     setRoutesLoading(true);
     setRoutesError(null);
-    fetchDirections({ lat: origin.lat, lng: origin.lng }, { lat: dest.lat, lng: dest.lng }, token ?? undefined)
+    fetchDirections(
+      { lat: origin.lat, lng: origin.lng },
+      { lat: dest.lat, lng: dest.lng },
+      token ?? undefined,
+      waypoints.map((w) => ({ lat: w.lat, lng: w.lng })),
+    )
       .then((r) => {
         if (cancelled) return;
         setRoutes(r);
@@ -81,7 +89,7 @@ export default function Publiko() {
     return () => {
       cancelled = true;
     };
-  }, [origin, dest, token]);
+  }, [origin, dest, token, waypoints]);
 
   const [departureAt, setDepartureAt] = useState<Date | null>(null);
   const [pricePerSeat, setPricePerSeat] = useState('');
@@ -202,6 +210,60 @@ export default function Publiko() {
                 selectedIndex={selectedRouteIndex}
                 onSelect={setSelectedRouteIndex}
               />
+            )}
+
+            {routes.length > 0 && (
+              <View style={s.waypointBlock}>
+                <Text style={s.hint}>
+                  {waypoints.length === 0
+                    ? 'Nëse dëshironi që rruga të kalojë nga një rrugë e caktuar, shtoni një pikë.'
+                    : `${waypoints.length} pikë në rrugë`}
+                </Text>
+                {waypoints.map((w, i) => (
+                  <View key={i} style={s.waypointChip}>
+                    <Text style={s.waypointChipText} numberOfLines={1}>
+                      📍 {w.label}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => setWaypoints((prev) => prev.filter((_, idx) => idx !== i))}
+                      hitSlop={10}
+                    >
+                      <Text style={s.waypointChipRemove}>×</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {showAddWaypoint ? (
+                  <View style={{ marginTop: 10 }}>
+                    <PlacesAutocomplete
+                      value={pendingWaypoint}
+                      onChange={(detail) => {
+                        if (detail) {
+                          setWaypoints((prev) => [...prev, detail]);
+                          setPendingWaypoint(null);
+                          setShowAddWaypoint(false);
+                        }
+                      }}
+                      placeholder="Rruga ose vendi nga ku do të kaloni"
+                      token={token ?? undefined}
+                    />
+                    <TouchableOpacity
+                      style={s.waypointCancel}
+                      onPress={() => {
+                        setShowAddWaypoint(false);
+                        setPendingWaypoint(null);
+                      }}
+                    >
+                      <Text style={s.waypointCancelText}>Anulo</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  waypoints.length < 5 && (
+                    <TouchableOpacity style={s.addWaypointBtn} onPress={() => setShowAddWaypoint(true)}>
+                      <Text style={s.addWaypointText}>+ Shto pikë në rrugë</Text>
+                    </TouchableOpacity>
+                  )
+                )}
+              </View>
             )}
           </Card>
         )}
@@ -335,6 +397,33 @@ const s = StyleSheet.create({
   detourBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   detourBtnText: { fontSize: 14, color: colors.text, fontWeight: '700' },
   detourBtnTextActive: { color: '#fff' },
+
+  waypointBlock: { marginTop: 14, gap: 8 },
+  waypointChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  waypointChipText: { flex: 1, ...typography.body, fontSize: 13 },
+  waypointChipRemove: { color: colors.subtle, fontSize: 20, fontWeight: '300', paddingHorizontal: 6 },
+  addWaypointBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+  },
+  addWaypointText: { color: colors.subtle, fontSize: 13, fontWeight: '600' },
+  waypointCancel: { marginTop: 8, alignItems: 'center' },
+  waypointCancelText: { color: colors.subtle, fontSize: 12 },
 
   seatRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 14 },
   seatBtn: {

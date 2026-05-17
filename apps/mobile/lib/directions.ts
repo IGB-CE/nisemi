@@ -11,6 +11,7 @@ export async function fetchDirections(
   origin: { lat: number; lng: number },
   dest: { lat: number; lng: number },
   token: string | undefined,
+  waypoints?: { lat: number; lng: number }[],
 ): Promise<RouteAlt[]> {
   const res = await api.post<{ routes: RouteAlt[] }>(
     '/api/v1/places/directions',
@@ -19,6 +20,7 @@ export async function fetchDirections(
       originLng: origin.lng,
       destLat: dest.lat,
       destLng: dest.lng,
+      ...(waypoints && waypoints.length > 0 ? { waypoints } : {}),
     },
     token,
   );

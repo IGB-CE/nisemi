@@ -138,6 +138,15 @@ router.post('/directions', requireAuth, async (req, res) => {
       originLng: z.number().min(-180).max(180),
       destLat: z.number().min(-90).max(90),
       destLng: z.number().min(-180).max(180),
+      waypoints: z
+        .array(
+          z.object({
+            lat: z.number().min(-90).max(90),
+            lng: z.number().min(-180).max(180),
+          }),
+        )
+        .max(5)
+        .optional(),
     })
     .safeParse(req.body);
   if (!body.success) {
@@ -157,6 +166,10 @@ router.post('/directions', requireAuth, async (req, res) => {
     language: 'sq',
     key,
   });
+  if (body.data.waypoints && body.data.waypoints.length > 0) {
+    const wp = body.data.waypoints.map((w) => `via:${w.lat},${w.lng}`).join('|');
+    params.set('waypoints', wp);
+  }
   const url = `https://maps.googleapis.com/maps/api/directions/json?${params.toString()}`;
   try {
     const r = await fetch(url);

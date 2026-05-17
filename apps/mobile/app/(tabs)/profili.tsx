@@ -325,6 +325,12 @@ export default function Profili() {
             <Text style={s.legalLabel}>Njoftimet e udhëtimeve</Text>
             <Text style={s.legalChevron}>›</Text>
           </TouchableOpacity>
+          <View style={s.divider} />
+          <TouchableOpacity style={s.legalRow} onPress={() => router.push('/bllokuar' as any)}>
+            <Text style={s.legalIcon}>🚫</Text>
+            <Text style={s.legalLabel}>Përdoruesit e bllokuar</Text>
+            <Text style={s.legalChevron}>›</Text>
+          </TouchableOpacity>
         </Card>
 
         <Card style={s.section}>

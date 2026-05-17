@@ -15,6 +15,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { colors } from '../../../lib/colors';
+import { useDialog } from '../../../lib/dialog';
+import { blocks as blocksApi } from '../../../lib/blocks';
 
 interface Message {
   id: string;
@@ -30,12 +32,31 @@ export default function Chat() {
   const { tripId, userId } = useLocalSearchParams<{ tripId: string; userId: string }>();
   const { token, user } = useAuth();
   const insets = useSafeAreaInsets();
+  const dialog = useDialog();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [otherUser, setOtherUser] = useState<{ firstName: string; lastName: string } | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+
+  const blockUser = async () => {
+    if (!token || !userId) return;
+    const name = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'këtë përdorues';
+    const ok = await dialog.confirm(
+      `Bllokoni ${name}?`,
+      'Nuk do të merrni më mesazhe prej tij. Mund ta zhblloko në çdo kohë nga profili.',
+      'Bllokoj',
+      true,
+    );
+    if (!ok) return;
+    try {
+      await blocksApi.create(userId as string, token);
+      await dialog.alert('U bllokua', `${name} është bllokuar.`);
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    }
+  };
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -94,7 +115,9 @@ export default function Chat() {
           <Text style={s.backText}>←</Text>
         </TouchableOpacity>
         <Text style={s.headerTitle}>{otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'Bisedë'}</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={blockUser} style={s.headerAction} hitSlop={8}>
+          <Text style={s.headerActionText}>🚫</Text>
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView
@@ -172,6 +195,8 @@ const s = StyleSheet.create({
   },
   back: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: colors.text },
+  headerAction: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  headerActionText: { fontSize: 18 },
   headerTitle: { fontSize: 17, fontWeight: '700', color: colors.text, flex: 1, textAlign: 'center' },
   list: { flex: 1 },
   empty: { alignItems: 'center', paddingTop: 80 },

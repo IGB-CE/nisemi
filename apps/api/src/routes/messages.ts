@@ -6,6 +6,25 @@ import { sendPushNotifications } from '../lib/push.js';
 
 const router = Router();
 
+async function getBlockedSenderCutoffs(blockerId: string): Promise<Map<string, Date>> {
+  const blocks = await prisma.block.findMany({
+    where: { blockerId },
+    select: { blockedId: true, createdAt: true },
+  });
+  return new Map(blocks.map((b) => [b.blockedId, b.createdAt]));
+}
+
+function messageVisibleTo(
+  msg: { senderId: string; createdAt: Date },
+  viewerId: string,
+  blockCutoffs: Map<string, Date>,
+): boolean {
+  if (msg.senderId === viewerId) return true;
+  const blockedAt = blockCutoffs.get(msg.senderId);
+  if (!blockedAt) return true;
+  return msg.createdAt < blockedAt;
+}
+
 const sendSchema = z.object({
   tripId: z.string(),
   receiverId: z.string(),
@@ -56,18 +75,25 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     data: { tripId, senderId: req.userId!, receiverId, content: content.trim() },
   });
 
-  const tokens = await prisma.pushToken.findMany({ where: { userId: receiverId }, select: { token: true } });
-  void sendPushNotifications(
-    tokens.map((t) => t.token),
-    `${sender?.firstName ?? 'Mesazh i ri'} ${sender?.lastName ?? ''}`.trim() + ' 💬',
-    `${trip.originCity?.name ?? trip.originLabel ?? 'Origjina'} → ${trip.destCity?.name ?? trip.destLabel ?? 'Destinacioni'}: ${content.slice(0, 80)}`,
-  );
+  const receiverBlock = await prisma.block.findUnique({
+    where: { blockerId_blockedId: { blockerId: receiverId, blockedId: req.userId! } },
+    select: { id: true },
+  });
+  if (!receiverBlock) {
+    const tokens = await prisma.pushToken.findMany({ where: { userId: receiverId }, select: { token: true } });
+    void sendPushNotifications(
+      tokens.map((t) => t.token),
+      `${sender?.firstName ?? 'Mesazh i ri'} ${sender?.lastName ?? ''}`.trim() + ' 💬',
+      `${trip.originCity?.name ?? trip.originLabel ?? 'Origjina'} → ${trip.destCity?.name ?? trip.destLabel ?? 'Destinacioni'}: ${content.slice(0, 80)}`,
+    );
+  }
 
   res.status(201).json(message);
 });
 
 router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.userId!;
+  const blockCutoffs = await getBlockedSenderCutoffs(userId);
 
   const messages = await prisma.message.findMany({
     where: { OR: [{ senderId: userId }, { receiverId: userId }] },
@@ -86,15 +112,24 @@ router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
     },
   });
 
+  const visible = messages.filter((m) => messageVisibleTo(m, userId, blockCutoffs));
+
   const seen = new Set<string>();
   const conversations: any[] = [];
-  for (const m of messages) {
+  for (const m of visible) {
     const other = m.senderId === userId ? m.receiver : m.sender;
     const key = `${m.tripId}|${other.id}`;
     if (seen.has(key)) continue;
     seen.add(key);
+    const blockedAt = blockCutoffs.get(other.id);
     const unread = await prisma.message.count({
-      where: { tripId: m.tripId, senderId: other.id, receiverId: userId, read: false },
+      where: {
+        tripId: m.tripId,
+        senderId: other.id,
+        receiverId: userId,
+        read: false,
+        ...(blockedAt ? { createdAt: { lt: blockedAt } } : {}),
+      },
     });
     conversations.push({
       tripId: m.tripId,
@@ -111,20 +146,28 @@ router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
 router.get('/trip/:tripId/with/:userId', requireAuth, async (req: AuthRequest, res) => {
   const me = req.userId!;
   const { tripId, userId: other } = req.params;
+  const blockCutoffs = await getBlockedSenderCutoffs(me);
+  const blockedAt = blockCutoffs.get(other as string);
 
   const messages = await prisma.message.findMany({
     where: {
       tripId,
       OR: [
         { senderId: me, receiverId: other },
-        { senderId: other, receiverId: me },
+        { senderId: other, receiverId: me, ...(blockedAt ? { createdAt: { lt: blockedAt } } : {}) },
       ],
     },
     orderBy: { createdAt: 'asc' },
   });
 
   await prisma.message.updateMany({
-    where: { tripId, senderId: other, receiverId: me, read: false },
+    where: {
+      tripId,
+      senderId: other,
+      receiverId: me,
+      read: false,
+      ...(blockedAt ? { createdAt: { lt: blockedAt } } : {}),
+    },
     data: { read: true },
   });
 
@@ -132,7 +175,19 @@ router.get('/trip/:tripId/with/:userId', requireAuth, async (req: AuthRequest, r
 });
 
 router.get('/unread-count', requireAuth, async (req: AuthRequest, res) => {
-  const count = await prisma.message.count({ where: { receiverId: req.userId, read: false } });
+  const me = req.userId!;
+  const blockCutoffs = await getBlockedSenderCutoffs(me);
+  if (blockCutoffs.size === 0) {
+    const count = await prisma.message.count({ where: { receiverId: me, read: false } });
+    res.json({ count });
+    return;
+  }
+  const all = await prisma.message.findMany({
+    where: { receiverId: me, read: false },
+    select: { senderId: true, createdAt: true },
+  });
+  const count = all.filter((m) => messageVisibleTo({ senderId: m.senderId, createdAt: m.createdAt }, me, blockCutoffs))
+    .length;
   res.json({ count });
 });
 

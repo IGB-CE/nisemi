@@ -18,6 +18,7 @@ import messagesRouter from './routes/messages.js';
 import policiesRouter from './routes/policies.js';
 import placesRouter from './routes/places.js';
 import rideAlertsRouter from './routes/ride-alerts.js';
+import blocksRouter from './routes/blocks.js';
 import { attachRealtime } from './realtime/index.js';
 
 const app = express();
@@ -55,6 +56,7 @@ app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/messages', messagesRouter);
 app.use('/api/v1/places', placesRouter);
 app.use('/api/v1/ride-alerts', rideAlertsRouter);
+app.use('/api/v1/blocks', blocksRouter);
 
 const httpServer = createServer(app);
 attachRealtime(httpServer);

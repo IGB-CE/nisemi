@@ -34,6 +34,20 @@ model User {
   messagesSent     Message[]      @relation("MessagesSent")
   messagesReceived Message[]      @relation("MessagesReceived")
   rideAlerts       RideAlert[]
+  blocksMade       Block[]        @relation("BlocksMade")
+  blocksReceived   Block[]        @relation("BlocksReceived")
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   User     @relation("BlocksMade", fields: [blockerId], references: [id])
+  blockedId String
+  blocked   User     @relation("BlocksReceived", fields: [blockedId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
 }
 
 model RideAlert {

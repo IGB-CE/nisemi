@@ -26,6 +26,7 @@ import PrimaryButton from '../../components/ui/PrimaryButton';
 import { maybeShowInterstitialAfterBooking } from '../../lib/ads';
 import LiveTripMap from '../../components/LiveTripMap';
 import { formatDistanceKm, formatDurationMin } from '../../lib/directions';
+import { blocks as blocksApi } from '../../lib/blocks';
 
 export default function TripDetail() {
   const params = useLocalSearchParams<{
@@ -382,9 +383,31 @@ export default function TripDetail() {
             </View>
           )}
           {token && !isOwnTrip && (
-            <TouchableOpacity style={s.reportLink} onPress={() => setShowReport(true)}>
-              <Text style={s.reportLinkText}>⚠️ Raporto shoferin</Text>
-            </TouchableOpacity>
+            <View style={s.profileActions}>
+              <TouchableOpacity
+                onPress={async () => {
+                  if (!token) return;
+                  const ok = await dialog.confirm(
+                    `Bllokoni ${trip.driver.firstName} ${trip.driver.lastName}?`,
+                    'Nuk do të merrni më mesazhe prej tij. Mund ta zhblloko nga profili.',
+                    'Bllokoj',
+                    true,
+                  );
+                  if (!ok) return;
+                  try {
+                    await blocksApi.create(trip.driver.id, token);
+                    await dialog.alert('U bllokua', 'Përdoruesi u bllokua.');
+                  } catch (e: any) {
+                    await dialog.alert('Gabim', e.message);
+                  }
+                }}
+              >
+                <Text style={s.reportLinkText}>🚫 Bllokoj</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowReport(true)}>
+                <Text style={s.reportLinkText}>⚠️ Raporto shoferin</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </Card>
 
@@ -513,6 +536,7 @@ const s = StyleSheet.create({
 
   reportLink: { marginTop: 14, alignItems: 'flex-end' },
   reportLinkText: { color: colors.subtle, fontSize: 12 },
+  profileActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
 
   fullBanner: {
     marginHorizontal: 16,

@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator 
 import { colors, typography } from '../lib/colors';
 import {
   autocompletePlaces,
+  getCurrentLocationAsPlace,
   newSessionToken,
   placeDetails,
   type PlaceDetail,
@@ -14,15 +15,40 @@ interface Props {
   onChange: (value: PlaceDetail | null) => void;
   placeholder: string;
   token: string | undefined;
+  showCurrentLocation?: boolean;
+  onError?: (message: string) => void;
 }
 
-export default function PlacesAutocomplete({ value, onChange, placeholder, token }: Props) {
+export default function PlacesAutocomplete({
+  value,
+  onChange,
+  placeholder,
+  token,
+  showCurrentLocation,
+  onError,
+}: Props) {
   const [query, setQuery] = useState(value?.label ?? '');
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [focused, setFocused] = useState(false);
   const sessionTokenRef = useRef(newSessionToken());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const useCurrentLocation = async () => {
+    setLocating(true);
+    try {
+      const detail = await getCurrentLocationAsPlace();
+      onChange(detail);
+      setQuery(detail.label);
+      setPredictions([]);
+      setFocused(false);
+    } catch (e: any) {
+      onError?.(e.message ?? 'Nuk u mor dot vendndodhja');
+    } finally {
+      setLocating(false);
+    }
+  };
 
   useEffect(() => {
     if (!focused) return;
@@ -94,6 +120,15 @@ export default function PlacesAutocomplete({ value, onChange, placeholder, token
           </TouchableOpacity>
         ) : null}
       </View>
+      {showCurrentLocation && !value && (
+        <TouchableOpacity style={s.locBtn} onPress={useCurrentLocation} disabled={locating}>
+          {locating ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Text style={s.locBtnText}>📍 Përdor vendndodhjen aktuale</Text>
+          )}
+        </TouchableOpacity>
+      )}
       {focused && predictions.length > 0 && (
         <View style={s.dropdown}>
           {predictions.map((p) => (
@@ -143,4 +178,15 @@ const s = StyleSheet.create({
   },
   rowMain: { ...typography.body, fontWeight: '600' },
   rowSecondary: { ...typography.caption, marginTop: 2 },
+  locBtn: {
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+  },
+  locBtnText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
 });

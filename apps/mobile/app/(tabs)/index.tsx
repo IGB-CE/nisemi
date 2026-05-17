@@ -145,6 +145,7 @@ export default function Search() {
               onChange={setFrom}
               placeholder="Adresa e nisjes"
               token={token ?? undefined}
+              showCurrentLocation
             />
 
             <Text style={s.fieldLabel}>Deri</Text>

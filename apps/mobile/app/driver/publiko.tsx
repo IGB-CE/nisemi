@@ -171,6 +171,8 @@ export default function Publiko() {
             onChange={setOrigin}
             placeholder="Adresa e nisjes"
             token={token ?? undefined}
+            showCurrentLocation
+            onError={(msg) => dialog.alert('Vendndodhja', msg)}
           />
 
           <Text style={s.fieldLabel}>Deri *</Text>

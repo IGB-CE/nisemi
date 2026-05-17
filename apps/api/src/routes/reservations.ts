@@ -4,6 +4,12 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { sendPushNotifications } from '../lib/push.js';
 import { matchesRoute } from '../lib/routeMatch.js';
+import {
+  isAdmin,
+  isWithinCancelWindow,
+  passengerHasOverlappingOwnTrip,
+  passengerHasOverlappingReservation,
+} from '../lib/tripRules.js';
 
 const router = Router();
 
@@ -70,6 +76,23 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   if (existing) {
     res.status(409).json({ error: 'Already have an active reservation for this trip' });
     return;
+  }
+
+  if (!isAdmin(req.userRole)) {
+    const overlapRes = await passengerHasOverlappingReservation(req.userId!, trip.departureAt);
+    if (overlapRes) {
+      res.status(400).json({
+        error: 'Keni një rezervim tjetër aktiv brenda 1 orë nga kjo orë nisjeje',
+      });
+      return;
+    }
+    const overlapOwn = await passengerHasOverlappingOwnTrip(req.userId!, trip.departureAt);
+    if (overlapOwn) {
+      res.status(400).json({
+        error: 'Keni një udhëtim të publikuar brenda 1 orë nga kjo orë nisjeje',
+      });
+      return;
+    }
   }
 
   const reservation = await prisma.reservation.create({
@@ -193,12 +216,18 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
     res.status(404).json({ error: 'Reservation not found' });
     return;
   }
-  if (reservation.passengerId !== req.userId) {
+  if (reservation.passengerId !== req.userId && !isAdmin(req.userRole)) {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
   if (!['PENDING', 'ACCEPTED'].includes(reservation.status)) {
     res.status(400).json({ error: 'Cannot cancel this reservation' });
+    return;
+  }
+  if (!isAdmin(req.userRole) && isWithinCancelWindow(reservation.trip.departureAt)) {
+    res.status(400).json({
+      error: 'Nuk mund të anuloni rezervimin më pak se 60 minuta para nisjes',
+    });
     return;
   }
 
@@ -212,6 +241,51 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
     );
   }
   const [updated] = await prisma.$transaction(ops);
+  res.json(updated);
+});
+
+router.patch('/:id/remove', requireAuth, async (req: AuthRequest, res) => {
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: req.params.id },
+    include: { trip: { include: { originCity: true, destCity: true } } },
+  });
+  if (!reservation) {
+    res.status(404).json({ error: 'Reservation not found' });
+    return;
+  }
+  if (reservation.trip.driverId !== req.userId && !isAdmin(req.userRole)) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  if (reservation.status !== 'ACCEPTED') {
+    res.status(400).json({ error: 'Mund të hiqen vetëm pasagjerët e pranuar' });
+    return;
+  }
+  if (!isAdmin(req.userRole) && isWithinCancelWindow(reservation.trip.departureAt)) {
+    res.status(400).json({
+      error: 'Nuk mund të hiqni pasagjer më pak se 60 minuta para nisjes',
+    });
+    return;
+  }
+
+  const [updated] = await prisma.$transaction([
+    prisma.reservation.update({ where: { id: req.params.id }, data: { status: 'REMOVED' } }),
+    prisma.trip.update({
+      where: { id: reservation.tripId },
+      data: { seatsAvailable: { increment: reservation.seats } },
+    }),
+  ]);
+
+  const tokens = await prisma.pushToken.findMany({
+    where: { userId: reservation.passengerId },
+    select: { token: true },
+  });
+  await sendPushNotifications(
+    tokens.map((t) => t.token),
+    'Shoferi ju hoqi nga udhëtimi',
+    `Udhëtimi ${reservation.trip.originCity?.name ?? reservation.trip.originLabel ?? 'Origjina'} → ${reservation.trip.destCity?.name ?? reservation.trip.destLabel ?? 'Destinacioni'}`,
+  );
+
   res.json(updated);
 });
 

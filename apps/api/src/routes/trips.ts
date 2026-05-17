@@ -6,6 +6,7 @@ import { sendPushNotifications } from '../lib/push.js';
 import { endTripRoom } from '../realtime/index.js';
 import { matchesRoute, validatePolylineEndpoints } from '../lib/routeMatch.js';
 import { notifyMatchingAlerts } from '../lib/rideAlerts.js';
+import { driverHasOverlappingTrip, isAdmin, isWithinCancelWindow } from '../lib/tripRules.js';
 
 const router = Router();
 
@@ -187,6 +188,18 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     }
   }
 
+  const departureAt = new Date(data.departureAt);
+
+  if (!isAdmin(req.userRole)) {
+    const overlap = await driverHasOverlappingTrip(req.userId!, departureAt);
+    if (overlap) {
+      res.status(400).json({
+        error: 'Keni një udhëtim tjetër aktiv brenda 1 orë nga kjo orë nisjeje',
+      });
+      return;
+    }
+  }
+
   const { totalSeats, ...rest } = data;
   const trip = await prisma.trip.create({
     data: {
@@ -194,7 +207,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
       totalSeats,
       seatsAvailable: totalSeats,
       driverId: req.userId!,
-      departureAt: new Date(rest.departureAt),
+      departureAt,
     },
     include: { originCity: true, destCity: true },
   });
@@ -338,10 +351,23 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
     res.status(404).json({ error: 'Trip not found' });
     return;
   }
-  if (trip.driverId !== req.userId) {
+  if (trip.driverId !== req.userId && !isAdmin(req.userRole)) {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
+
+  if (!isAdmin(req.userRole) && isWithinCancelWindow(trip.departureAt)) {
+    const hasActiveReservations = await prisma.reservation.count({
+      where: { tripId: req.params.id, status: { in: ['PENDING', 'ACCEPTED'] } },
+    });
+    if (hasActiveReservations > 0) {
+      res.status(400).json({
+        error: 'Nuk mund të anuloni udhëtimin më pak se 60 minuta para nisjes kur ka rezervime aktive',
+      });
+      return;
+    }
+  }
+
   const wasInProgress = trip.status === 'IN_PROGRESS';
   const updated = await prisma.trip.update({ where: { id: req.params.id }, data: { status: 'CANCELLED' } });
   if (wasInProgress) {

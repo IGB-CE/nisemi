@@ -188,6 +188,7 @@ enum ReservationStatus {
   ACCEPTED
   REJECTED
   CANCELLED
+  REMOVED
 }
 
 model Review {

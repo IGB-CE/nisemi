@@ -21,6 +21,7 @@ const statusMap: Record<string, { label: string; color: string }> = {
   ACCEPTED: { label: 'Pranuar', color: colors.success },
   REJECTED: { label: 'Refuzuar', color: colors.danger },
   CANCELLED: { label: 'Anuluar', color: colors.subtle },
+  REMOVED: { label: 'Hequr', color: colors.danger },
 };
 
 export default function TripReservations() {
@@ -48,6 +49,22 @@ export default function TripReservations() {
   const action = async (reservationId: string, act: 'accept' | 'reject') => {
     try {
       await api.patch(`/api/v1/reservations/${reservationId}/${act}`, {}, token ?? undefined);
+      load();
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    }
+  };
+
+  const removePassenger = async (reservationId: string) => {
+    const ok = await dialog.confirm(
+      'Hiq pasagjerin?',
+      'Pasagjeri do të njoftohet që e keni hequr nga udhëtimi.',
+      'Hiq',
+      true,
+    );
+    if (!ok) return;
+    try {
+      await api.patch(`/api/v1/reservations/${reservationId}/remove`, {}, token ?? undefined);
       load();
     } catch (e: any) {
       await dialog.alert('Gabim', e.message);
@@ -255,19 +272,28 @@ export default function TripReservations() {
                     </>
                   )}
                   {r.status === 'ACCEPTED' && (
-                    <View style={{ flex: 1 }}>
-                      <PrimaryButton
-                        label="Kontakto"
-                        icon="💬"
-                        onPress={() =>
-                          router.push({
-                            pathname: '/chat/[tripId]/[userId]',
-                            params: { tripId: trip.id, userId: r.passenger.id },
-                          })
-                        }
-                        variant="outline"
-                      />
-                    </View>
+                    <>
+                      <View style={{ flex: 1 }}>
+                        <PrimaryButton
+                          label="Kontakto"
+                          icon="💬"
+                          onPress={() =>
+                            router.push({
+                              pathname: '/chat/[tripId]/[userId]',
+                              params: { tripId: trip.id, userId: r.passenger.id },
+                            })
+                          }
+                          variant="outline"
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <PrimaryButton
+                          label="Hiq"
+                          onPress={() => removePassenger(r.id)}
+                          variant="ghost"
+                        />
+                      </View>
+                    </>
                   )}
                 </View>
               </View>

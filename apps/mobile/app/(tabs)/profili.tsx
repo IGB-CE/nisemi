@@ -32,7 +32,12 @@ export default function Profili() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', phone: '' });
+  const [editForm, setEditForm] = useState<{
+    firstName: string;
+    lastName: string;
+    phone: string;
+    gender: 'MALE' | 'FEMALE' | 'UNSPECIFIED';
+  }>({ firstName: '', lastName: '', phone: '', gender: 'UNSPECIFIED' });
 
   const load = useCallback(() => {
     setLoading(true);
@@ -41,7 +46,12 @@ export default function Profili() {
       .get<any>('/api/v1/users/me', token ?? undefined)
       .then((p) => {
         setProfile(p);
-        setEditForm({ firstName: p.firstName, lastName: p.lastName, phone: p.phone ?? '' });
+        setEditForm({
+          firstName: p.firstName,
+          lastName: p.lastName,
+          phone: p.phone ?? '',
+          gender: (p.gender ?? 'UNSPECIFIED') as 'MALE' | 'FEMALE' | 'UNSPECIFIED',
+        });
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -76,7 +86,11 @@ export default function Profili() {
       await dialog.alert('Gabim', 'Emri dhe mbiemri janë të detyrueshme');
       return;
     }
-    const body: any = { firstName: editForm.firstName.trim(), lastName: editForm.lastName.trim() };
+    const body: any = {
+      firstName: editForm.firstName.trim(),
+      lastName: editForm.lastName.trim(),
+      gender: editForm.gender,
+    };
     if (editForm.phone.trim()) {
       const normalizedPhone = normalizeAlbanianMobile(editForm.phone);
       if (!normalizedPhone) {
@@ -228,7 +242,7 @@ export default function Profili() {
                 <Text style={s.fieldLabel}>{label}</Text>
                 <TextInput
                   style={s.input}
-                  value={editForm[key as keyof typeof editForm]}
+                  value={editForm[key as 'firstName' | 'lastName' | 'phone']}
                   onChangeText={(v) => setEditForm((f) => ({ ...f, [key]: v }))}
                   placeholderTextColor={colors.subtle}
                   autoCapitalize={key === 'phone' ? 'none' : 'words'}
@@ -236,6 +250,36 @@ export default function Profili() {
                 />
               </View>
             ))}
+            <View style={{ marginTop: 14 }}>
+              <Text style={s.fieldLabel}>Gjinia</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+                {(['MALE', 'FEMALE', 'UNSPECIFIED'] as const).map((g) => (
+                  <TouchableOpacity
+                    key={g}
+                    onPress={() => setEditForm((f) => ({ ...f, gender: g }))}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 12,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: editForm.gender === g ? colors.primary : colors.border,
+                      backgroundColor: editForm.gender === g ? colors.primary : colors.surfaceElevated,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: editForm.gender === g ? '#fff' : colors.text,
+                        fontWeight: '700',
+                        fontSize: 13,
+                      }}
+                    >
+                      {g === 'MALE' ? '♂ Mashkull' : g === 'FEMALE' ? '♀ Femër' : '— Pa specifikuar'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
             <View style={{ marginTop: 18 }}>
               <PrimaryButton label="Ruaj ndryshimet" onPress={saveProfile} loading={saving} />
             </View>

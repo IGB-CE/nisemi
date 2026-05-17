@@ -46,6 +46,24 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  if (trip.genderRestriction !== 'ANY') {
+    const passenger = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { gender: true },
+    });
+    if (!passenger || passenger.gender === 'UNSPECIFIED') {
+      res.status(400).json({
+        error: 'Plotësoni gjininë në profilin tuaj për të rezervuar këtë udhëtim',
+      });
+      return;
+    }
+    const required = trip.genderRestriction === 'FEMALE_ONLY' ? 'FEMALE' : 'MALE';
+    if (passenger.gender !== required) {
+      res.status(400).json({ error: 'Ky udhëtim është i kufizuar për një gjini tjetër' });
+      return;
+    }
+  }
+
   const hasPickup = pickupLat !== undefined && pickupLng !== undefined;
   const hasDropoff = dropoffLat !== undefined && dropoffLng !== undefined;
   if (hasPickup !== hasDropoff) {

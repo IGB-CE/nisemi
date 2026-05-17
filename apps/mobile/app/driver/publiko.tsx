@@ -95,6 +95,7 @@ export default function Publiko() {
   const [pricePerSeat, setPricePerSeat] = useState('');
   const [totalSeats, setTotalSeats] = useState('3');
   const [notes, setNotes] = useState('');
+  const [genderRestriction, setGenderRestriction] = useState<'ANY' | 'FEMALE_ONLY' | 'MALE_ONLY'>('ANY');
   const [saving, setSaving] = useState(false);
 
   const selectedRoute = routes[selectedRouteIndex];
@@ -129,6 +130,7 @@ export default function Publiko() {
           routeAltIndex: selectedRouteIndex,
           tripType,
           maxDetourM,
+          genderRestriction,
           departureAt: departureAt.toISOString(),
           pricePerSeat: Number(pricePerSeat),
           totalSeats: Number(totalSeats),
@@ -326,6 +328,31 @@ export default function Publiko() {
                 onPress={() => setTotalSeats(n)}
               >
                 <Text style={[s.seatBtnText, totalSeats === n && s.seatBtnTextActive]}>{n}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Card>
+
+        <Card style={s.card}>
+          <Text style={s.cardLabel}>Kufizimi i gjinisë</Text>
+          <View style={s.detourRow}>
+            {(
+              [
+                { value: 'ANY', label: 'Të gjithë' },
+                { value: 'FEMALE_ONLY', label: '♀ Vetëm femra' },
+                { value: 'MALE_ONLY', label: '♂ Vetëm meshkuj' },
+              ] as const
+            ).map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[s.detourBtn, genderRestriction === opt.value && s.detourBtnActive]}
+                onPress={() => setGenderRestriction(opt.value)}
+              >
+                <Text
+                  style={[s.detourBtnText, genderRestriction === opt.value && s.detourBtnTextActive]}
+                >
+                  {opt.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>

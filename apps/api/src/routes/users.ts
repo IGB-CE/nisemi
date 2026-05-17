@@ -12,6 +12,7 @@ const updateSchema = z.object({
   lastName: z.string().min(1).optional(),
   phone: albanianMobileSchema.optional(),
   avatarUrl: z.string().url().optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'UNSPECIFIED']).optional(),
 });
 
 const photoSchema = z.object({
@@ -31,6 +32,7 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
       avatarUrl: true,
       role: true,
       status: true,
+      gender: true,
       createdAt: true,
       driverProfile: true,
     },
@@ -60,6 +62,7 @@ router.patch('/me', requireAuth, async (req: AuthRequest, res) => {
       avatarUrl: true,
       role: true,
       status: true,
+      gender: true,
     },
   });
   res.json(user);

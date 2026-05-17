@@ -19,6 +19,7 @@ model User {
   avatarUrl    String?
   role         Role       @default(PASSENGER)
   status       UserStatus @default(ACTIVE)
+  gender       Gender     @default(UNSPECIFIED)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -69,6 +70,18 @@ enum UserStatus {
   BLOCKED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  UNSPECIFIED
+}
+
+enum GenderRestriction {
+  ANY
+  FEMALE_ONLY
+  MALE_ONLY
+}
+
 model DriverProfile {
   id          String   @id @default(cuid())
   userId      String   @unique
@@ -115,8 +128,9 @@ model Trip {
   routeDurationS Int?
   routeAltIndex  Int     @default(0)
 
-  tripType   TripType?
-  maxDetourM Int       @default(500)
+  tripType          TripType?
+  maxDetourM        Int               @default(500)
+  genderRestriction GenderRestriction @default(ANY)
 
   departureAt    DateTime
   pricePerSeat   Decimal

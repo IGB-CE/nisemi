@@ -32,6 +32,7 @@ const tripSchema = z.object({
   routeAltIndex: z.number().int().min(0).max(5).optional(),
   tripType: z.enum(['INTERCITY', 'INTRACITY']).optional(),
   maxDetourM: z.number().int().min(50).max(5000).optional(),
+  genderRestriction: z.enum(['ANY', 'FEMALE_ONLY', 'MALE_ONLY']).optional(),
   departureAt: z.string().datetime(),
   pricePerSeat: z.number().positive(),
   totalSeats: z.number().int().min(1).max(8),
@@ -51,7 +52,7 @@ const searchSchema = z.object({
   tripType: z.enum(['INTERCITY', 'INTRACITY']).optional(),
 });
 
-router.get('/', async (req, res) => {
+router.get('/', async (req: AuthRequest, res) => {
   const parsed = searchSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -62,10 +63,28 @@ router.get('/', async (req, res) => {
   const isGeoSearch =
     originLat !== undefined && originLng !== undefined && destLat !== undefined && destLng !== undefined;
 
+  let callerGender: 'MALE' | 'FEMALE' | 'UNSPECIFIED' = 'UNSPECIFIED';
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const { verifyToken } = await import('../lib/jwt.js');
+      const payload = verifyToken(authHeader.slice(7));
+      const u = await prisma.user.findUnique({ where: { id: payload.sub }, select: { gender: true } });
+      if (u) callerGender = u.gender;
+    } catch {
+      // ignore — treat as unauthenticated
+    }
+  }
+
+  const allowedRestrictions: ('ANY' | 'FEMALE_ONLY' | 'MALE_ONLY')[] = ['ANY'];
+  if (callerGender === 'FEMALE') allowedRestrictions.push('FEMALE_ONLY');
+  if (callerGender === 'MALE') allowedRestrictions.push('MALE_ONLY');
+
   const where: Record<string, unknown> = {
     status: 'SCHEDULED',
     seatsAvailable: { gte: seats },
     departureAt: { gte: new Date() },
+    genderRestriction: { in: allowedRestrictions },
   };
   if (from) where.originCityId = from;
   if (to) where.destCityId = to;

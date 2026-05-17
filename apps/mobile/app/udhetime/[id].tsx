@@ -214,6 +214,11 @@ export default function TripDetail() {
               {formatDistanceKm(trip.routeDistanceM)} · {formatDurationMin(trip.routeDurationS)}
             </Text>
           )}
+          {trip.genderRestriction && trip.genderRestriction !== 'ANY' && (
+            <Text style={s.routeMeta}>
+              {trip.genderRestriction === 'FEMALE_ONLY' ? '♀ Vetëm femra' : '♂ Vetëm meshkuj'}
+            </Text>
+          )}
         </View>
 
         <View style={s.statGrid}>

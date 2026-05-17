@@ -4,12 +4,32 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { sendPushNotifications } from '../lib/push.js';
 import { endTripRoom } from '../realtime/index.js';
+import { matchesRoute, validatePolylineEndpoints } from '../lib/routeMatch.js';
 
 const router = Router();
 
+const latLng = z
+  .object({
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+  })
+  .strict();
+
 const tripSchema = z.object({
-  originCityId: z.string(),
-  destCityId: z.string(),
+  originCityId: z.string().optional(),
+  destCityId: z.string().optional(),
+  originLat: z.number().min(-90).max(90).optional(),
+  originLng: z.number().min(-180).max(180).optional(),
+  originLabel: z.string().min(1).max(300).optional(),
+  destLat: z.number().min(-90).max(90).optional(),
+  destLng: z.number().min(-180).max(180).optional(),
+  destLabel: z.string().min(1).max(300).optional(),
+  routePolyline: z.string().min(2).optional(),
+  routeDistanceM: z.number().int().nonnegative().optional(),
+  routeDurationS: z.number().int().nonnegative().optional(),
+  routeAltIndex: z.number().int().min(0).max(5).optional(),
+  tripType: z.enum(['INTERCITY', 'INTRACITY']).optional(),
+  maxDetourM: z.number().int().min(50).max(5000).optional(),
   departureAt: z.string().datetime(),
   pricePerSeat: z.number().positive(),
   totalSeats: z.number().int().min(1).max(8),
@@ -21,6 +41,12 @@ const searchSchema = z.object({
   to: z.string().optional(),
   date: z.string().optional(),
   seats: z.coerce.number().int().min(1).optional().default(1),
+  originLat: z.coerce.number().min(-90).max(90).optional(),
+  originLng: z.coerce.number().min(-180).max(180).optional(),
+  destLat: z.coerce.number().min(-90).max(90).optional(),
+  destLng: z.coerce.number().min(-180).max(180).optional(),
+  searchRadiusM: z.coerce.number().int().min(50).max(5000).optional().default(500),
+  tripType: z.enum(['INTERCITY', 'INTRACITY']).optional(),
 });
 
 router.get('/', async (req, res) => {
@@ -29,7 +55,10 @@ router.get('/', async (req, res) => {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { from, to, date, seats } = parsed.data;
+  const { from, to, date, seats, originLat, originLng, destLat, destLng, searchRadiusM, tripType } = parsed.data;
+
+  const isGeoSearch =
+    originLat !== undefined && originLng !== undefined && destLat !== undefined && destLng !== undefined;
 
   const where: Record<string, unknown> = {
     status: 'SCHEDULED',
@@ -38,6 +67,8 @@ router.get('/', async (req, res) => {
   };
   if (from) where.originCityId = from;
   if (to) where.destCityId = to;
+  if (tripType) where.tripType = tripType;
+  if (isGeoSearch) where.routePolyline = { not: null };
   if (date) {
     const d = new Date(date);
     const next = new Date(d);
@@ -63,8 +94,25 @@ router.get('/', async (req, res) => {
     orderBy: { departureAt: 'asc' },
   });
 
+  let filtered = trips;
+  if (isGeoSearch) {
+    const pickup = { lat: originLat!, lng: originLng! };
+    const dropoff = { lat: destLat!, lng: destLng! };
+    filtered = trips.filter((t) => {
+      if (!t.routePolyline) return false;
+      const result = matchesRoute({
+        routePolyline: t.routePolyline,
+        driverMaxDetourM: t.maxDetourM,
+        pickup,
+        dropoff,
+        passengerSearchRadiusM: searchRadiusM,
+      });
+      return result.matched;
+    });
+  }
+
   const now = Date.now();
-  const sorted = [...trips].sort((a, b) => {
+  const sorted = [...filtered].sort((a, b) => {
     const aBoosted = a.boostedUntil && a.boostedUntil.getTime() > now ? 1 : 0;
     const bBoosted = b.boostedUntil && b.boostedUntil.getTime() > now ? 1 : 0;
     if (aBoosted !== bBoosted) return bBoosted - aBoosted;
@@ -109,7 +157,36 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const { totalSeats, ...rest } = parsed.data;
+  const data = parsed.data;
+
+  if (!data.originCityId && (data.originLat === undefined || data.originLng === undefined)) {
+    res.status(400).json({ error: 'Origin city or coordinates required' });
+    return;
+  }
+  if (!data.destCityId && (data.destLat === undefined || data.destLng === undefined)) {
+    res.status(400).json({ error: 'Destination city or coordinates required' });
+    return;
+  }
+
+  if (
+    data.routePolyline &&
+    data.originLat !== undefined &&
+    data.originLng !== undefined &&
+    data.destLat !== undefined &&
+    data.destLng !== undefined
+  ) {
+    const valid = validatePolylineEndpoints(
+      data.routePolyline,
+      { lat: data.originLat, lng: data.originLng },
+      { lat: data.destLat, lng: data.destLng },
+    );
+    if (!valid) {
+      res.status(400).json({ error: 'Route polyline endpoints do not match origin/destination' });
+      return;
+    }
+  }
+
+  const { totalSeats, ...rest } = data;
   const trip = await prisma.trip.create({
     data: {
       ...rest,

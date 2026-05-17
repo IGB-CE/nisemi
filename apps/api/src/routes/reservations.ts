@@ -3,12 +3,19 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { sendPushNotifications } from '../lib/push.js';
+import { matchesRoute } from '../lib/routeMatch.js';
 
 const router = Router();
 
 const bookSchema = z.object({
   tripId: z.string(),
   seats: z.number().int().min(1).max(8).default(1),
+  pickupLat: z.number().min(-90).max(90).optional(),
+  pickupLng: z.number().min(-180).max(180).optional(),
+  pickupLabel: z.string().min(1).max(300).optional(),
+  dropoffLat: z.number().min(-90).max(90).optional(),
+  dropoffLng: z.number().min(-180).max(180).optional(),
+  dropoffLabel: z.string().min(1).max(300).optional(),
 });
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
@@ -17,7 +24,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { tripId, seats } = parsed.data;
+  const { tripId, seats, pickupLat, pickupLng, pickupLabel, dropoffLat, dropoffLng, dropoffLabel } = parsed.data;
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip || trip.status !== 'SCHEDULED') {
@@ -33,6 +40,30 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  const hasPickup = pickupLat !== undefined && pickupLng !== undefined;
+  const hasDropoff = dropoffLat !== undefined && dropoffLng !== undefined;
+  if (hasPickup !== hasDropoff) {
+    res.status(400).json({ error: 'Pickup and dropoff must be provided together' });
+    return;
+  }
+  if (hasPickup && trip.routePolyline) {
+    const result = matchesRoute({
+      routePolyline: trip.routePolyline,
+      driverMaxDetourM: trip.maxDetourM,
+      pickup: { lat: pickupLat!, lng: pickupLng! },
+      dropoff: { lat: dropoffLat!, lng: dropoffLng! },
+      passengerSearchRadiusM: trip.maxDetourM,
+    });
+    if (!result.matched) {
+      const msg =
+        result.reason === 'wrong_direction'
+          ? 'Pikat e marrjes dhe lëshimit nuk janë në drejtimin e udhëtimit'
+          : 'Pikat e marrjes ose lëshimit janë larg rrugës së udhëtimit';
+      res.status(400).json({ error: msg, detail: result });
+      return;
+    }
+  }
+
   const existing = await prisma.reservation.findFirst({
     where: { tripId, passengerId: req.userId, status: { in: ['PENDING', 'ACCEPTED'] } },
   });
@@ -42,7 +73,17 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const reservation = await prisma.reservation.create({
-    data: { tripId, passengerId: req.userId!, seats },
+    data: {
+      tripId,
+      passengerId: req.userId!,
+      seats,
+      pickupLat,
+      pickupLng,
+      pickupLabel,
+      dropoffLat,
+      dropoffLng,
+      dropoffLabel,
+    },
     include: { trip: { include: { originCity: true, destCity: true } } },
   });
   res.status(201).json(reservation);
@@ -107,7 +148,7 @@ router.patch('/:id/accept', requireAuth, async (req: AuthRequest, res) => {
   await sendPushNotifications(
     tokens.map((t) => t.token),
     'Rezervimi u pranua ✅',
-    `Udhëtimi ${reservation.trip.originCity.name} → ${reservation.trip.destCity.name} u konfirmua.`,
+    `Udhëtimi ${reservation.trip.originCity?.name ?? reservation.trip.originLabel ?? 'Origjina'} → ${reservation.trip.destCity?.name ?? reservation.trip.destLabel ?? 'Destinacioni'} u konfirmua.`,
   );
 
   res.json(updated);
@@ -140,7 +181,7 @@ router.patch('/:id/reject', requireAuth, async (req: AuthRequest, res) => {
   await sendPushNotifications(
     tokens.map((t) => t.token),
     'Rezervimi u refuzua ❌',
-    `Udhëtimi ${reservation.trip.originCity.name} → ${reservation.trip.destCity.name} u refuzua nga shoferi.`,
+    `Udhëtimi ${reservation.trip.originCity?.name ?? reservation.trip.originLabel ?? 'Origjina'} → ${reservation.trip.destCity?.name ?? reservation.trip.destLabel ?? 'Destinacioni'} u refuzua nga shoferi.`,
   );
 
   res.json(updated);

@@ -27,7 +27,13 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 
   const trip = await prisma.trip.findUnique({
     where: { id: tripId },
-    select: { driverId: true, originCity: { select: { name: true } }, destCity: { select: { name: true } } },
+    select: {
+      driverId: true,
+      originCity: { select: { name: true } },
+      destCity: { select: { name: true } },
+      originLabel: true,
+      destLabel: true,
+    },
   });
   if (!trip) {
     res.status(404).json({ error: 'Trip not found' });
@@ -54,7 +60,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   void sendPushNotifications(
     tokens.map((t) => t.token),
     `${sender?.firstName ?? 'Mesazh i ri'} ${sender?.lastName ?? ''}`.trim() + ' 💬',
-    `${trip.originCity.name} → ${trip.destCity.name}: ${content.slice(0, 80)}`,
+    `${trip.originCity?.name ?? trip.originLabel ?? 'Origjina'} → ${trip.destCity?.name ?? trip.destLabel ?? 'Destinacioni'}: ${content.slice(0, 80)}`,
   );
 
   res.status(201).json(message);

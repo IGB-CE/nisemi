@@ -23,6 +23,8 @@
     "@mapbox/polyline": "^1.2.1",
     "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.105.4",
+    "@turf/helpers": "^7.3.5",
+    "@turf/nearest-point-on-line": "^7.3.5",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

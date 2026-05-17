@@ -13,12 +13,14 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:admin": "tsx prisma/create-admin.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "backfill:routes": "tsx scripts/backfill-trip-routes.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@mapbox/polyline": "^1.2.1",
     "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.105.4",
     "bcryptjs": "^2.4.3",
@@ -36,6 +38,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/mapbox__polyline": "^1.0.5",
     "@types/node": "^24.12.2",
     "prisma": "^5.22.0",
     "tsx": "^4.21.0",

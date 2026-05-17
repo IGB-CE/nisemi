@@ -72,13 +72,29 @@ model City {
 }
 
 model Trip {
-  id             String     @id @default(cuid())
-  driverId       String
-  driver         User       @relation("DriverTrips", fields: [driverId], references: [id])
-  originCityId   String
-  originCity     City       @relation("TripOrigin", fields: [originCityId], references: [id])
-  destCityId     String
-  destCity       City       @relation("TripDestination", fields: [destCityId], references: [id])
+  id           String  @id @default(cuid())
+  driverId     String
+  driver       User    @relation("DriverTrips", fields: [driverId], references: [id])
+  originCityId String?
+  originCity   City?   @relation("TripOrigin", fields: [originCityId], references: [id])
+  destCityId   String?
+  destCity     City?   @relation("TripDestination", fields: [destCityId], references: [id])
+
+  originLat   Float?
+  originLng   Float?
+  originLabel String?
+  destLat     Float?
+  destLng     Float?
+  destLabel   String?
+
+  routePolyline  String?
+  routeDistanceM Int?
+  routeDurationS Int?
+  routeAltIndex  Int     @default(0)
+
+  tripType   TripType?
+  maxDetourM Int       @default(500)
+
   departureAt    DateTime
   pricePerSeat   Decimal
   totalSeats     Int
@@ -104,6 +120,11 @@ enum TripStatus {
   CANCELLED
 }
 
+enum TripType {
+  INTERCITY
+  INTRACITY
+}
+
 model TripLocation {
   id         String   @id @default(cuid())
   tripId     String
@@ -127,8 +148,16 @@ model Reservation {
   passenger   User              @relation(fields: [passengerId], references: [id])
   seats       Int               @default(1)
   status      ReservationStatus @default(PENDING)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+
+  pickupLat    Float?
+  pickupLng    Float?
+  pickupLabel  String?
+  dropoffLat   Float?
+  dropoffLng   Float?
+  dropoffLabel String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum ReservationStatus {

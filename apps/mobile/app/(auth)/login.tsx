@@ -18,6 +18,7 @@ import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
 import { colors, typography, gradient } from '../../lib/colors';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import PasswordInput from '../../components/ui/PasswordInput';
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -67,7 +68,6 @@ export default function Login() {
             <Text style={s.fieldLabel}>Email</Text>
             <TextInput
               style={s.input}
-              placeholder="ti@example.com"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -76,12 +76,10 @@ export default function Login() {
             />
 
             <Text style={s.fieldLabel}>Fjalëkalimi</Text>
-            <TextInput
+            <PasswordInput
               style={s.input}
-              placeholder="••••••••"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
               placeholderTextColor={colors.subtle}
             />
 

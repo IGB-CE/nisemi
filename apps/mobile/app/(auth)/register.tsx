@@ -19,6 +19,7 @@ import { useDialog } from '../../lib/dialog';
 import { colors, typography, gradient } from '../../lib/colors';
 import { normalizeAlbanianMobile } from '../../lib/phone';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import PasswordInput from '../../components/ui/PasswordInput';
 
 export default function Register() {
   const { signIn } = useAuth();
@@ -86,16 +87,23 @@ export default function Register() {
                   {label}
                   {required && ' *'}
                 </Text>
-                <TextInput
-                  style={s.input}
-                  value={form[key as keyof typeof form]}
-                  onChangeText={set(key as keyof typeof form)}
-                  autoCapitalize={key === 'email' ? 'none' : 'words'}
-                  keyboardType={keyboard}
-                  secureTextEntry={secure}
-                  placeholderTextColor={colors.subtle}
-                  placeholder={label}
-                />
+                {secure ? (
+                  <PasswordInput
+                    style={s.input}
+                    value={form[key as keyof typeof form]}
+                    onChangeText={set(key as keyof typeof form)}
+                    placeholderTextColor={colors.subtle}
+                  />
+                ) : (
+                  <TextInput
+                    style={s.input}
+                    value={form[key as keyof typeof form]}
+                    onChangeText={set(key as keyof typeof form)}
+                    autoCapitalize={key === 'email' ? 'none' : 'words'}
+                    keyboardType={keyboard}
+                    placeholderTextColor={colors.subtle}
+                  />
+                )}
               </View>
             ))}
 

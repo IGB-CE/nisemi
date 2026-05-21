@@ -4,7 +4,7 @@ Step-by-step for deploying `apps/api` to Render's free tier. Mobile and admin ap
 
 ## Prerequisites
 
-- Repo pushed to GitHub at `IGB-CE/nisemi` (already done)
+- Repo pushed to GitHub at `nisemialb-creator/nisemi` (already done)
 - `apps/api/Dockerfile` present (already done)
 - A Render account (free)
 
@@ -17,7 +17,7 @@ Step-by-step for deploying `apps/api` to Render's free tier. Mobile and admin ap
 
 1. From the Render dashboard → **New +** → **Web Service**
 2. Select **Build and deploy from a Git repository**
-3. Connect your `IGB-CE/nisemi` repo
+3. Connect your `nisemialb-creator/nisemi` repo
 4. Fill in:
    - **Name:** `nisemi-api` (whatever — becomes part of the URL)
    - **Region:** **Frankfurt** (closest to Albania)

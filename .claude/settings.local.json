@@ -27,7 +27,11 @@
       "PowerShell(git push *)",
       "PowerShell(git add *)",
       "Bash(npx tsc *)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx prisma *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(docker *)",
+      "Bash(npx expo *)"
     ]
   }
 }

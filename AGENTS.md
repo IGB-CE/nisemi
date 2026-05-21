@@ -131,26 +131,27 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Date/time picker on search and driver post screens
 - [x] Auto-detect API host from Expo so mobile works on any LAN
 - [x] Real-time GPS tracking (driver shares live location with accepted passengers during active trip; socket.io relay + 90-day persisted trace)
+- [x] AdMob integration shipped with test IDs in dev (rewarded ad → 12h driver boost; capped interstitial after booking; UMP consent + iOS ATT wired)
 
 ### Ads And Monetization
 
-- [ ] Treat ads as secondary income, not the primary business model
-- [ ] Decide whether MVP launches without ads or with minimal ads only
-- [ ] Create Google AdMob account
-- [ ] Configure AdMob app IDs for Android and iOS
-- [ ] Configure AdMob ad unit IDs for banner ads
-- [ ] Configure AdMob ad unit IDs for interstitial ads if included
-- [ ] Use official AdMob test ad IDs during development
-- [ ] Never click real ads during testing
-- [ ] Add banner ads in low-friction areas such as search results or trip listings
-- [ ] Consider interstitial ads only after non-critical actions such as search completion or booking confirmation
-- [ ] Avoid ads during driving, navigation, booking submission, reservation acceptance, or other critical flows
-- [ ] Defer rewarded ads such as "watch ad to boost your listing" until after MVP validation
+- [x] Treat ads as secondary income, not the primary business model
+- [x] Decide whether MVP launches without ads or with minimal ads only (minimal: rewarded driver boost + capped interstitial after booking)
+- [ ] Create Google AdMob account (product owner)
+- [ ] Configure AdMob app IDs for Android and iOS (test IDs in place; real IDs needed for prod)
+- [ ] Configure AdMob ad unit IDs for banner ads (banners deferred)
+- [x] Configure AdMob ad unit IDs for interstitial ads if included (test ID; real ID via `EXPO_PUBLIC_ADMOB_INTERSTITIAL_*`)
+- [x] Use official AdMob test ad IDs during development (auto-switched by `__DEV__` in `apps/mobile/lib/ads.ts`)
+- [x] Never click real ads during testing (enforced by test-only IDs in dev builds)
+- [ ] Add banner ads in low-friction areas such as search results or trip listings (deferred)
+- [x] Consider interstitial ads only after non-critical actions such as search completion or booking confirmation (shipped: capped 1/session, skipped on first booking)
+- [x] Avoid ads during driving, navigation, booking submission, reservation acceptance, or other critical flows (no ads in those flows)
+- [x] Rewarded ad for voluntary driver-listing boost shipped (12h promote, top of search results)
 - [ ] Defer native ads until after MVP because they are more complex to implement well
-- [ ] Declare ads in Google Play Console
-- [ ] Declare ads and tracking/data collection in App Store privacy forms
-- [ ] Mention advertising services and AdMob data collection in the Privacy Policy
-- [ ] Track ad performance only after the product has enough active users to make optimization useful
+- [ ] Declare ads in Google Play Console (at submission)
+- [ ] Declare ads and tracking/data collection in App Store privacy forms (at submission)
+- [x] Mention advertising services and AdMob data collection in the Privacy Policy (`apps/api/policies/privacy.md`)
+- [ ] Track ad performance only after the product has enough active users to make optimization useful (post-launch)
 
 ## Not Included In MVP
 
@@ -214,12 +215,12 @@ Online payments, live GPS tracking, and full chat are not part of the MVP.
 - [x] Push notifications
 - [x] Image uploads
 - [x] Ratings and reviews
-- [ ] Optional minimal AdMob banner integration
-- [ ] Optional limited AdMob interstitial integration
-- [ ] Confirm AdMob test ads are used in development builds
-- [ ] Confirm real ad unit IDs are used only in production builds
-- [ ] Update Privacy Policy for advertising and data collection
-- [ ] Complete Google Play and App Store ad/privacy declarations
+- [ ] Optional minimal AdMob banner integration (deferred)
+- [x] Optional limited AdMob interstitial integration (after booking, capped per session)
+- [x] Confirm AdMob test ads are used in development builds (`__DEV__` switch in `apps/mobile/lib/ads.ts`)
+- [x] Confirm real ad unit IDs are used only in production builds (env-var fallback in `apps/mobile/lib/ads.ts`)
+- [x] Update Privacy Policy for advertising and data collection
+- [ ] Complete Google Play and App Store ad/privacy declarations (at submission)
 - [x] Error states
 - [x] Loading states
 - [x] Empty states
@@ -289,3 +290,4 @@ Better long-term monetization options may include featured drivers, promoted tri
 - [x] Currency switched from EUR to Lek (ALL)
 - [x] F1-inspired design system rollout (dark/red theme, themed dialogs, avatar halo)
 - [x] Albanian phone format validation shipped (server + client validators, phone @unique constraint, required at register, hidden from all non-owner API responses)
+- [x] EAS build config in place (`eas.json` with dev/preview/production profiles; owner `bledi-nisemi`)

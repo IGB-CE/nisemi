@@ -39,7 +39,7 @@ app.use(
 );
 app.use(express.json({ limit: '8mb' }));
 
-app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'albania-rides-api' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'nisemi-api' }));
 
 app.use('/', policiesRouter);
 

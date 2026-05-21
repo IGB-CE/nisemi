@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nisemi",
     "slug": "albania-rides",
-    "scheme": "albaniarides",
+    "scheme": "nisemi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.albaniarides.app",
+      "bundleIdentifier": "al.nisemi.app",
       "infoPlist": {
         "NSUserNotificationUsageDescription": "Nisemi dërgon njoftime për rezervimet tuaja.",
         "NSLocationWhenInUseUsageDescription": "Nisemi përdor vendndodhjen tuaj për të ndarë pozicionin tuaj me pasagjerët gjatë udhëtimit.",
@@ -28,7 +28,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0D0D0D"
       },
-      "package": "com.albaniarides.app",
+      "package": "al.nisemi.app",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "ACCESS_FINE_LOCATION",

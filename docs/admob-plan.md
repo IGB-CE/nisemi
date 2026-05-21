@@ -25,7 +25,7 @@ Banners deferred. Native ads deferred. Rewarded ads beyond the boost flow deferr
 
 ### A2. Host the public URL
 - Option A *(recommended)*: serve `GET /privacy` and `GET /terms` on the API server, rendering the markdown to HTML. Zero extra hosting.
-- Option B: GitHub Pages on the repo (`igb-ce.github.io/albania-rides/privacy`).
+- Option B: GitHub Pages on the repo (`igb-ce.github.io/nisemi/privacy`).
 
 ### A3. In-app screens
 - Add "Politika e Privatësisë" and "Kushtet e Përdorimit" links in `apps/mobile/app/(tabs)/profili.tsx`

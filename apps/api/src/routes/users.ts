@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
@@ -18,6 +19,11 @@ const updateSchema = z.object({
 const photoSchema = z.object({
   base64: z.string().min(1),
   mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+});
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
 });
 
 router.get('/me', requireAuth, async (req: AuthRequest, res) => {
@@ -66,6 +72,31 @@ router.patch('/me', requireAuth, async (req: AuthRequest, res) => {
     },
   });
   res.json(user);
+});
+
+router.post('/me/password', requireAuth, async (req: AuthRequest, res) => {
+  const parsed = passwordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+  if (!user.passwordHash) {
+    res.status(400).json({ error: 'Account uses social sign-in — no password to change' });
+    return;
+  }
+  const match = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+  if (!match) {
+    res.status(401).json({ error: 'Current password is incorrect' });
+    return;
+  }
+  const newHash = await bcrypt.hash(parsed.data.newPassword, 12);
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash: newHash } });
+  res.json({ ok: true });
 });
 
 router.post('/me/avatar', requireAuth, async (req: AuthRequest, res) => {

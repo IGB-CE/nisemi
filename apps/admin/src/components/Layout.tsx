@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { type Page } from '../App';
 import { useAuth } from '../lib/auth';
+import ChangePasswordModal from './ChangePasswordModal';
 
 interface Props {
   page: Page;
@@ -20,6 +21,7 @@ const NAV: { id: Page; label: string; icon: string }[] = [
 export default function Layout({ page, setPage, children }: Props) {
   const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pwdOpen, setPwdOpen] = useState(false);
   const current = NAV.find((n) => n.id === page);
 
   const goTo = (p: Page) => {
@@ -64,6 +66,9 @@ export default function Layout({ page, setPage, children }: Props) {
             <span className="user-name">
               {user?.firstName} {user?.lastName}
             </span>
+            <button className="btn-outline btn-sm" onClick={() => setPwdOpen(true)}>
+              Fjalëkalimi
+            </button>
             <button className="btn-outline" onClick={signOut}>
               Dil
             </button>
@@ -71,6 +76,8 @@ export default function Layout({ page, setPage, children }: Props) {
         </header>
         <main className="content">{children}</main>
       </div>
+
+      <ChangePasswordModal open={pwdOpen} onClose={() => setPwdOpen(false)} />
     </div>
   );
 }

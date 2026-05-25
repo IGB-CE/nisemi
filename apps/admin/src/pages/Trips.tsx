@@ -4,8 +4,10 @@ import { useAuth } from '../lib/auth';
 
 interface Trip {
   id: string;
-  originCity: { name: string };
-  destCity: { name: string };
+  originCity: { name: string } | null;
+  destCity: { name: string } | null;
+  originLabel: string | null;
+  destLabel: string | null;
   driver: { firstName: string; lastName: string };
   departureAt: string;
   pricePerSeat: string;
@@ -61,7 +63,7 @@ export default function Trips() {
           {trips.map((t) => (
             <tr key={t.id}>
               <td className="fw-medium">
-                {t.originCity.name} → {t.destCity.name}
+                {t.originCity?.name ?? t.originLabel ?? '—'} → {t.destCity?.name ?? t.destLabel ?? '—'}
               </td>
               <td>
                 {t.driver.firstName} {t.driver.lastName}

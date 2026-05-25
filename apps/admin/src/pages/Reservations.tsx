@@ -5,7 +5,13 @@ import { useAuth } from '../lib/auth';
 interface Reservation {
   id: string;
   passenger: { firstName: string; lastName: string };
-  trip: { originCity: { name: string }; destCity: { name: string }; departureAt: string };
+  trip: {
+    originCity: { name: string } | null;
+    destCity: { name: string } | null;
+    originLabel: string | null;
+    destLabel: string | null;
+    departureAt: string;
+  };
   seatsReserved: number;
   status: string;
   createdAt: string;
@@ -62,7 +68,7 @@ export default function Reservations() {
                 {r.passenger.firstName} {r.passenger.lastName}
               </td>
               <td>
-                {r.trip.originCity.name} → {r.trip.destCity.name}
+                {r.trip.originCity?.name ?? r.trip.originLabel ?? '—'} → {r.trip.destCity?.name ?? r.trip.destLabel ?? '—'}
               </td>
               <td className="text-subtle">
                 {new Date(r.trip.departureAt).toLocaleDateString('sq-AL', {

@@ -26,7 +26,7 @@ export default function Layout({ page, setPage, children }: Props) {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <span className="brand-icon">🚗</span>
-          <span>Albania Rides</span>
+          <span>Nisemi</span>
         </div>
         <nav className="sidebar-nav">
           {NAV.map((n) => (

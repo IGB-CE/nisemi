@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/jwt.js';
 import { albanianMobileSchema } from '../lib/phone.js';
@@ -20,6 +21,29 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
+const googleSchema = z.object({
+  idToken: z.string().min(20),
+});
+
+const GOOGLE_AUDIENCES = [
+  process.env.GOOGLE_WEB_CLIENT_ID,
+  process.env.GOOGLE_IOS_CLIENT_ID,
+  process.env.GOOGLE_ANDROID_CLIENT_ID,
+].filter((v): v is string => Boolean(v));
+
+const googleClient = new OAuth2Client();
+
+const userPublicFields = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  phone: true,
+  role: true,
+  status: true,
+  avatarUrl: true,
+} as const;
+
 router.post('/register', async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -37,7 +61,7 @@ router.post('/register', async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
     data: { email, passwordHash, firstName, lastName, phone },
-    select: { id: true, email: true, firstName: true, lastName: true, role: true, status: true },
+    select: userPublicFields,
   });
 
   const token = signToken({ sub: user.id, role: user.role });
@@ -53,7 +77,7 @@ router.post('/login', async (req, res) => {
   const { email, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+  if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
     res.status(401).json({ error: 'Invalid credentials' });
     return;
   }
@@ -70,8 +94,94 @@ router.post('/login', async (req, res) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      phone: user.phone,
       role: user.role,
       status: user.status,
+      avatarUrl: user.avatarUrl,
+    },
+  });
+});
+
+router.post('/google', async (req, res) => {
+  const parsed = googleSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  if (GOOGLE_AUDIENCES.length === 0) {
+    res.status(500).json({ error: 'Google sign-in not configured on server' });
+    return;
+  }
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: parsed.data.idToken,
+      audience: GOOGLE_AUDIENCES,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    res.status(401).json({ error: 'Invalid Google token' });
+    return;
+  }
+  if (!payload || !payload.sub || !payload.email) {
+    res.status(401).json({ error: 'Invalid Google token' });
+    return;
+  }
+
+  const googleId = payload.sub;
+  const email = payload.email.toLowerCase();
+  const emailVerified = payload.email_verified === true;
+  const fullName = payload.name ?? '';
+  const firstName = payload.given_name || fullName.split(' ')[0] || 'Google';
+  const lastName = payload.family_name || fullName.split(' ').slice(1).join(' ') || '';
+  const avatarUrl = payload.picture ?? null;
+
+  let user = await prisma.user.findUnique({ where: { googleId } });
+
+  if (!user) {
+    const byEmail = await prisma.user.findUnique({ where: { email } });
+    if (byEmail && emailVerified) {
+      user = await prisma.user.update({
+        where: { id: byEmail.id },
+        data: {
+          googleId,
+          avatarUrl: byEmail.avatarUrl ?? avatarUrl,
+        },
+      });
+    } else if (byEmail && !emailVerified) {
+      res.status(409).json({ error: 'Email already in use' });
+      return;
+    } else {
+      user = await prisma.user.create({
+        data: {
+          email,
+          googleId,
+          firstName,
+          lastName,
+          avatarUrl,
+        },
+      });
+    }
+  }
+
+  if (user.status === 'BLOCKED') {
+    res.status(403).json({ error: 'Account blocked' });
+    return;
+  }
+
+  const token = signToken({ sub: user.id, role: user.role });
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      role: user.role,
+      status: user.status,
+      avatarUrl: user.avatarUrl,
     },
   });
 });

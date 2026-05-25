@@ -20,6 +20,7 @@ import { colors, typography, gradient } from '../../lib/colors';
 import { normalizeAlbanianMobile } from '../../lib/phone';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import PasswordInput from '../../components/ui/PasswordInput';
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
 
 export default function Register() {
   const { signIn } = useAuth();
@@ -111,6 +112,14 @@ export default function Register() {
               <PrimaryButton label="Regjistrohu" onPress={handleRegister} loading={loading} />
             </View>
 
+            <View style={s.divider}>
+              <View style={s.dividerLine} />
+              <Text style={s.dividerText}>ose</Text>
+              <View style={s.dividerLine} />
+            </View>
+
+            <GoogleSignInButton />
+
             <Link href="/(auth)/login" asChild>
               <TouchableOpacity style={s.link}>
                 <Text style={s.linkText}>
@@ -147,4 +156,7 @@ const s = StyleSheet.create({
   link: { marginTop: 24, alignItems: 'center', marginBottom: 20 },
   linkText: { color: colors.subtle, fontSize: 14 },
   linkBold: { color: colors.primary, fontWeight: '700' },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 20 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerText: { color: colors.subtle, fontSize: 12 },
 });

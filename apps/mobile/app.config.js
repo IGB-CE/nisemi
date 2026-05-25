@@ -3,6 +3,8 @@ const base = require('./app.json');
 const TEST_ADMOB_ANDROID_APP_ID = 'ca-app-pub-3940256099942544~3347511713';
 const TEST_ADMOB_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
 
+const GOOGLE_IOS_URL_SCHEME = 'com.googleusercontent.apps.1039009843352-6k7m327kvdq8i6h39kbt34d51uqjvls5';
+
 module.exports = {
   ...base,
   expo: {
@@ -31,6 +33,10 @@ module.exports = {
           userTrackingPermission:
             'Lejimi i ndjekjes na ndihmon të shfaqim reklama më relevante. Ju mund të refuzoni pa humbur asnjë funksion të aplikacionit.',
         },
+      ],
+      [
+        '@react-native-google-signin/google-signin',
+        { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
       ],
     ],
   },

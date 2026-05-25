@@ -9,8 +9,10 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  phone: string | null;
   role: 'PASSENGER' | 'DRIVER' | 'ADMIN';
   status: string;
+  avatarUrl?: string | null;
 }
 
 interface AuthContextType {
@@ -19,6 +21,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (token: string, user: User) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUser: (user: User) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -27,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signIn: async () => {},
   signOut: async () => {},
+  updateUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -60,7 +64,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ token, user, loading, signIn, signOut }}>{children}</AuthContext.Provider>;
+  const updateUser = async (u: User) => {
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(u));
+    setUser(u);
+  };
+
+  return (
+    <AuthContext.Provider value={{ token, user, loading, signIn, signOut, updateUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => useContext(AuthContext);

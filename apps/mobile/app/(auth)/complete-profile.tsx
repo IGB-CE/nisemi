@@ -7,37 +7,39 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
+import { normalizeAlbanianMobile } from '../../lib/phone';
 import { colors, typography, gradient } from '../../lib/colors';
 import PrimaryButton from '../../components/ui/PrimaryButton';
-import PasswordInput from '../../components/ui/PasswordInput';
-import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
 
-export default function Login() {
-  const { signIn } = useAuth();
+export default function CompleteProfile() {
+  const { token, user, updateUser, signOut } = useAuth();
   const dialog = useDialog();
   const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      await dialog.alert('Gabim', 'Plotëso të gjitha fushat');
+  const handleSubmit = async () => {
+    if (!phone) {
+      await dialog.alert('Gabim', 'Plotëso numrin e telefonit');
+      return;
+    }
+    const normalizedPhone = normalizeAlbanianMobile(phone);
+    if (!normalizedPhone) {
+      await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567');
       return;
     }
     setLoading(true);
     try {
-      const res = await api.post<{ token: string; user: any }>('/api/v1/auth/login', { email, password });
-      await signIn(res.token, res.user);
+      const updated = await api.patch<any>('/api/v1/users/me', { phone: normalizedPhone }, token ?? undefined);
+      await updateUser({ ...user!, ...updated });
       router.replace('/(tabs)');
     } catch (e: any) {
       await dialog.alert('Gabim', e.message);
@@ -62,47 +64,37 @@ export default function Login() {
         >
           <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.brand}>NISEMI</Text>
-          <Text style={s.title}>Mirë se erdhe</Text>
-          <Text style={s.subtitle}>Hyr për të vazhduar</Text>
+          <Text style={s.title}>Edhe një hap</Text>
+          <Text style={s.subtitle}>
+            {user?.firstName ? `Përshëndetje ${user.firstName}, ` : ''}
+            na duhet numri yt i telefonit për të vazhduar
+          </Text>
 
           <View style={s.form}>
-            <Text style={s.fieldLabel}>Email</Text>
+            <Text style={s.fieldLabel}>Numri i telefonit</Text>
             <TextInput
               style={s.input}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
               placeholderTextColor={colors.subtle}
             />
+            <Text style={s.hint}>Shembull: 069 123 4567</Text>
 
-            <Text style={s.fieldLabel}>Fjalëkalimi</Text>
-            <PasswordInput
-              style={s.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholderTextColor={colors.subtle}
-            />
-
-            <View style={{ marginTop: 20 }}>
-              <PrimaryButton label="Hyr" onPress={handleLogin} loading={loading} />
+            <View style={{ marginTop: 24 }}>
+              <PrimaryButton label="Vazhdo" onPress={handleSubmit} loading={loading} />
             </View>
 
-            <View style={s.divider}>
-              <View style={s.dividerLine} />
-              <Text style={s.dividerText}>ose</Text>
-              <View style={s.dividerLine} />
+            <View style={{ marginTop: 12 }}>
+              <PrimaryButton
+                label="Dil"
+                variant="ghost"
+                onPress={async () => {
+                  await signOut();
+                  router.replace('/(auth)/login');
+                }}
+              />
             </View>
-
-            <GoogleSignInButton />
-
-            <Link href="/(auth)/register" asChild>
-              <TouchableOpacity style={s.link}>
-                <Text style={s.linkText}>
-                  Nuk ke llogari? <Text style={s.linkBold}>Regjistrohu</Text>
-                </Text>
-              </TouchableOpacity>
-            </Link>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -129,10 +121,5 @@ const s = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
-  link: { marginTop: 24, alignItems: 'center' },
-  linkText: { color: colors.subtle, fontSize: 14 },
-  linkBold: { color: colors.primary, fontWeight: '700' },
-  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 20 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
-  dividerText: { color: colors.subtle, fontSize: 12 },
+  hint: { ...typography.bodyDim, fontSize: 12, marginTop: 6 },
 });

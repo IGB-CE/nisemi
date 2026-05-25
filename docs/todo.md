@@ -49,13 +49,14 @@ Currently using Google's official test ad IDs in dev — automatic switch via `_
 
 ---
 
-## Admin app deployment
+## Admin app deployment ✅
 
-Admin runs locally only right now. Deploy options:
+Deployed on Vercel Hobby at <https://admin.nisemi.al> (CNAME via Cloudflare, gray cloud). `CORS_ORIGIN` on Render API includes `https://admin.nisemi.al`. Admin user seeded: `admin@nisemi.al` / `admin123` (change after first login).
 
-- [ ] Pick a host (Render static site, Vercel, Netlify — all free for static Vite output)
-- [ ] Add the admin's production URL to `CORS_ORIGIN` env var on Render API
-- [ ] If using a custom domain (e.g. `admin.nisemi.al`), set up Cloudflare DNS the same way we did for `api.nisemi.al`
+**Heads-up for future commits:** Vercel Hobby plan blocks deploys when the commit author email doesn't match the Vercel account email (`nisemi.alb@gmail.com`). The repo's local git is configured to use that email so commits don't get blocked. If you ever clone fresh, run:
+```
+git config user.email "nisemi.alb@gmail.com"
+```
 
 ---
 

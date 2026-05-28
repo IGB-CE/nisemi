@@ -3,16 +3,17 @@
 
 export const BUSINESS = {
   name: 'Nisemi',
-  legalName: 'Nisemi sh.p.k.', // TODO: confirm legal form (sh.p.k. / sh.a. / person fizik) after registration
-  nipt: 'XX-XX-XXX', // TODO: fill in after Albanian business registration
+  legalName: 'Bledi Demirlika P.F.',
+  proprietor: 'Bledi Demirlika',
+  nipt: 'XXXXXXXXX', // TODO: fill in NIPT from QKB document
   address: {
-    street: 'Rruga [adresa]', // TODO
+    street: 'Rruga Teodor Keto',
     city: 'Tiranë',
-    postalCode: '1001',
+    postalCode: '1031',
     country: 'Shqipëri',
   },
   email: 'info@nisemi.al',
-  phone: '+355 XX XXX XXXX', // TODO
+  phone: '+355 69 233 1289',
   domain: 'nisemi.al',
   privacyUrl: '/privacy',
   termsUrl: '/terms',

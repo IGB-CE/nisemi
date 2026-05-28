@@ -5,7 +5,7 @@ export const BUSINESS = {
   name: 'Nisemi',
   legalName: 'Bledi Demirlika P.F.',
   proprietor: 'Bledi Demirlika',
-  nipt: 'XXXXXXXXX', // TODO: fill in NIPT from QKB document
+  nipt: 'M31917023G',
   address: {
     street: 'Rruga Teodor Keto',
     city: 'Tiranë',

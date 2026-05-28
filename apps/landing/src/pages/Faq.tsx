@@ -32,10 +32,6 @@ const FAQS: QA[] = [
     q: 'Si i raportoj një problem ose përdorues të papërshtatshëm?',
     a: 'Brenda aplikacionit ka një opsion "Raporto" për çdo udhëtim dhe profil. Mund të na shkruash edhe direkt në info@nisemi.al.',
   },
-  {
-    q: 'A do të ketë pagesa online në të ardhmen?',
-    a: 'Po, është në plan. Pagesat online dhe komisioni opsional janë në fazën e zhvillimit dhe do të lëshohen pas hapjes së plotë të aplikacionit.',
-  },
 ];
 
 export default function Faq() {

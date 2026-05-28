@@ -30,7 +30,7 @@ const FAQS: QA[] = [
   },
   {
     q: 'Si i raportoj një problem ose përdorues të papërshtatshëm?',
-    a: 'Brenda aplikacionit ka një opsion "Raporto" për çdo udhëtim dhe profil. Mund të na shkruash edhe direkt në info@nisemi.al.',
+    a: 'Brenda aplikacionit ka një opsion "Raporto" për çdo udhëtim dhe profil. Mund të na shkruash edhe direkt në support@nisemi.al.',
   },
 ];
 

@@ -51,7 +51,7 @@ export default function Contact() {
             <strong>Adresa e regjistruar:</strong> {FORMATTED_ADDRESS}
             <br />
             <strong>Email zyrtar:</strong>{' '}
-            <a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
+            <a href={`mailto:${BUSINESS.legalEmail}`}>{BUSINESS.legalEmail}</a>
             <br />
             <strong>Faqja zyrtare:</strong>{' '}
             <a href={`https://${BUSINESS.domain}`}>{BUSINESS.domain}</a>

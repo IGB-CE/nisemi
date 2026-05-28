@@ -7,7 +7,7 @@ export const BUSINESS = {
   proprietor: 'Bledi Demirlika',
   nipt: 'M31917023G',
   address: {
-    street: 'Rruga Teodor Keto',
+    street: 'Rruga Teodor Keko',
     city: 'Tiranë',
     postalCode: '1031',
     country: 'Shqipëri',

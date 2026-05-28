@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="container footer-grid">
         <div>
           <div className="footer-brand">
-            <span className="brand-mark sm">N</span>
+            <img src="/logo.png" alt="Nisemi" className="brand-logo sm" />
             <span>Nisemi</span>
           </div>
           <p className="footer-tag">

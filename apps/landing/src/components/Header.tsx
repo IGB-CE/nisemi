@@ -21,7 +21,7 @@ export default function Header() {
     <header className="site-header">
       <div className="container header-row">
         <Link to="/" className="brand">
-          <span className="brand-mark">N</span>
+          <img src="/logo.png" alt="Nisemi" className="brand-logo" />
           <span className="brand-name">Nisemi</span>
         </Link>
         <button

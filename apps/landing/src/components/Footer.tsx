@@ -38,14 +38,10 @@ export default function Footer() {
           <h4 className="footer-h">Ligjore</h4>
           <ul className="footer-list">
             <li>
-              <a href={BUSINESS.privacyUrl} target="_blank" rel="noreferrer">
-                Politika e Privatësisë
-              </a>
+              <Link to={BUSINESS.privacyUrl}>Politika e Privatësisë</Link>
             </li>
             <li>
-              <a href={BUSINESS.termsUrl} target="_blank" rel="noreferrer">
-                Kushtet e Përdorimit
-              </a>
+              <Link to={BUSINESS.termsUrl}>Kushtet e Përdorimit</Link>
             </li>
           </ul>
         </div>

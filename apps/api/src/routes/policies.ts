@@ -6,7 +6,10 @@ import { marked } from 'marked';
 
 const router = Router();
 
-const POLICIES_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../policies');
+const POLICIES_DIR = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../../landing/public',
+);
 
 const policyCache = new Map<string, { markdown: string; html: string }>();
 

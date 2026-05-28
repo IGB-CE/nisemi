@@ -6,6 +6,7 @@ import About from './pages/About';
 import HowItWorks from './pages/HowItWorks';
 import Faq from './pages/Faq';
 import Contact from './pages/Contact';
+import Policy from './pages/Policy';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -19,6 +20,8 @@ export default function App() {
           <Route path="/si-funksionon" element={<HowItWorks />} />
           <Route path="/pyetje" element={<Faq />} />
           <Route path="/kontakt" element={<Contact />} />
+          <Route path="/privacy" element={<Policy slug="privacy" />} />
+          <Route path="/terms" element={<Policy slug="terms" />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

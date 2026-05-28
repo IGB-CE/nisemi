@@ -14,8 +14,8 @@ export const BUSINESS = {
   email: 'info@nisemi.al',
   phone: '+355 XX XXX XXXX', // TODO
   domain: 'nisemi.al',
-  privacyUrl: 'https://api.nisemi.al/privacy',
-  termsUrl: 'https://api.nisemi.al/terms',
+  privacyUrl: '/privacy',
+  termsUrl: '/terms',
 };
 
 export const FORMATTED_ADDRESS = `${BUSINESS.address.street}, ${BUSINESS.address.postalCode} ${BUSINESS.address.city}, ${BUSINESS.address.country}`;

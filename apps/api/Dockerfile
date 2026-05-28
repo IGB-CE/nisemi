@@ -38,7 +38,6 @@ RUN groupadd --system nodejs && useradd --system --gid nodejs --shell /bin/false
 COPY --from=prod-deps --chown=nodejs:nodejs /repo/node_modules ./node_modules
 COPY --from=build --chown=nodejs:nodejs /repo/apps/api/dist ./dist
 COPY --chown=nodejs:nodejs apps/api/prisma ./prisma
-COPY --chown=nodejs:nodejs apps/api/policies ./policies
 COPY --chown=nodejs:nodejs apps/api/package.json ./package.json
 
 USER nodejs

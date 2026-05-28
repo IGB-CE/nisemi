@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 
 const NAV = [
-  { to: '/', label: 'Ballina' },
+  { to: '/', label: 'Kreu' },
   { to: '/rreth', label: 'Rreth nesh' },
   { to: '/si-funksionon', label: 'Si funksionon' },
   { to: '/pyetje', label: 'Pyetje' },

@@ -12,7 +12,7 @@ export default function Home() {
           </h1>
           <p className="hero-sub">
             Nisemi është platforma shqiptare që lidh udhëtarët me shoferët që po nisen për të
-            njëjtin destinacion. Ndani koston, kurseni kohë dhe ulni emetimet.
+            njëjtin destinacion. Ndani koston, kurseni kohë dhe ulni shpenzimet.
           </p>
           <div className="hero-cta">
             <Link to="/si-funksionon" className="btn btn-primary">

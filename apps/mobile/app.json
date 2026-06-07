@@ -49,6 +49,7 @@
         }
       },
       "package": "al.nisemi.app",
+      "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "ACCESS_FINE_LOCATION",

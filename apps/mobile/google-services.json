@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "449381637940",
+    "project_id": "nisemi-d1cc9",
+    "storage_bucket": "nisemi-d1cc9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:449381637940:android:08e5577c8ad4f90a780f61",
+        "android_client_info": {
+          "package_name": "al.nisemi.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBE0esV3WEajn1sn_I-icfC_LDrFCJVj2I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

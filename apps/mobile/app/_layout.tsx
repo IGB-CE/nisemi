@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { ThemeProvider, useTheme } from '../lib/theme';
+import { UnreadProvider } from '../lib/unread';
 import { DialogProvider } from '../lib/dialog';
 import { registerPushToken, setupNotificationTapHandler } from '../lib/notifications';
 import { bootstrapAds } from '../lib/ads';
@@ -43,13 +44,15 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <AuthProvider>
-            <DialogProvider>
-              <ThemedStatusBar />
-              <PushRegistrar />
-              <AdsBootstrap />
-              <NotificationTapHandler />
-              <Stack screenOptions={{ headerShown: false }} />
-            </DialogProvider>
+            <UnreadProvider>
+              <DialogProvider>
+                <ThemedStatusBar />
+                <PushRegistrar />
+                <AdsBootstrap />
+                <NotificationTapHandler />
+                <Stack screenOptions={{ headerShown: false }} />
+              </DialogProvider>
+            </UnreadProvider>
           </AuthProvider>
         </ThemeProvider>
       </SafeAreaProvider>

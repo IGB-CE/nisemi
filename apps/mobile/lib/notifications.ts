@@ -21,6 +21,14 @@ export function clearActiveChat() {
   activeChatOnMessage = null;
 }
 
+// Fired whenever a message push is received in the foreground, so the unread
+// badge can refresh immediately regardless of which screen is showing.
+let onIncomingMessage: (() => void) | null = null;
+
+export function setOnIncomingMessage(cb: (() => void) | null) {
+  onIncomingMessage = cb;
+}
+
 function isForOpenChat(data: MessageData | undefined): boolean {
   return !!data && data.type === 'message' && `${data.tripId}|${data.senderId}` === activeChatKey;
 }
@@ -28,6 +36,7 @@ function isForOpenChat(data: MessageData | undefined): boolean {
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const data = notification.request.content.data as MessageData | undefined;
+    if (data?.type === 'message') onIncomingMessage?.();
     if (isForOpenChat(data)) {
       // Already viewing this conversation — pull the new message in instead of
       // popping a banner/sound.

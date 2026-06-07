@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
+import { useUnread } from '../../lib/unread';
 import { ErrorScreen, EmptyState } from '../../components/States';
 
 interface Conversation {
@@ -34,6 +35,7 @@ export default function Mesazhet() {
   const { token } = useAuth();
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
+  const { refresh: refreshUnread } = useUnread();
   const insets = useSafeAreaInsets();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,12 @@ export default function Mesazhet() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  useFocusEffect(load);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+      refreshUnread();
+    }, [load, refreshUnread]),
+  );
 
   if (loading)
     return (

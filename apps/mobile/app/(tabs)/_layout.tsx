@@ -1,6 +1,7 @@
 import { Tabs, Redirect } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { useColors } from '../../lib/theme';
+import { useUnread } from '../../lib/unread';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +12,7 @@ function TabIcon({ label }: { label: string }) {
 export default function TabsLayout() {
   const { token, user, loading } = useAuth();
   const colors = useColors();
+  const { unread } = useUnread();
   const insets = useSafeAreaInsets();
   const isDriver = user?.role === 'DRIVER' || user?.role === 'ADMIN';
 
@@ -36,7 +38,15 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Kërko', tabBarIcon: () => <TabIcon label="🔍" /> }} />
       <Tabs.Screen name="rezervimet" options={{ title: 'Rezervimet', tabBarIcon: () => <TabIcon label="🎫" /> }} />
-      <Tabs.Screen name="mesazhet" options={{ title: 'Mesazhet', tabBarIcon: () => <TabIcon label="💬" /> }} />
+      <Tabs.Screen
+        name="mesazhet"
+        options={{
+          title: 'Mesazhet',
+          tabBarIcon: () => <TabIcon label="💬" />,
+          tabBarBadge: unread > 0 ? (unread > 99 ? '99+' : unread) : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.primary, color: '#fff', fontSize: 10, fontWeight: '700' },
+        }}
+      />
       {isDriver ? (
         <Tabs.Screen name="shofer" options={{ title: 'Shofer', tabBarIcon: () => <TabIcon label="🚗" /> }} />
       ) : (

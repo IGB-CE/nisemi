@@ -15,6 +15,7 @@ import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { useColors, useThemedStyles, type Theme } from '../../../lib/theme';
 import { useDialog } from '../../../lib/dialog';
+import { useUnread } from '../../../lib/unread';
 import { setActiveChat, clearActiveChat } from '../../../lib/notifications';
 import { blocks as blocksApi } from '../../../lib/blocks';
 
@@ -35,6 +36,7 @@ export default function Chat() {
   const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const dialog = useDialog();
+  const { refresh: refreshUnread } = useUnread();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -84,8 +86,12 @@ export default function Chat() {
   useFocusEffect(
     useCallback(() => {
       if (tripId && userId) setActiveChat(tripId, userId, fetchMessages);
-      return () => clearActiveChat();
-    }, [tripId, userId, fetchMessages]),
+      return () => {
+        clearActiveChat();
+        // Opening this chat marked its messages read on the server — sync the badge.
+        refreshUnread();
+      };
+    }, [tripId, userId, fetchMessages, refreshUnread]),
   );
 
   useEffect(() => {

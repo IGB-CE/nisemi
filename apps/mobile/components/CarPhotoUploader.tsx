@@ -5,7 +5,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useDialog } from '../lib/dialog';
-import { colors, typography } from '../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../lib/theme';
 
 interface Props {
   currentUrl?: string | null;
@@ -15,6 +15,8 @@ interface Props {
 export default function CarPhotoUploader({ currentUrl, onUploaded }: Props) {
   const { token } = useAuth();
   const dialog = useDialog();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const [uploading, setUploading] = useState(false);
 
   const pickAndUpload = async (source: 'gallery' | 'camera') => {
@@ -104,7 +106,8 @@ export default function CarPhotoUploader({ currentUrl, onUploaded }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   wrap: { marginTop: 4 },
   image: { width: '100%', height: 180, borderRadius: 14, backgroundColor: colors.surfaceElevated },
   overlay: {

@@ -16,16 +16,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
-import { colors, typography } from '../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
+import type { Palette } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 
-const statusMap: Record<string, { label: string; color: string }> = {
+const statusMapFor = (colors: Palette): Record<string, { label: string; color: string }> => ({
   PENDING: { label: 'Në pritje', color: colors.warning },
   ACCEPTED: { label: 'Pranuar', color: colors.success },
   REJECTED: { label: 'Refuzuar', color: colors.danger },
   CANCELLED: { label: 'Anuluar', color: colors.subtle },
-};
+});
 
 interface RatingTarget {
   tripId: string;
@@ -34,6 +35,7 @@ interface RatingTarget {
 }
 
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.stars}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -48,6 +50,9 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 export default function Rezervimet() {
   const { token } = useAuth();
   const dialog = useDialog();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
+  const statusMap = statusMapFor(colors);
   const insets = useSafeAreaInsets();
   const [reservations, setReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -255,7 +260,8 @@ export default function Rezervimet() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 

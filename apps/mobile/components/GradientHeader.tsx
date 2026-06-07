@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode } from 'react';
 import { type ViewStyle, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { gradient, colors } from '../lib/colors';
+import { useTheme } from '../lib/theme';
 
 interface Props {
   children: ReactNode;
@@ -11,6 +11,7 @@ interface Props {
 }
 
 export default function GradientHeader({ children, style, variant = 'flat' }: Props) {
+  const { colors, gradient } = useTheme();
   const insets = useSafeAreaInsets();
   if (variant === 'flat') {
     return (

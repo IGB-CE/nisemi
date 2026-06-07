@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography } from '../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
 import { blocks as blocksApi, type Block } from '../../lib/blocks';
@@ -12,6 +12,8 @@ import Card from '../../components/ui/Card';
 export default function BlockedUsersScreen() {
   const { token } = useAuth();
   const dialog = useDialog();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const [items, setItems] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +109,8 @@ export default function BlockedUsersScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 

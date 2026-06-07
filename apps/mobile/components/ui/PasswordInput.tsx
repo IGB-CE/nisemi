@@ -8,7 +8,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../lib/theme';
 
 type Props = {
   value: string;
@@ -44,6 +44,7 @@ export default function PasswordInput({ value, onChangeText, style, placeholderT
 }
 
 function Eye() {
+  const colors = useColors();
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
       <Path
@@ -59,6 +60,7 @@ function Eye() {
 }
 
 function EyeOff() {
+  const colors = useColors();
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
       <Path

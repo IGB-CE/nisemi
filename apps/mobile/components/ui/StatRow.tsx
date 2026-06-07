@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography } from '../../lib/colors';
+import { useThemedStyles, type Theme } from '../../lib/theme';
 
 interface Props {
   icon: string;
@@ -8,6 +8,7 @@ interface Props {
 }
 
 export default function StatRow({ icon, value, label }: Props) {
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.row}>
       <View style={s.iconWrap}>
@@ -21,11 +22,12 @@ export default function StatRow({ icon, value, label }: Props) {
   );
 }
 
-const s = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
-  iconWrap: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center' },
-  icon: { fontSize: 20, color: colors.primary },
-  body: { flex: 1 },
-  value: { ...typography.h2, lineHeight: 28 },
-  label: { ...typography.caption, marginTop: -2 },
-});
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
+    iconWrap: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center' },
+    icon: { fontSize: 20, color: colors.primary },
+    body: { flex: 1 },
+    value: { ...typography.h2, lineHeight: 28 },
+    label: { ...typography.caption, marginTop: -2 },
+  });

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography } from '../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 
 interface Props {
   data: { label: string; value: number }[];
@@ -7,6 +7,8 @@ interface Props {
 }
 
 export default function BarChart({ data, height = 120 }: Props) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const max = Math.max(...data.map((d) => d.value), 1);
   return (
     <View style={s.wrap}>
@@ -36,11 +38,12 @@ export default function BarChart({ data, height = 120 }: Props) {
   );
 }
 
-const s = StyleSheet.create({
-  wrap: { gap: 6 },
-  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
-  col: { flex: 1, alignItems: 'center' },
-  bar: { width: '100%', borderTopLeftRadius: 3, borderTopRightRadius: 3 },
-  labels: { flexDirection: 'row', gap: 4 },
-  label: { ...typography.caption, fontSize: 9, color: colors.subtle },
-});
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
+    wrap: { gap: 6 },
+    bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
+    col: { flex: 1, alignItems: 'center' },
+    bar: { width: '100%', borderTopLeftRadius: 3, borderTopRightRadius: 3 },
+    labels: { flexDirection: 'row', gap: 4 },
+    label: { ...typography.caption, fontSize: 9, color: colors.subtle },
+  });

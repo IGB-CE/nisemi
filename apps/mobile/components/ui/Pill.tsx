@@ -1,15 +1,17 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../lib/theme';
 
 interface Props {
   label: string;
   color?: string;
 }
 
-export default function Pill({ label, color = colors.primary }: Props) {
+export default function Pill({ label, color }: Props) {
+  const colors = useColors();
+  const resolved = color ?? colors.primary;
   return (
-    <View style={[s.pill, { borderColor: color, backgroundColor: color + '15' }]}>
-      <Text style={[s.text, { color }]}>{label}</Text>
+    <View style={[s.pill, { borderColor: resolved, backgroundColor: resolved + '15' }]}>
+      <Text style={[s.text, { color: resolved }]}>{label}</Text>
     </View>
   );
 }

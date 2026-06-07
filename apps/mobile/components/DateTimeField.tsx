@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal } from 'react-native';
 import RNDateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { colors } from '../lib/colors';
+import { useThemedStyles, type Theme } from '../lib/theme';
 
 interface Props {
   value: Date | null;
@@ -11,6 +11,7 @@ interface Props {
 }
 
 export default function DateTimeField({ value, onChange, mode = 'date', placeholder = 'Zgjidhni datën' }: Props) {
+  const s = useThemedStyles(makeStyles);
   const [show, setShow] = useState(false);
   const [androidStep, setAndroidStep] = useState<'date' | 'time'>('date');
   const [tempDate, setTempDate] = useState<Date>(new Date());
@@ -100,7 +101,8 @@ export default function DateTimeField({ value, onChange, mode = 'date', placehol
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors }: Theme) =>
+  StyleSheet.create({
   field: {
     backgroundColor: colors.surface,
     borderWidth: 1,

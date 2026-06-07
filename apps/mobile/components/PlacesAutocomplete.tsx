@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { colors, typography } from '../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../lib/theme';
 import {
   autocompletePlaces,
   getCurrentLocationAsPlace,
@@ -27,6 +27,8 @@ export default function PlacesAutocomplete({
   showCurrentLocation,
   onError,
 }: Props) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const [query, setQuery] = useState(value?.label ?? '');
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -149,7 +151,8 @@ export default function PlacesAutocomplete({
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   inputWrap: {
     backgroundColor: colors.surfaceElevated,
     borderWidth: 1,

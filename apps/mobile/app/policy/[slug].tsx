@@ -4,7 +4,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Markdown from 'react-native-markdown-display';
 import { BASE } from '../../lib/api';
-import { colors, typography } from '../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
+import type { Palette } from '../../lib/colors';
 
 const TITLES: Record<string, string> = {
   privacy: 'Politika e Privatësisë',
@@ -13,6 +14,9 @@ const TITLES: Record<string, string> = {
 
 export default function PolicyScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
+  const mdStyles = makeMdStyles(colors);
   const insets = useSafeAreaInsets();
   const [markdown, setMarkdown] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +68,8 @@ export default function PolicyScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   topBar: {
     flexDirection: 'row',
@@ -90,7 +95,7 @@ const s = StyleSheet.create({
   errorText: { ...typography.body, color: colors.danger, textAlign: 'center' },
 });
 
-const mdStyles = {
+const makeMdStyles = (colors: Palette) => ({
   body: { color: colors.text, fontSize: 15, lineHeight: 22 },
   heading1: { color: colors.text, fontSize: 24, fontWeight: '800' as const, marginTop: 16, marginBottom: 8 },
   heading2: { color: colors.text, fontSize: 19, fontWeight: '700' as const, marginTop: 24, marginBottom: 6 },
@@ -108,4 +113,4 @@ const mdStyles = {
   td: { color: colors.textDim, padding: 8, borderTopWidth: 1, borderTopColor: colors.border },
   hr: { backgroundColor: colors.border, height: 1, marginVertical: 20 },
   code_inline: { backgroundColor: colors.surface, color: colors.text, paddingHorizontal: 6, borderRadius: 4 },
-};
+});

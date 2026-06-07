@@ -1,5 +1,5 @@
 import { View, type ViewStyle, type ViewProps } from 'react-native';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../lib/theme';
 
 interface Props extends ViewProps {
   variant?: 'default' | 'elevated' | 'flat';
@@ -8,6 +8,7 @@ interface Props extends ViewProps {
 }
 
 export default function Card({ variant = 'default', padding = 16, style, children, ...rest }: Props) {
+  const colors = useColors();
   const bg = variant === 'elevated' ? colors.surfaceElevated : variant === 'flat' ? 'transparent' : colors.surface;
   const borderColor = variant === 'flat' ? 'transparent' : colors.border;
   return (

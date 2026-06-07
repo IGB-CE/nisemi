@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
-import { colors, typography } from './colors';
+import { useThemedStyles, type Theme } from './theme';
 
 export interface DialogButton {
   label: string;
@@ -29,6 +29,7 @@ export function useDialog() {
 }
 
 export function DialogProvider({ children }: { children: ReactNode }) {
+  const s = useThemedStyles(makeStyles);
   const [visible, setVisible] = useState(false);
   const [config, setConfig] = useState<DialogConfig | null>(null);
   const [resolver, setResolver] = useState<(() => void) | null>(null);
@@ -136,7 +137,8 @@ export function DialogProvider({ children }: { children: ReactNode }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 32 },
   card: {
     width: '100%',

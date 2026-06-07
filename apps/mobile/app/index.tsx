@@ -1,10 +1,11 @@
 import { Redirect } from 'expo-router';
 import { useAuth } from '../lib/auth';
 import { View, ActivityIndicator } from 'react-native';
-import { colors } from '../lib/colors';
+import { useColors } from '../lib/theme';
 
 export default function Index() {
   const { token, user, loading } = useAuth();
+  const colors = useColors();
   if (loading)
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>

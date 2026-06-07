@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
-import { colors, typography } from '../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import DateTimeField from '../../components/DateTimeField';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import Card from '../../components/ui/Card';
@@ -35,6 +35,8 @@ const DETOUR_OPTIONS = [
 export default function Publiko() {
   const { token } = useAuth();
   const dialog = useDialog();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
 
   const [origin, setOrigin] = useState<PlaceDetail | null>(null);
@@ -378,7 +380,8 @@ export default function Publiko() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   headerWrap: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 4 },
   back: { marginBottom: 12 },
   backText: { color: colors.textDim, fontSize: 14 },

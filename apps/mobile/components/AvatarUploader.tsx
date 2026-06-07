@@ -6,7 +6,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useDialog } from '../lib/dialog';
-import { colors } from '../lib/colors';
+import { useThemedStyles, type Theme } from '../lib/theme';
 
 interface Props {
   currentUrl?: string | null;
@@ -17,6 +17,7 @@ interface Props {
 export default function AvatarUploader({ currentUrl, initials, onUploaded }: Props) {
   const { token } = useAuth();
   const dialog = useDialog();
+  const s = useThemedStyles(makeStyles);
   const [uploading, setUploading] = useState(false);
 
   const pickAndUpload = async (source: 'gallery' | 'camera') => {
@@ -127,7 +128,8 @@ export default function AvatarUploader({ currentUrl, initials, onUploaded }: Pro
 const CANVAS = 320;
 const AVATAR = 140;
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors }: Theme) =>
+  StyleSheet.create({
   touch: { width: CANVAS, height: CANVAS, justifyContent: 'center', alignItems: 'center' },
   svg: { position: 'absolute', top: 0, left: 0, width: CANVAS, height: CANVAS },
   avatarTouch: { width: AVATAR, height: AVATAR },

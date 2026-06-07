@@ -1,6 +1,6 @@
 import { Tabs, Redirect } from 'expo-router';
 import { useAuth } from '../../lib/auth';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../lib/theme';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +10,7 @@ function TabIcon({ label }: { label: string }) {
 
 export default function TabsLayout() {
   const { token, user, loading } = useAuth();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const isDriver = user?.role === 'DRIVER' || user?.role === 'ADMIN';
 

@@ -19,7 +19,7 @@ import polyline from '@mapbox/polyline';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
-import { colors, typography } from '../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -41,6 +41,8 @@ export default function TripDetail() {
   const { id } = params;
   const { token, user } = useAuth();
   const dialog = useDialog();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -461,7 +463,8 @@ export default function TripDetail() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
-import { colors, typography, gradient } from '../../lib/colors';
+import { useTheme, useThemedStyles, type Theme } from '../../lib/theme';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import PasswordInput from '../../components/ui/PasswordInput';
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
@@ -24,6 +24,8 @@ import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
 export default function Login() {
   const { signIn } = useAuth();
   const dialog = useDialog();
+  const { colors, gradient } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -110,7 +112,8 @@ export default function Login() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   bg: { ...StyleSheet.absoluteFillObject, opacity: 0.4 },
   scroll: { padding: 28, paddingBottom: 60 },

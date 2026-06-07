@@ -4,7 +4,7 @@ import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { colors, typography } from '../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { ErrorScreen, EmptyState } from '../../components/States';
 
 interface Conversation {
@@ -32,6 +32,8 @@ function formatTime(iso: string) {
 
 export default function Mesazhet() {
   const { token } = useAuth();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,7 +140,8 @@ export default function Mesazhet() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 

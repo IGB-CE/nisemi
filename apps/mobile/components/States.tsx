@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors } from '../lib/colors';
+import { useThemedStyles, type Theme } from '../lib/theme';
 
 export function ErrorScreen({ message, onRetry }: { message?: string; onRetry?: () => void }) {
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.fullCenter}>
       <Text style={s.icon}>⚠️</Text>
@@ -17,6 +18,7 @@ export function ErrorScreen({ message, onRetry }: { message?: string; onRetry?: 
 }
 
 export function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle?: string }) {
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.inlineCenter}>
       <Text style={s.icon}>{icon}</Text>
@@ -26,12 +28,13 @@ export function EmptyState({ icon, title, subtitle }: { icon: string; title: str
   );
 }
 
-const s = StyleSheet.create({
-  fullCenter: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  inlineCenter: { alignItems: 'center', paddingVertical: 56, paddingHorizontal: 32 },
-  icon: { fontSize: 48, marginBottom: 12 },
-  title: { fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 6 },
-  subtitle: { fontSize: 14, color: colors.subtle, textAlign: 'center', lineHeight: 20 },
-  btn: { marginTop: 20, paddingHorizontal: 28, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 24 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-});
+const makeStyles = ({ colors }: Theme) =>
+  StyleSheet.create({
+    fullCenter: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+    inlineCenter: { alignItems: 'center', paddingVertical: 56, paddingHorizontal: 32 },
+    icon: { fontSize: 48, marginBottom: 12 },
+    title: { fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 6 },
+    subtitle: { fontSize: 14, color: colors.subtle, textAlign: 'center', lineHeight: 20 },
+    btn: { marginTop: 20, paddingHorizontal: 28, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 24 },
+    btnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  });

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import polyline from '@mapbox/polyline';
-import { colors, typography } from '../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../lib/theme';
 import { formatDistanceKm, formatDurationMin, type RouteAlt } from '../lib/directions';
 
 interface Props {
@@ -21,6 +21,8 @@ interface DecodedRoute {
 }
 
 export default function RoutePicker({ origin, dest, routes, selectedIndex, onSelect }: Props) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const decoded: DecodedRoute[] = useMemo(
     () =>
       routes.map((r) => ({
@@ -91,7 +93,8 @@ export default function RoutePicker({ origin, dest, routes, selectedIndex, onSel
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   wrap: { gap: 12 },
   mapWrap: {
     height: 220,

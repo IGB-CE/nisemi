@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
-import { colors, typography } from '../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { useAuth } from '../../lib/auth';
 import { EmptyState } from '../../components/States';
 import DateTimeField from '../../components/DateTimeField';
@@ -48,6 +48,8 @@ function tripDestText(t: Trip): string {
 
 export default function Search() {
   const { token } = useAuth();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const [from, setFrom] = useState<PlaceDetail | null>(null);
   const [to, setTo] = useState<PlaceDetail | null>(null);
@@ -284,7 +286,8 @@ export default function Search() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
 
   headerWrap: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 4 },

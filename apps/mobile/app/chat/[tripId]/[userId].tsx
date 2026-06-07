@@ -14,7 +14,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
-import { colors } from '../../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../../lib/theme';
 import { useDialog } from '../../../lib/dialog';
 import { blocks as blocksApi } from '../../../lib/blocks';
 
@@ -31,6 +31,8 @@ const POLL_MS = 3000;
 export default function Chat() {
   const { tripId, userId } = useLocalSearchParams<{ tripId: string; userId: string }>();
   const { token, user } = useAuth();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const dialog = useDialog();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -180,7 +182,8 @@ export default function Chat() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {

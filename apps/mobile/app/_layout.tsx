@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
+import { ThemeProvider, useTheme } from '../lib/theme';
 import { DialogProvider } from '../lib/dialog';
 import { registerPushToken, setupNotificationTapHandler } from '../lib/notifications';
 import { bootstrapAds } from '../lib/ads';
@@ -30,18 +31,25 @@ function NotificationTapHandler() {
   return null;
 }
 
+function ThemedStatusBar() {
+  const { scheme } = useTheme();
+  return <StatusBar style={scheme === 'light' ? 'dark' : 'light'} />;
+}
+
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <DialogProvider>
-          <StatusBar style="light" />
-          <PushRegistrar />
-          <AdsBootstrap />
-          <NotificationTapHandler />
-          <Stack screenOptions={{ headerShown: false }} />
-        </DialogProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <DialogProvider>
+            <ThemedStatusBar />
+            <PushRegistrar />
+            <AdsBootstrap />
+            <NotificationTapHandler />
+            <Stack screenOptions={{ headerShown: false }} />
+          </DialogProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

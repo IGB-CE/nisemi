@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { io, type Socket } from 'socket.io-client';
 import { BASE } from '../lib/api';
-import { colors, typography } from '../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../lib/theme';
 
 interface Position {
   lat: number;
@@ -24,6 +24,8 @@ interface Props {
 const STALE_MS = 15_000;
 
 export default function LiveTripMap({ tripId, token, origin, destination, onTripEnded }: Props) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const [position, setPosition] = useState<Position | null>(null);
   const [connected, setConnected] = useState(false);
   const [stale, setStale] = useState(false);
@@ -130,7 +132,8 @@ export default function LiveTripMap({ tripId, token, origin, destination, onTrip
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   wrap: { width: '100%' },
   map: { height: 220, width: '100%' },
   driverMarker: {

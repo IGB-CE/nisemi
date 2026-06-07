@@ -1,5 +1,5 @@
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, type ViewStyle } from 'react-native';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../lib/theme';
 
 interface Props {
   label: string;
@@ -12,6 +12,7 @@ interface Props {
 }
 
 export default function PrimaryButton({ label, onPress, variant = 'primary', loading, disabled, icon, style }: Props) {
+  const colors = useColors();
   const bg = variant === 'primary' ? colors.primary : 'transparent';
   const border = variant === 'outline' ? colors.borderStrong : 'transparent';
   const fg = variant === 'primary' ? '#fff' : variant === 'outline' ? colors.text : colors.textDim;

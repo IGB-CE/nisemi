@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
-import { colors, typography } from '../../lib/colors';
+import { useTheme, useThemedStyles, type Theme } from '../../lib/theme';
 import { normalizeAlbanianMobile } from '../../lib/phone';
 import { isPrivacyOptionsRequired, showPrivacyOptionsForm } from '../../lib/ads';
 import { ErrorScreen } from '../../components/States';
@@ -23,6 +23,8 @@ const MONTHS = ['J', 'F', 'M', 'A', 'M', 'Q', 'K', 'G', 'S', 'T', 'N', 'D'];
 export default function Profili() {
   const { token, user, signOut, signIn } = useAuth();
   const dialog = useDialog();
+  const { colors, preference, setPreference } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<any>(null);
   const [tripsByMonth, setTripsByMonth] = useState<number[]>(new Array(12).fill(0));
@@ -319,6 +321,33 @@ export default function Profili() {
         )}
 
         <Card style={s.section}>
+          <Text style={s.cardLabel}>Pamja</Text>
+          <View style={s.segment}>
+            {(
+              [
+                { key: 'system', label: '⚙️ Sistemi' },
+                { key: 'light', label: '☀️ E çelët' },
+                { key: 'dark', label: '🌙 E errët' },
+              ] as const
+            ).map(({ key, label }) => {
+              const active = preference === key;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[s.segmentBtn, active && s.segmentBtnActive]}
+                  onPress={() => setPreference(key)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[s.segmentText, active && s.segmentTextActive]} numberOfLines={1}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Card>
+
+        <Card style={s.section}>
           <Text style={s.cardLabel}>Njoftimet</Text>
           <TouchableOpacity style={s.legalRow} onPress={() => router.push('/njoftimet' as any)}>
             <Text style={s.legalIcon}>🔔</Text>
@@ -366,7 +395,8 @@ export default function Profili() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   topBar: {
@@ -420,4 +450,19 @@ const s = StyleSheet.create({
   legalIcon: { fontSize: 18, marginRight: 12 },
   legalLabel: { ...typography.body, flex: 1 },
   legalChevron: { color: colors.subtle, fontSize: 22, fontWeight: '700' },
+
+  segment: { flexDirection: 'row', gap: 6, marginTop: 12 },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+  },
+  segmentBtnActive: { borderColor: colors.primary, backgroundColor: colors.primary },
+  segmentText: { color: colors.textDim, fontWeight: '700', fontSize: 12 },
+  segmentTextActive: { color: '#fff' },
 });

@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { useDialog } from '../../../lib/dialog';
-import { colors, typography } from '../../../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../../../lib/theme';
+import type { Palette } from '../../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../../components/States';
 import PrimaryButton from '../../../components/ui/PrimaryButton';
 import {
@@ -16,18 +17,21 @@ import {
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
-const statusMap: Record<string, { label: string; color: string }> = {
+const statusMapFor = (colors: Palette): Record<string, { label: string; color: string }> => ({
   PENDING: { label: 'Në pritje', color: colors.warning },
   ACCEPTED: { label: 'Pranuar', color: colors.success },
   REJECTED: { label: 'Refuzuar', color: colors.danger },
   CANCELLED: { label: 'Anuluar', color: colors.subtle },
   REMOVED: { label: 'Hequr', color: colors.danger },
-};
+});
 
 export default function TripReservations() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { token } = useAuth();
   const dialog = useDialog();
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
+  const statusMap = statusMapFor(colors);
   const insets = useSafeAreaInsets();
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -305,7 +309,8 @@ export default function TripReservations() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors, typography }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 

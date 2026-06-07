@@ -6,7 +6,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useDialog } from '../../lib/dialog';
 import { signInWithGoogle, googleStatusCodes } from '../../lib/google-signin';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../lib/theme';
 
 function GoogleIcon() {
   return (
@@ -34,6 +34,7 @@ function GoogleIcon() {
 export default function GoogleSignInButton() {
   const { signIn } = useAuth();
   const dialog = useDialog();
+  const colors = useColors();
   const [loading, setLoading] = useState(false);
 
   const onPress = async () => {

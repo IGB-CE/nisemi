@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, type Region } from 'react-native-maps';
-import { colors } from '../lib/colors';
+import { useColors, useThemedStyles, type Theme } from '../lib/theme';
 
 export interface City {
   id: string;
@@ -27,6 +27,8 @@ const ALBANIA: Region = {
 };
 
 export default function CityMapPicker({ visible, cities, onSelect, onClose, title }: Props) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<City | null>(null);
   const [search, setSearch] = useState('');
@@ -98,7 +100,8 @@ export default function CityMapPicker({ visible, cities, onSelect, onClose, titl
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = ({ colors }: Theme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   topBar: {
     flexDirection: 'row',

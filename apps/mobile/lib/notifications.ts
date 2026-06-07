@@ -4,18 +4,60 @@ import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { api } from './api';
 
+type MessageData = { type?: string; tripId?: string; senderId?: string };
+
+// The chat screen currently in the foreground, so we can suppress redundant
+// banners for the conversation the user is already reading (WhatsApp-style).
+let activeChatKey: string | null = null;
+let activeChatOnMessage: (() => void) | null = null;
+
+export function setActiveChat(tripId: string, userId: string, onMessage?: () => void) {
+  activeChatKey = `${tripId}|${userId}`;
+  activeChatOnMessage = onMessage ?? null;
+}
+
+export function clearActiveChat() {
+  activeChatKey = null;
+  activeChatOnMessage = null;
+}
+
+function isForOpenChat(data: MessageData | undefined): boolean {
+  return !!data && data.type === 'message' && `${data.tripId}|${data.senderId}` === activeChatKey;
+}
+
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
+  handleNotification: async (notification) => {
+    const data = notification.request.content.data as MessageData | undefined;
+    if (isForOpenChat(data)) {
+      // Already viewing this conversation — pull the new message in instead of
+      // popping a banner/sound.
+      activeChatOnMessage?.();
+      return {
+        shouldShowBanner: false,
+        shouldShowList: false,
+        shouldPlaySound: false,
+        shouldSetBadge: true,
+      };
+    }
+    return {
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    };
+  },
 });
 
 export function setupNotificationTapHandler() {
   const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as { tripId?: string } | undefined;
+    const data = response.notification.request.content.data as MessageData | undefined;
+    if (data?.type === 'message' && data.tripId && data.senderId) {
+      router.push({
+        pathname: '/chat/[tripId]/[userId]',
+        params: { tripId: data.tripId, userId: data.senderId },
+      } as any);
+      return;
+    }
     if (data?.tripId) {
       router.push(`/udhetime/${data.tripId}` as any);
     }

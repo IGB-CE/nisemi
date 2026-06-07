@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { ThemeProvider, useTheme } from '../lib/theme';
 import { DialogProvider } from '../lib/dialog';
@@ -38,18 +39,20 @@ function ThemedStatusBar() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <DialogProvider>
-            <ThemedStatusBar />
-            <PushRegistrar />
-            <AdsBootstrap />
-            <NotificationTapHandler />
-            <Stack screenOptions={{ headerShown: false }} />
-          </DialogProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <KeyboardProvider>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <DialogProvider>
+              <ThemedStatusBar />
+              <PushRegistrar />
+              <AdsBootstrap />
+              <NotificationTapHandler />
+              <Stack screenOptions={{ headerShown: false }} />
+            </DialogProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </KeyboardProvider>
   );
 }

@@ -85,6 +85,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
       tokens.map((t) => t.token),
       `${sender?.firstName ?? 'Mesazh i ri'} ${sender?.lastName ?? ''}`.trim() + ' 💬',
       `${trip.originCity?.name ?? trip.originLabel ?? 'Origjina'} → ${trip.destCity?.name ?? trip.destLabel ?? 'Destinacioni'}: ${content.slice(0, 80)}`,
+      { type: 'message', tripId, senderId: req.userId },
     );
   }
 

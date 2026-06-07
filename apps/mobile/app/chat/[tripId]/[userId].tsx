@@ -6,16 +6,16 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { useColors, useThemedStyles, type Theme } from '../../../lib/theme';
 import { useDialog } from '../../../lib/dialog';
+import { setActiveChat, clearActiveChat } from '../../../lib/notifications';
 import { blocks as blocksApi } from '../../../lib/blocks';
 
 interface Message {
@@ -79,6 +79,15 @@ export default function Chat() {
     return () => clearInterval(i);
   }, [fetchMessages]);
 
+  // While this chat is open, suppress push banners for messages from this person
+  // and refresh immediately when one arrives.
+  useFocusEffect(
+    useCallback(() => {
+      if (tripId && userId) setActiveChat(tripId, userId, fetchMessages);
+      return () => clearActiveChat();
+    }, [tripId, userId, fetchMessages]),
+  );
+
   useEffect(() => {
     if (otherUser) return;
     api
@@ -122,11 +131,7 @@ export default function Chat() {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         {loading ? (
           <View style={s.center}>
             <ActivityIndicator color={colors.primary} />

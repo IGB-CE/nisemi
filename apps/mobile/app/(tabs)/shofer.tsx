@@ -20,6 +20,7 @@ export default function Shofer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [boostingId, setBoostingId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const boostTrip = useCallback(
     async (tripId: string) => {
@@ -70,11 +71,103 @@ export default function Shofer() {
   if (error) return <ErrorScreen message={error} onRetry={load} />;
 
   const now = Date.now();
+  const isActive = (t: any) =>
+    t.status === 'IN_PROGRESS' || (new Date(t.departureAt).getTime() > now && t.status === 'SCHEDULED');
   const upcoming = trips.filter((t) => new Date(t.departureAt).getTime() > now && t.status === 'SCHEDULED');
+  const active = trips.filter(isActive);
+  const history = trips.filter((t) => !isActive(t));
   const totalEarnings = trips.reduce((sum, t) => {
     const accepted = (t.reservations ?? []).filter((r: any) => r.status === 'ACCEPTED');
     return sum + accepted.reduce((s: number, r: any) => s + r.seats * Number(t.pricePerSeat), 0);
   }, 0);
+
+  const renderTrip = (trip: any, past = false) => {
+    const pendingCount = (trip.reservations ?? []).filter((r: any) => r.status === 'PENDING').length;
+    const statusColor =
+      trip.status === 'SCHEDULED'
+        ? colors.success
+        : trip.status === 'CANCELLED'
+          ? colors.danger
+          : colors.subtle;
+    const isBoosted = trip.boostedUntil && new Date(trip.boostedUntil).getTime() > now;
+    const isUpcoming = new Date(trip.departureAt).getTime() > now && trip.status === 'SCHEDULED';
+    const canBoost = isUpcoming && !isBoosted;
+    return (
+      <TouchableOpacity
+        key={trip.id}
+        style={[s.card, isBoosted && s.cardBoosted, past && s.cardPast]}
+        onPress={() => router.push(`/driver/rezervimet/${trip.id}` as any)}
+        activeOpacity={0.85}
+      >
+        {isBoosted && (
+          <View style={s.boostPill}>
+            <Text style={s.boostPillText}>
+              ⚡ Promovuar deri{' '}
+              {new Date(trip.boostedUntil).toLocaleTimeString('sq-AL', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          </View>
+        )}
+        <View style={s.cardTop}>
+          <View style={s.routeDots}>
+            <View style={s.dotPrimary} />
+            <View style={s.dotLine} />
+            <View style={s.dotEnd} />
+          </View>
+          <View style={s.routeBody}>
+            <Text style={s.city} numberOfLines={1}>{trip.originLabel ?? trip.originCity?.name ?? '?'}</Text>
+            <Text style={s.cityDest} numberOfLines={1}>{trip.destLabel ?? trip.destCity?.name ?? '?'}</Text>
+          </View>
+          <View style={s.priceWrap}>
+            <Text style={s.price}>
+              {Number(trip.pricePerSeat).toFixed(0)}
+              <Text style={s.priceUnit}>L</Text>
+            </Text>
+            {pendingCount > 0 && (
+              <View style={s.pendingBadge}>
+                <Text style={s.pendingBadgeText}>{pendingCount}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <View style={s.metaRow}>
+          <Text style={s.metaItem}>
+            📅{' '}
+            {new Date(trip.departureAt).toLocaleDateString('sq-AL', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Text>
+          <Text style={s.metaDot}>·</Text>
+          <Text style={s.metaItem}>
+            💺 {trip.seatsAvailable}/{trip.totalSeats}
+          </Text>
+          <Text style={s.metaDot}>·</Text>
+          <Text style={s.metaItem}>📋 {trip.reservations?.length ?? 0}</Text>
+          <View style={{ flex: 1 }} />
+          <View style={[s.statusDot, { backgroundColor: statusColor }]} />
+        </View>
+        {canBoost && (
+          <TouchableOpacity
+            style={s.boostButton}
+            disabled={boostingId === trip.id}
+            onPress={(e) => {
+              e.stopPropagation?.();
+              boostTrip(trip.id);
+            }}
+          >
+            <Text style={s.boostButtonText}>
+              {boostingId === trip.id ? 'Po ngarkohet…' : '⚡ Promovo udhëtimin 12h'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={s.container}>
@@ -108,105 +201,35 @@ export default function Shofer() {
 
         <View style={s.sectionHeader}>
           <Text style={s.sectionTitle}>Udhëtimet e mia</Text>
-          <Text style={s.sectionMeta}>{trips.length} totale</Text>
+          <Text style={s.sectionMeta}>{active.length} aktive</Text>
         </View>
 
-        {trips.length === 0 ? (
+        {active.length === 0 ? (
           <View style={{ marginTop: 20 }}>
             <EmptyState
               icon="🚗"
-              title="Nuk keni udhëtime të publikuara"
-              subtitle="Shtypni butonin sipër për të publikuar udhëtimin tuaj të parë."
+              title={trips.length === 0 ? 'Nuk keni udhëtime të publikuara' : 'Nuk keni udhëtime të ardhshme'}
+              subtitle={
+                trips.length === 0
+                  ? 'Shtypni butonin sipër për të publikuar udhëtimin tuaj të parë.'
+                  : 'Udhëtimet e kaluara i gjeni te historiku më poshtë.'
+              }
             />
           </View>
         ) : (
-          trips.map((trip) => {
-            const pendingCount = (trip.reservations ?? []).filter((r: any) => r.status === 'PENDING').length;
-            const statusColor =
-              trip.status === 'SCHEDULED'
-                ? colors.success
-                : trip.status === 'CANCELLED'
-                  ? colors.danger
-                  : colors.subtle;
-            const isBoosted = trip.boostedUntil && new Date(trip.boostedUntil).getTime() > now;
-            const isUpcoming = new Date(trip.departureAt).getTime() > now && trip.status === 'SCHEDULED';
-            const canBoost = isUpcoming && !isBoosted;
-            return (
-              <TouchableOpacity
-                key={trip.id}
-                style={[s.card, isBoosted && s.cardBoosted]}
-                onPress={() => router.push(`/driver/rezervimet/${trip.id}` as any)}
-                activeOpacity={0.85}
-              >
-                {isBoosted && (
-                  <View style={s.boostPill}>
-                    <Text style={s.boostPillText}>
-                      ⚡ Promovuar deri{' '}
-                      {new Date(trip.boostedUntil).toLocaleTimeString('sq-AL', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </View>
-                )}
-                <View style={s.cardTop}>
-                  <View style={s.routeDots}>
-                    <View style={s.dotPrimary} />
-                    <View style={s.dotLine} />
-                    <View style={s.dotEnd} />
-                  </View>
-                  <View style={s.routeBody}>
-                    <Text style={s.city} numberOfLines={1}>{trip.originLabel ?? trip.originCity?.name ?? '?'}</Text>
-                    <Text style={s.cityDest} numberOfLines={1}>{trip.destLabel ?? trip.destCity?.name ?? '?'}</Text>
-                  </View>
-                  <View style={s.priceWrap}>
-                    <Text style={s.price}>
-                      {Number(trip.pricePerSeat).toFixed(0)}
-                      <Text style={s.priceUnit}>L</Text>
-                    </Text>
-                    {pendingCount > 0 && (
-                      <View style={s.pendingBadge}>
-                        <Text style={s.pendingBadgeText}>{pendingCount}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-                <View style={s.metaRow}>
-                  <Text style={s.metaItem}>
-                    📅{' '}
-                    {new Date(trip.departureAt).toLocaleDateString('sq-AL', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
-                  <Text style={s.metaDot}>·</Text>
-                  <Text style={s.metaItem}>
-                    💺 {trip.seatsAvailable}/{trip.totalSeats}
-                  </Text>
-                  <Text style={s.metaDot}>·</Text>
-                  <Text style={s.metaItem}>📋 {trip.reservations?.length ?? 0}</Text>
-                  <View style={{ flex: 1 }} />
-                  <View style={[s.statusDot, { backgroundColor: statusColor }]} />
-                </View>
-                {canBoost && (
-                  <TouchableOpacity
-                    style={s.boostButton}
-                    disabled={boostingId === trip.id}
-                    onPress={(e) => {
-                      e.stopPropagation?.();
-                      boostTrip(trip.id);
-                    }}
-                  >
-                    <Text style={s.boostButtonText}>
-                      {boostingId === trip.id ? 'Po ngarkohet…' : '⚡ Promovo udhëtimin 12h'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </TouchableOpacity>
-            );
-          })
+          active.map((trip) => renderTrip(trip))
+        )}
+
+        {history.length > 0 && (
+          <>
+            <TouchableOpacity style={s.historyToggle} onPress={() => setShowHistory((v) => !v)} activeOpacity={0.7}>
+              <Text style={s.historyToggleText}>
+                {showHistory ? 'Fshih historikun' : `Shfaq historikun (${history.length})`}
+              </Text>
+              <Text style={s.historyToggleIcon}>{showHistory ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {showHistory && history.map((trip) => renderTrip(trip, true))}
+          </>
         )}
       </ScrollView>
     </View>
@@ -310,6 +333,25 @@ const makeStyles = ({ colors, typography }: Theme) =>
   statusDot: { width: 8, height: 8, borderRadius: 4 },
 
   cardBoosted: { borderColor: colors.primary },
+  cardPast: { opacity: 0.6 },
+
+  historyToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
+  },
+  historyToggleText: { ...typography.label, color: colors.textDim },
+  historyToggleIcon: { color: colors.textDim, fontSize: 11 },
+
   boostPill: {
     alignSelf: 'flex-start',
     backgroundColor: colors.primary,

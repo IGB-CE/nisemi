@@ -11,6 +11,11 @@ interface Driver {
   rating: number;
   totalTrips: number;
   createdAt: string;
+  verificationStatus: string;
+  rejectionReason: string | null;
+  verifiedAt: string | null;
+  hasLicense: boolean;
+  licenseSignedUrl: string | null;
   user: {
     id: string;
     firstName: string;
@@ -26,6 +31,19 @@ const STATUS_CLASS: Record<string, string> = {
   ACTIVE: 'badge-success',
   BLOCKED: 'badge-danger',
   PENDING: 'badge-warning',
+};
+
+const VERIF_CLASS: Record<string, string> = {
+  APPROVED: 'badge-success',
+  PENDING: 'badge-warning',
+  REJECTED: 'badge-danger',
+  UNVERIFIED: 'badge-neutral',
+};
+const VERIF_LABEL: Record<string, string> = {
+  APPROVED: 'I verifikuar',
+  PENDING: 'Në pritje',
+  REJECTED: 'I refuzuar',
+  UNVERIFIED: 'Pa verifikuar',
 };
 
 export default function Drivers() {
@@ -49,6 +67,36 @@ export default function Drivers() {
     setActionId(userId);
     try {
       await api.patch(`/api/v1/admin/users/${userId}/${action}`, {}, token ?? undefined);
+      load();
+    } catch {
+      /* ignore */
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const doVerify = async (userId: string) => {
+    setActionId(userId);
+    try {
+      await api.patch(`/api/v1/admin/drivers/${userId}/verify`, {}, token ?? undefined);
+      load();
+    } catch {
+      /* ignore */
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const doReject = async (userId: string) => {
+    const reason = window.prompt('Arsyeja e refuzimit (opsionale):', '');
+    if (reason === null) return; // cancelled
+    setActionId(userId);
+    try {
+      await api.patch(
+        `/api/v1/admin/drivers/${userId}/reject`,
+        { reason: reason.trim() || undefined },
+        token ?? undefined,
+      );
       load();
     } catch {
       /* ignore */
@@ -89,6 +137,7 @@ export default function Drivers() {
             <th>Vlerësimi</th>
             <th>Udhëtime</th>
             <th>Statusi</th>
+            <th>Verifikimi</th>
             <th>Veprimet</th>
           </tr>
         </thead>
@@ -116,7 +165,42 @@ export default function Drivers() {
                 <span className={`badge ${STATUS_CLASS[d.user.status] ?? 'badge-neutral'}`}>{d.user.status}</span>
               </td>
               <td>
+                <span className={`badge ${VERIF_CLASS[d.verificationStatus] ?? 'badge-neutral'}`}>
+                  {VERIF_LABEL[d.verificationStatus] ?? d.verificationStatus}
+                </span>
+                {d.licenseSignedUrl && (
+                  <div style={{ marginTop: 4 }}>
+                    <a href={d.licenseSignedUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12 }}>
+                      Shiko licencën
+                    </a>
+                  </div>
+                )}
+                {d.verificationStatus === 'REJECTED' && d.rejectionReason && (
+                  <div className="text-subtle" style={{ fontSize: 11, marginTop: 2 }}>
+                    {d.rejectionReason}
+                  </div>
+                )}
+              </td>
+              <td>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {d.hasLicense && d.verificationStatus !== 'APPROVED' && (
+                    <button
+                      className="btn-success btn-sm"
+                      disabled={actionId === d.user.id}
+                      onClick={() => doVerify(d.user.id)}
+                    >
+                      Aprovo
+                    </button>
+                  )}
+                  {d.hasLicense && d.verificationStatus !== 'REJECTED' && (
+                    <button
+                      className="btn-danger btn-sm"
+                      disabled={actionId === d.user.id}
+                      onClick={() => doReject(d.user.id)}
+                    >
+                      Refuzo
+                    </button>
+                  )}
                   {d.user.status === 'BLOCKED' ? (
                     <button
                       className="btn-success btn-sm"

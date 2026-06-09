@@ -97,6 +97,13 @@ enum GenderRestriction {
   MALE_ONLY
 }
 
+enum DriverVerificationStatus {
+  UNVERIFIED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model DriverProfile {
   id          String   @id @default(cuid())
   userId      String   @unique
@@ -107,6 +114,12 @@ model DriverProfile {
   carPhotoUrl String?
   rating      Float    @default(0)
   totalTrips  Int      @default(0)
+
+  licenseUrl         String?
+  verificationStatus DriverVerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+  rejectionReason    String?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

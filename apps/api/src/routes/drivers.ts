@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
-import { supabase, CAR_PHOTOS_BUCKET } from '../lib/supabase.js';
+import { supabase, CAR_PHOTOS_BUCKET, DRIVER_DOCS_BUCKET } from '../lib/supabase.js';
 
 const router = Router();
 
@@ -99,6 +99,49 @@ router.post('/me/car-photo', requireAuth, async (req: AuthRequest, res) => {
   res.json(updated);
 });
 
+router.post('/me/license', requireAuth, async (req: AuthRequest, res) => {
+  const parsed = photoSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const profile = await prisma.driverProfile.findUnique({ where: { userId: req.userId } });
+  if (!profile) {
+    res.status(404).json({ error: 'Driver profile not found' });
+    return;
+  }
+
+  const ext = parsed.data.mimeType.split('/')[1];
+  const path = `${req.userId}/license.${ext}`;
+  const buffer = Buffer.from(parsed.data.base64, 'base64');
+
+  // Remove a previously stored license (possibly with a different extension).
+  if (profile.licenseUrl && profile.licenseUrl !== path) {
+    await supabase.storage
+      .from(DRIVER_DOCS_BUCKET)
+      .remove([profile.licenseUrl])
+      .catch(() => {});
+  }
+
+  const { error } = await supabase.storage.from(DRIVER_DOCS_BUCKET).upload(path, buffer, {
+    contentType: parsed.data.mimeType,
+    upsert: true,
+  });
+  if (error) {
+    res.status(500).json({ error: `Upload failed: ${error.message}` });
+    return;
+  }
+
+  // Store the storage path (not a public URL) — the bucket is private.
+  const updated = await prisma.driverProfile.update({
+    where: { userId: req.userId },
+    data: { licenseUrl: path, verificationStatus: 'PENDING', rejectionReason: null },
+    select: { id: true, verificationStatus: true, verifiedAt: true, rejectionReason: true },
+  });
+  res.json(updated);
+});
+
 router.get('/:userId', async (req, res) => {
   const profile = await prisma.driverProfile.findUnique({
     where: { userId: req.params.userId },
@@ -108,7 +151,9 @@ router.get('/:userId', async (req, res) => {
     res.status(404).json({ error: 'Driver profile not found' });
     return;
   }
-  res.json(profile);
+  // Never expose the private license path publicly.
+  const { licenseUrl: _licenseUrl, ...safe } = profile;
+  res.json(safe);
 });
 
 export default router;

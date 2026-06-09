@@ -108,7 +108,7 @@ router.get('/', async (req: AuthRequest, res) => {
           firstName: true,
           lastName: true,
           avatarUrl: true,
-          driverProfile: { select: { rating: true } },
+          driverProfile: { select: { rating: true, verificationStatus: true } },
         },
       },
     },
@@ -255,7 +255,27 @@ router.get('/:id', async (req, res) => {
     include: {
       originCity: true,
       destCity: true,
-      driver: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, driverProfile: true } },
+      driver: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          driverProfile: {
+            select: {
+              carModel: true,
+              carColor: true,
+              carPlate: true,
+              carPhotoUrl: true,
+              rating: true,
+              totalTrips: true,
+              verificationStatus: true,
+              verifiedAt: true,
+              createdAt: true,
+            },
+          },
+        },
+      },
       reservations: {
         where: { status: { in: ['PENDING', 'ACCEPTED'] } },
         select: {

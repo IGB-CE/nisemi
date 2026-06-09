@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAdmin } from '../middleware/auth.js';
+import { supabase, DRIVER_DOCS_BUCKET } from '../lib/supabase.js';
 
 const router = Router();
 
@@ -77,7 +79,50 @@ router.get('/drivers', async (req, res) => {
     },
     orderBy: { createdAt: 'desc' },
   });
-  res.json(drivers);
+
+  // Generate short-lived signed URLs so admins can view the private license images.
+  const withLicense = await Promise.all(
+    drivers.map(async ({ licenseUrl, ...d }) => {
+      let licenseSignedUrl: string | null = null;
+      if (licenseUrl) {
+        const { data } = await supabase.storage
+          .from(DRIVER_DOCS_BUCKET)
+          .createSignedUrl(licenseUrl, 60 * 10);
+        licenseSignedUrl = data?.signedUrl ?? null;
+      }
+      return { ...d, hasLicense: Boolean(licenseUrl), licenseSignedUrl };
+    }),
+  );
+  res.json(withLicense);
+});
+
+router.patch('/drivers/:userId/verify', async (req, res) => {
+  const profile = await prisma.driverProfile.update({
+    where: { userId: req.params.userId },
+    data: { verificationStatus: 'APPROVED', verifiedAt: new Date(), rejectionReason: null },
+    select: { id: true, verificationStatus: true, verifiedAt: true },
+  });
+  res.json(profile);
+});
+
+const rejectSchema = z.object({ reason: z.string().max(500).optional() });
+
+router.patch('/drivers/:userId/reject', async (req, res) => {
+  const parsed = rejectSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const profile = await prisma.driverProfile.update({
+    where: { userId: req.params.userId },
+    data: {
+      verificationStatus: 'REJECTED',
+      verifiedAt: null,
+      rejectionReason: parsed.data.reason ?? null,
+    },
+    select: { id: true, verificationStatus: true, rejectionReason: true },
+  });
+  res.json(profile);
 });
 
 router.patch('/drivers/:userId/demote', async (req, res) => {

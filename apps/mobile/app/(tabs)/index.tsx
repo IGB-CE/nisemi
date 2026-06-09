@@ -10,6 +10,7 @@ import DateTimeField from '../../components/DateTimeField';
 import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import PlacesAutocomplete from '../../components/PlacesAutocomplete';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import type { PlaceDetail } from '../../lib/places';
 import { formatDistanceKm, formatDurationMin } from '../../lib/directions';
 
@@ -26,7 +27,7 @@ interface Trip {
   routeDistanceM?: number | null;
   routeDurationS?: number | null;
   tripType?: 'INTERCITY' | 'INTRACITY' | null;
-  driver: { firstName: string; lastName: string; driverProfile: { rating: number } | null };
+  driver: { firstName: string; lastName: string; driverProfile: { rating: number; verificationStatus?: string } | null };
 }
 
 type TripTypeFilter = 'ANY' | 'INTERCITY' | 'INTRACITY';
@@ -278,6 +279,11 @@ export default function Search() {
                     ? ` · ${formatDistanceKm(trip.routeDistanceM)} · ${formatDurationMin(trip.routeDurationS)}`
                     : ''}
                 </Text>
+                {trip.driver?.driverProfile?.verificationStatus === 'APPROVED' && (
+                  <View style={{ marginTop: 4 }}>
+                    <VerifiedBadge size={12} label="Verifikuar" />
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           ))}

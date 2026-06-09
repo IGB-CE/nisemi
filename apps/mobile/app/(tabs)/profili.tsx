@@ -16,6 +16,8 @@ import PrimaryButton from '../../components/ui/PrimaryButton';
 import BarChart from '../../components/ui/BarChart';
 import Pill from '../../components/ui/Pill';
 import CarPhotoUploader from '../../components/CarPhotoUploader';
+import LicenseUploader from '../../components/LicenseUploader';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import AvatarUploader from '../../components/AvatarUploader';
 
 const MONTHS = ['J', 'F', 'M', 'A', 'M', 'Q', 'K', 'G', 'S', 'T', 'N', 'D'];
@@ -198,7 +200,10 @@ export default function Profili() {
 
         <Card style={s.section}>
           <View style={s.sectionHeader}>
-            <Pill label={isDriver ? 'Shofer' : 'Pasagjer'} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Pill label={isDriver ? 'Shofer' : 'Pasagjer'} />
+              {isDriver && dp?.verificationStatus === 'APPROVED' && <VerifiedBadge size={18} />}
+            </View>
             <Text style={s.email}>{profile?.email}</Text>
           </View>
           {profile?.phone && <StatRow icon="📞" value={profile.phone} label="Telefoni" />}
@@ -221,6 +226,20 @@ export default function Profili() {
               currentUrl={dp.carPhotoUrl}
               onUploaded={(url) =>
                 setProfile((p: any) => ({ ...p, driverProfile: { ...p.driverProfile, carPhotoUrl: url } }))
+              }
+            />
+          </Card>
+        )}
+
+        {isDriver && dp && (
+          <Card style={s.section}>
+            <Text style={s.cardLabel}>Licenca e drejtimit</Text>
+            <View style={{ height: 12 }} />
+            <LicenseUploader
+              status={dp.verificationStatus ?? 'UNVERIFIED'}
+              rejectionReason={dp.rejectionReason}
+              onUpdated={(r) =>
+                setProfile((p: any) => ({ ...p, driverProfile: { ...p.driverProfile, ...r } }))
               }
             />
           </Card>

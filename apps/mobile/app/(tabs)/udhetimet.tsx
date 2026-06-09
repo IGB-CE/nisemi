@@ -6,6 +6,7 @@ import { api } from '../../lib/api';
 import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { useAuth } from '../../lib/auth';
 import { ErrorScreen, EmptyState } from '../../components/States';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import { formatDistanceKm, formatDurationMin } from '../../lib/directions';
 
 interface Trip {
@@ -24,6 +25,7 @@ interface Trip {
   tripType?: 'INTERCITY' | 'INTRACITY' | null;
   genderRestriction?: 'ANY' | 'FEMALE_ONLY' | 'MALE_ONLY';
   boostedUntil?: string | null;
+  driver?: { driverProfile?: { verificationStatus?: string } | null } | null;
 }
 
 type SortKey = 'time' | 'newest' | 'price' | 'seats';
@@ -268,6 +270,9 @@ export default function Udhetimet() {
                       {tripDestText(trip)}
                     </Text>
                     <View style={s.badgeRow}>
+                      {trip.driver?.driverProfile?.verificationStatus === 'APPROVED' && (
+                        <VerifiedBadge size={13} label="Shofer i verifikuar" />
+                      )}
                       {boosted && (
                         <View style={[s.badge, { borderColor: colors.primary, backgroundColor: colors.primary + '15' }]}>
                           <Text style={[s.badgeText, { color: colors.primary }]}>Promovuar</Text>

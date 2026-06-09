@@ -25,6 +25,7 @@ import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { maybeShowInterstitialAfterBooking } from '../../lib/ads';
 import LiveTripMap from '../../components/LiveTripMap';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import { formatDistanceKm, formatDurationMin } from '../../lib/directions';
 import { blocks as blocksApi } from '../../lib/blocks';
 
@@ -354,9 +355,12 @@ export default function TripDetail() {
               )}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={s.driverName}>
-                {trip.driver.firstName} {trip.driver.lastName}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={s.driverName}>
+                  {trip.driver.firstName} {trip.driver.lastName}
+                </Text>
+                {dp?.verificationStatus === 'APPROVED' && <VerifiedBadge size={18} />}
+              </View>
               {dp && (
                 <>
                   <Text style={s.driverMeta}>

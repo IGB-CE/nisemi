@@ -37,6 +37,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Kërko', tabBarIcon: () => <TabIcon label="🔍" /> }} />
+      <Tabs.Screen name="udhetimet" options={{ title: 'Udhëtimet', tabBarIcon: () => <TabIcon label="🚌" /> }} />
       <Tabs.Screen name="rezervimet" options={{ title: 'Rezervimet', tabBarIcon: () => <TabIcon label="🎫" /> }} />
       <Tabs.Screen
         name="mesazhet"

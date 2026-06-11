@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../lib/jwt.js';
 
-export interface AuthRequest extends Request {
+// Express 5's `@types/express-serve-static-core` types route params as
+// `string | string[]`, which makes every `req.params.x` read fail against
+// Prisma's string inputs. Route params are always strings here, so narrow them.
+export interface AuthRequest<P = Record<string, string>> extends Request<P> {
   userId?: string;
   userRole?: string;
 }

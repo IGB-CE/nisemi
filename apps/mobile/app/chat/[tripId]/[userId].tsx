@@ -44,6 +44,26 @@ export default function Chat() {
   const [otherUser, setOtherUser] = useState<{ firstName: string; lastName: string } | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
+  const deleteChat = async () => {
+    if (!token || !tripId || !userId) return;
+    const name = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'këtë përdorues';
+    const firstName = otherUser?.firstName ?? 'Ai';
+    const ok = await dialog.confirm(
+      'Fshini bisedën?',
+      `Biseda me ${name} do të fshihet vetëm për ju. Nëse ${firstName} ju shkruan përsëri, biseda do të rishfaqet.`,
+      'Fshij',
+      true,
+    );
+    if (!ok) return;
+    try {
+      await api.delete(`/api/v1/messages/trip/${tripId}/with/${userId}`, token);
+      refreshUnread();
+      router.back();
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    }
+  };
+
   const blockUser = async () => {
     if (!token || !userId) return;
     const name = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'këtë përdorues';
@@ -132,6 +152,9 @@ export default function Chat() {
           <Text style={s.backText}>←</Text>
         </TouchableOpacity>
         <Text style={s.headerTitle}>{otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'Bisedë'}</Text>
+        <TouchableOpacity onPress={deleteChat} style={s.headerAction} hitSlop={8}>
+          <Text style={s.headerActionText}>🗑️</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={blockUser} style={s.headerAction} hitSlop={8}>
           <Text style={s.headerActionText}>🚫</Text>
         </TouchableOpacity>

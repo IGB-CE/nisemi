@@ -6,6 +6,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { useUnread } from '../../lib/unread';
+import { useDialog } from '../../lib/dialog';
 import { ErrorScreen, EmptyState } from '../../components/States';
 
 interface Conversation {
@@ -36,6 +37,7 @@ export default function Mesazhet() {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
   const { refresh: refreshUnread } = useUnread();
+  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,26 @@ export default function Mesazhet() {
       refreshUnread();
     }, [load, refreshUnread]),
   );
+
+  const deleteConversation = async (c: Conversation) => {
+    const name = `${c.otherUser.firstName} ${c.otherUser.lastName}`;
+    const ok = await dialog.confirm(
+      'Fshini bisedën?',
+      `Biseda me ${name} do të fshihet vetëm për ju. Nëse ${c.otherUser.firstName} ju shkruan përsëri, biseda do të rishfaqet.`,
+      'Fshij',
+      true,
+    );
+    if (!ok) return;
+    const prev = conversations;
+    setConversations((cs) => cs.filter((x) => !(x.tripId === c.tripId && x.otherUser.id === c.otherUser.id)));
+    try {
+      await api.delete(`/api/v1/messages/trip/${c.tripId}/with/${c.otherUser.id}`, token ?? undefined);
+      refreshUnread();
+    } catch (e: any) {
+      setConversations(prev);
+      await dialog.alert('Gabim', e.message);
+    }
+  };
 
   if (loading)
     return (
@@ -105,6 +127,8 @@ export default function Mesazhet() {
                       params: { tripId: c.tripId, userId: c.otherUser.id },
                     })
                   }
+                  onLongPress={() => deleteConversation(c)}
+                  delayLongPress={350}
                   activeOpacity={0.85}
                 >
                   <View style={s.avatar}>

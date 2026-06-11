@@ -25,6 +25,16 @@ function messageVisibleTo(
   return msg.createdAt < blockedAt;
 }
 
+// Returns a map keyed by `${tripId}|${otherUserId}` -> cutoff. Messages in that
+// conversation created on or before the cutoff are hidden from the viewer.
+async function getConversationDeletions(userId: string): Promise<Map<string, Date>> {
+  const deletions = await prisma.conversationDeletion.findMany({
+    where: { userId },
+    select: { tripId: true, otherId: true, deletedAt: true },
+  });
+  return new Map(deletions.map((d) => [`${d.tripId}|${d.otherId}`, d.deletedAt]));
+}
+
 const sendSchema = z.object({
   tripId: z.string(),
   receiverId: z.string(),
@@ -95,6 +105,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.userId!;
   const blockCutoffs = await getBlockedSenderCutoffs(userId);
+  const deletions = await getConversationDeletions(userId);
 
   const messages = await prisma.message.findMany({
     where: { OR: [{ senderId: userId }, { receiverId: userId }] },
@@ -122,6 +133,11 @@ router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
     const key = `${m.tripId}|${other.id}`;
     if (seen.has(key)) continue;
     seen.add(key);
+    // `m` is the most recent message in this conversation. If it predates the
+    // deletion cutoff, the whole conversation was deleted and stays hidden
+    // until a newer message arrives.
+    const deletedAt = deletions.get(key);
+    if (deletedAt && m.createdAt <= deletedAt) continue;
     const blockedAt = blockCutoffs.get(other.id);
     const unread = await prisma.message.count({
       where: {
@@ -129,7 +145,9 @@ router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
         senderId: other.id,
         receiverId: userId,
         read: false,
-        ...(blockedAt ? { createdAt: { lt: blockedAt } } : {}),
+        ...(blockedAt || deletedAt
+          ? { createdAt: { ...(blockedAt ? { lt: blockedAt } : {}), ...(deletedAt ? { gt: deletedAt } : {}) } }
+          : {}),
       },
     });
     conversations.push({
@@ -149,10 +167,13 @@ router.get('/trip/:tripId/with/:userId', requireAuth, async (req: AuthRequest, r
   const { tripId, userId: other } = req.params;
   const blockCutoffs = await getBlockedSenderCutoffs(me);
   const blockedAt = blockCutoffs.get(other as string);
+  const deletions = await getConversationDeletions(me);
+  const deletedAt = deletions.get(`${tripId}|${other}`);
 
   const messages = await prisma.message.findMany({
     where: {
       tripId,
+      ...(deletedAt ? { createdAt: { gt: deletedAt } } : {}),
       OR: [
         { senderId: me, receiverId: other },
         { senderId: other, receiverId: me, ...(blockedAt ? { createdAt: { lt: blockedAt } } : {}) },
@@ -178,18 +199,35 @@ router.get('/trip/:tripId/with/:userId', requireAuth, async (req: AuthRequest, r
 router.get('/unread-count', requireAuth, async (req: AuthRequest, res) => {
   const me = req.userId!;
   const blockCutoffs = await getBlockedSenderCutoffs(me);
-  if (blockCutoffs.size === 0) {
+  const deletions = await getConversationDeletions(me);
+  if (blockCutoffs.size === 0 && deletions.size === 0) {
     const count = await prisma.message.count({ where: { receiverId: me, read: false } });
     res.json({ count });
     return;
   }
   const all = await prisma.message.findMany({
     where: { receiverId: me, read: false },
-    select: { senderId: true, createdAt: true },
+    select: { tripId: true, senderId: true, createdAt: true },
   });
-  const count = all.filter((m) => messageVisibleTo({ senderId: m.senderId, createdAt: m.createdAt }, me, blockCutoffs))
-    .length;
+  const count = all.filter((m) => {
+    if (!messageVisibleTo({ senderId: m.senderId, createdAt: m.createdAt }, me, blockCutoffs)) return false;
+    const deletedAt = deletions.get(`${m.tripId}|${m.senderId}`);
+    return !deletedAt || m.createdAt > deletedAt;
+  }).length;
   res.json({ count });
+});
+
+// Delete a conversation for the current user only. Records a cutoff so messages
+// up to now are hidden; the chat reappears if the other person sends a new one.
+router.delete('/trip/:tripId/with/:userId', requireAuth, async (req: AuthRequest, res) => {
+  const me = req.userId!;
+  const { tripId, userId: other } = req.params;
+  await prisma.conversationDeletion.upsert({
+    where: { userId_tripId_otherId: { userId: me, tripId, otherId: other } },
+    create: { userId: me, tripId, otherId: other, deletedAt: new Date() },
+    update: { deletedAt: new Date() },
+  });
+  res.json({ ok: true });
 });
 
 export default router;

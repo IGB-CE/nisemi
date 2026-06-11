@@ -35,6 +35,19 @@ model User {
   rideAlerts       RideAlert[]
   blocksMade       Block[]        @relation("BlocksMade")
   blocksReceived   Block[]        @relation("BlocksReceived")
+  conversationDeletions ConversationDeletion[]
+}
+
+model ConversationDeletion {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  tripId    String
+  otherId   String
+  deletedAt DateTime @default(now())
+
+  @@unique([userId, tripId, otherId])
+  @@index([userId])
 }
 
 model Block {

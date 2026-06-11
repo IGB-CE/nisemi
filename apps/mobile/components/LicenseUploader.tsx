@@ -62,7 +62,7 @@ export default function LicenseUploader({ status, rejectionReason, onUpdated }: 
         token ?? undefined,
       );
       onUpdated(updated);
-      await dialog.alert('U dërgua', 'Licenca u dërgua për verifikim. Do të njoftoheni pas shqyrtimit.');
+      await dialog.alert('U dërgua', 'Patenta u dërgua për verifikim. Do të njoftoheni pas shqyrtimit.');
     } catch (e: any) {
       await dialog.alert('Gabim', e.message ?? 'Ngarkimi dështoi');
     } finally {
@@ -72,8 +72,8 @@ export default function LicenseUploader({ status, rejectionReason, onUpdated }: 
 
   const showSourceMenu = () => {
     dialog.show({
-      title: 'Licenca e drejtimit',
-      message: 'Zgjidh nga ku të marrësh foton e licencës',
+      title: 'Patenta',
+      message: 'Zgjidh nga ku të marrësh foton e patentës',
       buttons: [
         { label: 'Bëj foto', variant: 'primary', onPress: () => pickAndUpload('camera') },
         { label: 'Zgjidh nga galeria', variant: 'primary', onPress: () => pickAndUpload('gallery') },
@@ -102,14 +102,14 @@ export default function LicenseUploader({ status, rejectionReason, onUpdated }: 
       return (
         <View>
           <VerifiedBadge size={20} label="E verifikuar" />
-          <Text style={s.statusHint}>Licenca jote u verifikua nga administratorët.</Text>
+          <Text style={s.statusHint}>Patenta jote u verifikua nga administratorët.</Text>
         </View>
       );
     case 'PENDING':
       return (
         <View>
           <Text style={[s.statusBadge, { color: colors.warning, borderColor: colors.warning }]}>⏳ Në shqyrtim</Text>
-          <Text style={s.statusHint}>Licenca është dërguar dhe po shqyrtohet.</Text>
+          <Text style={s.statusHint}>Patenta është dërguar dhe po shqyrtohet.</Text>
           {uploadBtn('Ngarko përsëri')}
         </View>
       );
@@ -125,10 +125,10 @@ export default function LicenseUploader({ status, rejectionReason, onUpdated }: 
       return (
         <View>
           <Text style={s.statusHint}>
-            Ngarko foton e licencës së drejtimit për të marrë shenjën e verifikimit. Mund të publikosh udhëtime edhe pa
+            Ngarko foton e patentës për të marrë shenjën e verifikimit. Mund të publikosh udhëtime edhe pa
             u verifikuar.
           </Text>
-          {uploadBtn('Ngarko licencën')}
+          {uploadBtn('Ngarko patentën')}
         </View>
       );
   }

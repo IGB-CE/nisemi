@@ -233,7 +233,7 @@ export default function Profili() {
 
         {isDriver && dp && (
           <Card style={s.section}>
-            <Text style={s.cardLabel}>Licenca e drejtimit</Text>
+            <Text style={s.cardLabel}>Patenta</Text>
             <View style={{ height: 12 }} />
             <LicenseUploader
               status={dp.verificationStatus ?? 'UNVERIFIED'}

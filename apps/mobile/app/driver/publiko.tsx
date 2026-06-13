@@ -18,6 +18,7 @@ import { useDialog } from '../../lib/dialog';
 import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import DateTimeField from '../../components/DateTimeField';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import Icon from '../../components/ui/Icon';
 import Card from '../../components/ui/Card';
 import PlacesAutocomplete from '../../components/PlacesAutocomplete';
 import RoutePicker from '../../components/RoutePicker';
@@ -190,7 +191,12 @@ export default function Publiko() {
           {origin && dest && (
             <View style={s.typePill}>
               <Text style={s.typePillText}>
-                {tripType === 'INTRACITY' ? '🏙️ Brenda qytetit' : '🛣️ Mes qyteteve'}
+                <Icon
+                  name={tripType === 'INTRACITY' ? 'city' : 'intercity'}
+                  size={13}
+                  color={colors.textDim}
+                />{' '}
+                {tripType === 'INTRACITY' ? 'Brenda qytetit' : 'Mes qyteteve'}
               </Text>
             </View>
           )}
@@ -228,7 +234,7 @@ export default function Publiko() {
                 {waypoints.map((w, i) => (
                   <View key={i} style={s.waypointChip}>
                     <Text style={s.waypointChipText} numberOfLines={1}>
-                      📍 {w.label}
+                      <Icon name="location" size={13} color={colors.textDim} /> {w.label}
                     </Text>
                     <TouchableOpacity
                       onPress={() => setWaypoints((prev) => prev.filter((_, idx) => idx !== i))}
@@ -373,7 +379,7 @@ export default function Publiko() {
         </Card>
 
         <View style={{ marginHorizontal: 16, marginTop: 20 }}>
-          <PrimaryButton label="Publiko udhëtimin" icon="🚗" onPress={publish} loading={saving} />
+          <PrimaryButton label="Publiko udhëtimin" icon="car" onPress={publish} loading={saving} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

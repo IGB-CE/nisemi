@@ -23,6 +23,7 @@ import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import Icon from '../../components/ui/Icon';
 import { maybeShowInterstitialAfterBooking } from '../../lib/ads';
 import LiveTripMap from '../../components/LiveTripMap';
 import VerifiedBadge from '../../components/VerifiedBadge';
@@ -214,7 +215,12 @@ export default function TripDetail() {
           </Text>
           {trip.routeDistanceM != null && trip.routeDurationS != null && (
             <Text style={s.routeMeta}>
-              {trip.tripType === 'INTRACITY' ? '🏙️ Brenda qytetit' : '🛣️ Mes qyteteve'} ·{' '}
+              <Icon
+                name={trip.tripType === 'INTRACITY' ? 'city' : 'intercity'}
+                size={13}
+                color={colors.subtle}
+              />{' '}
+              {trip.tripType === 'INTRACITY' ? 'Brenda qytetit' : 'Mes qyteteve'} ·{' '}
               {formatDistanceKm(trip.routeDistanceM)} · {formatDurationMin(trip.routeDurationS)}
             </Text>
           )}
@@ -364,10 +370,12 @@ export default function TripDetail() {
               {dp && (
                 <>
                   <Text style={s.driverMeta}>
-                    ⭐ {dp.rating.toFixed(1)} · {dp.totalTrips} udhëtime
+                    <Icon name="star" size={13} color={colors.warning} /> {dp.rating.toFixed(1)} ·{' '}
+                    {dp.totalTrips} udhëtime
                   </Text>
                   <Text style={s.driverMeta}>
-                    🚘 {dp.carModel} · {dp.carColor} · {dp.carPlate}
+                    <Icon name="car" size={13} color={colors.subtle} /> {dp.carModel} · {dp.carColor} ·{' '}
+                    {dp.carPlate}
                   </Text>
                 </>
               )}
@@ -377,7 +385,7 @@ export default function TripDetail() {
             <View style={{ marginTop: 14 }}>
               <PrimaryButton
                 label="Kontakto shoferin"
-                icon="💬"
+                icon="chat"
                 onPress={() =>
                   router.push({
                     pathname: '/chat/[tripId]/[userId]',
@@ -408,10 +416,14 @@ export default function TripDetail() {
                   }
                 }}
               >
-                <Text style={s.reportLinkText}>🚫 Bllokoj</Text>
+                <Text style={s.reportLinkText}>
+                  <Icon name="blocked" size={13} color={colors.danger} /> Bllokoj
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowReport(true)}>
-                <Text style={s.reportLinkText}>⚠️ Raporto shoferin</Text>
+                <Text style={s.reportLinkText}>
+                  <Icon name="warning" size={13} color={colors.danger} /> Raporto shoferin
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -419,7 +431,7 @@ export default function TripDetail() {
 
         {!isOwnTrip && trip.status === 'SCHEDULED' && trip.seatsAvailable > 0 && (
           <View style={{ marginHorizontal: 16, marginTop: 18 }}>
-            <PrimaryButton label="Rezervo vendin" icon="🎫" onPress={book} loading={booking} />
+            <PrimaryButton label="Rezervo vendin" icon="ticket" onPress={book} loading={booking} />
           </View>
         )}
 

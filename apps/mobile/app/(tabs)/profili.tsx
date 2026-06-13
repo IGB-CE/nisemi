@@ -10,6 +10,7 @@ import { normalizeAlbanianMobile } from '../../lib/phone';
 import { isPrivacyOptionsRequired, showPrivacyOptionsForm } from '../../lib/ads';
 import { ErrorScreen } from '../../components/States';
 import Card from '../../components/ui/Card';
+import Icon from '../../components/ui/Icon';
 import StatRow from '../../components/ui/StatRow';
 import MegaStat from '../../components/ui/MegaStat';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -206,14 +207,14 @@ export default function Profili() {
             </View>
             <Text style={s.email}>{profile?.email}</Text>
           </View>
-          {profile?.phone && <StatRow icon="📞" value={profile.phone} label="Telefoni" />}
+          {profile?.phone && <StatRow icon="phone" value={profile.phone} label="Telefoni" />}
           {isDriver && dp && (
             <>
               <View style={s.divider} />
-              <StatRow icon="🏆" value={dp.totalTrips} label="Udhëtime totale" />
-              <StatRow icon="⭐" value={rating.toFixed(1)} label="Vlerësim mesatar" />
-              <StatRow icon="🚘" value={`${dp.carModel} · ${dp.carColor}`} label="Makina" />
-              <StatRow icon="🔢" value={dp.carPlate} label="Targa" />
+              <StatRow icon="trophy" value={dp.totalTrips} label="Udhëtime totale" />
+              <StatRow icon="star" value={rating.toFixed(1)} label="Vlerësim mesatar" />
+              <StatRow icon="car" value={`${dp.carModel} · ${dp.carColor}`} label="Makina" />
+              <StatRow icon="plate" value={dp.carPlate} label="Targa" />
             </>
           )}
         </Card>
@@ -309,7 +310,7 @@ export default function Profili() {
 
         {!isDriver && !showDriverForm && (
           <View style={s.section}>
-            <PrimaryButton label="Bëhu shofer" icon="🚗" onPress={() => setShowDriverForm(true)} variant="outline" />
+            <PrimaryButton label="Bëhu shofer" icon="car" onPress={() => setShowDriverForm(true)} variant="outline" />
           </View>
         )}
 
@@ -344,11 +345,11 @@ export default function Profili() {
           <View style={s.segment}>
             {(
               [
-                { key: 'system', label: '⚙️ Sistemi' },
-                { key: 'light', label: '☀️ E çelët' },
-                { key: 'dark', label: '🌙 E errët' },
+                { key: 'system', icon: 'systemTheme', label: 'Sistemi' },
+                { key: 'light', icon: 'sunny', label: 'E çelët' },
+                { key: 'dark', icon: 'moon', label: 'E errët' },
               ] as const
-            ).map(({ key, label }) => {
+            ).map(({ key, icon, label }) => {
               const active = preference === key;
               return (
                 <TouchableOpacity
@@ -357,6 +358,7 @@ export default function Profili() {
                   onPress={() => setPreference(key)}
                   activeOpacity={0.85}
                 >
+                  <Icon name={icon} size={14} color={active ? '#fff' : colors.textDim} />
                   <Text style={[s.segmentText, active && s.segmentTextActive]} numberOfLines={1}>
                     {label}
                   </Text>
@@ -369,13 +371,13 @@ export default function Profili() {
         <Card style={s.section}>
           <Text style={s.cardLabel}>Njoftimet</Text>
           <TouchableOpacity style={s.legalRow} onPress={() => router.push('/njoftimet' as any)}>
-            <Text style={s.legalIcon}>🔔</Text>
+            <Icon name="bell" size={18} color={colors.textDim} style={s.legalIcon} />
             <Text style={s.legalLabel}>Njoftimet e udhëtimeve</Text>
             <Text style={s.legalChevron}>›</Text>
           </TouchableOpacity>
           <View style={s.divider} />
           <TouchableOpacity style={s.legalRow} onPress={() => router.push('/bllokuar' as any)}>
-            <Text style={s.legalIcon}>🚫</Text>
+            <Icon name="blocked" size={18} color={colors.textDim} style={s.legalIcon} />
             <Text style={s.legalLabel}>Përdoruesit e bllokuar</Text>
             <Text style={s.legalChevron}>›</Text>
           </TouchableOpacity>
@@ -384,13 +386,13 @@ export default function Profili() {
         <Card style={s.section}>
           <Text style={s.cardLabel}>Të dhëna ligjore</Text>
           <TouchableOpacity style={s.legalRow} onPress={() => router.push('/policy/terms' as any)}>
-            <Text style={s.legalIcon}>📄</Text>
+            <Icon name="document" size={18} color={colors.textDim} style={s.legalIcon} />
             <Text style={s.legalLabel}>Kushtet e Përdorimit</Text>
             <Text style={s.legalChevron}>›</Text>
           </TouchableOpacity>
           <View style={s.divider} />
           <TouchableOpacity style={s.legalRow} onPress={() => router.push('/policy/privacy' as any)}>
-            <Text style={s.legalIcon}>🔒</Text>
+            <Icon name="lock" size={18} color={colors.textDim} style={s.legalIcon} />
             <Text style={s.legalLabel}>Politika e Privatësisë</Text>
             <Text style={s.legalChevron}>›</Text>
           </TouchableOpacity>
@@ -398,7 +400,7 @@ export default function Profili() {
             <>
               <View style={s.divider} />
               <TouchableOpacity style={s.legalRow} onPress={() => showPrivacyOptionsForm().catch(() => {})}>
-                <Text style={s.legalIcon}>⚙️</Text>
+                <Icon name="settings" size={18} color={colors.textDim} style={s.legalIcon} />
                 <Text style={s.legalLabel}>Opsionet e reklamave</Text>
                 <Text style={s.legalChevron}>›</Text>
               </TouchableOpacity>
@@ -479,7 +481,10 @@ const makeStyles = ({ colors, typography }: Theme) =>
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surfaceElevated,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
   },
   segmentBtnActive: { borderColor: colors.primary, backgroundColor: colors.primary },
   segmentText: { color: colors.textDim, fontWeight: '700', fontSize: 12 },

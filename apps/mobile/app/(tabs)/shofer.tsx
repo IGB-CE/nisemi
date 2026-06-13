@@ -8,6 +8,7 @@ import { useDialog } from '../../lib/dialog';
 import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { ErrorScreen, EmptyState } from '../../components/States';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import Icon from '../../components/ui/Icon';
 import { showRewardedAd } from '../../lib/ads';
 
 export default function Shofer() {
@@ -134,7 +135,7 @@ export default function Shofer() {
         </View>
         <View style={s.metaRow}>
           <Text style={s.metaItem}>
-            📅{' '}
+            <Icon name="calendar" size={12} color={colors.subtle} />{' '}
             {new Date(trip.departureAt).toLocaleDateString('sq-AL', {
               day: 'numeric',
               month: 'short',
@@ -144,10 +145,12 @@ export default function Shofer() {
           </Text>
           <Text style={s.metaDot}>·</Text>
           <Text style={s.metaItem}>
-            💺 {trip.seatsAvailable}/{trip.totalSeats}
+            <Icon name="seats" size={12} color={colors.subtle} /> {trip.seatsAvailable}/{trip.totalSeats}
           </Text>
           <Text style={s.metaDot}>·</Text>
-          <Text style={s.metaItem}>📋 {trip.reservations?.length ?? 0}</Text>
+          <Text style={s.metaItem}>
+            <Icon name="list" size={12} color={colors.subtle} /> {trip.reservations?.length ?? 0}
+          </Text>
           <View style={{ flex: 1 }} />
           <View style={[s.statusDot, { backgroundColor: statusColor }]} />
         </View>
@@ -196,7 +199,7 @@ export default function Shofer() {
         </View>
 
         <View style={{ marginHorizontal: 16, marginTop: 14 }}>
-          <PrimaryButton label="Publiko udhëtim" icon="+" onPress={() => router.push('/driver/publiko')} />
+          <PrimaryButton label="Publiko udhëtim" icon="plus" onPress={() => router.push('/driver/publiko')} />
         </View>
 
         <View style={s.sectionHeader}>
@@ -207,7 +210,7 @@ export default function Shofer() {
         {active.length === 0 ? (
           <View style={{ marginTop: 20 }}>
             <EmptyState
-              icon="🚗"
+              icon="car"
               title={trips.length === 0 ? 'Nuk keni udhëtime të publikuara' : 'Nuk keni udhëtime të ardhshme'}
               subtitle={
                 trips.length === 0

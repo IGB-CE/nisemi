@@ -1,5 +1,6 @@
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, type ViewStyle } from 'react-native';
 import { useColors } from '../../lib/theme';
+import Icon, { type IconName } from './Icon';
 
 interface Props {
   label: string;
@@ -7,7 +8,7 @@ interface Props {
   variant?: 'primary' | 'outline' | 'ghost';
   loading?: boolean;
   disabled?: boolean;
-  icon?: string;
+  icon?: IconName;
   style?: ViewStyle;
 }
 
@@ -27,7 +28,7 @@ export default function PrimaryButton({ label, onPress, variant = 'primary', loa
         <ActivityIndicator color={fg} />
       ) : (
         <>
-          {icon && <Text style={[s.icon, { color: fg }]}>{icon}</Text>}
+          {icon && <Icon name={icon} size={18} color={fg} />}
           <Text style={[s.label, { color: fg }]}>{label}</Text>
         </>
       )}
@@ -46,6 +47,5 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
-  icon: { fontSize: 16, fontWeight: '700' },
   label: { fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
 });

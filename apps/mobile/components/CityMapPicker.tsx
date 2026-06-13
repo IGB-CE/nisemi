@@ -3,6 +3,7 @@ import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'reac
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { useColors, useThemedStyles, type Theme } from '../lib/theme';
+import Icon from './ui/Icon';
 
 export interface City {
   id: string;
@@ -86,7 +87,9 @@ export default function CityMapPicker({ visible, cities, onSelect, onClose, titl
         <View style={[s.bottomBar, { paddingBottom: 16 + insets.bottom }]}>
           {selected ? (
             <>
-              <Text style={s.selectedText}>📍 {selected.name}</Text>
+              <Text style={s.selectedText}>
+                <Icon name="location" size={15} color={colors.primary} /> {selected.name}
+              </Text>
               <TouchableOpacity style={s.confirmBtn} onPress={confirm}>
                 <Text style={s.confirmBtnText}>Konfirmo</Text>
               </TouchableOpacity>

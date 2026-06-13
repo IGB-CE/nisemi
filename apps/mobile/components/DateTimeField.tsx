@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal } from 'react-native';
 import RNDateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useThemedStyles, type Theme } from '../lib/theme';
+import { useColors, useThemedStyles, type Theme } from '../lib/theme';
+import Icon from './ui/Icon';
 
 interface Props {
   value: Date | null;
@@ -12,6 +13,7 @@ interface Props {
 
 export default function DateTimeField({ value, onChange, mode = 'date', placeholder = 'Zgjidhni datën' }: Props) {
   const s = useThemedStyles(makeStyles);
+  const colors = useColors();
   const [show, setShow] = useState(false);
   const [androidStep, setAndroidStep] = useState<'date' | 'time'>('date');
   const [tempDate, setTempDate] = useState<Date>(new Date());
@@ -54,7 +56,7 @@ export default function DateTimeField({ value, onChange, mode = 'date', placehol
     <>
       <TouchableOpacity style={s.field} onPress={open}>
         <Text style={value ? s.value : s.placeholder}>{value ? fmt(value) : placeholder}</Text>
-        <Text style={s.icon}>📅</Text>
+        <Icon name="calendar" size={16} color={colors.subtle} />
       </TouchableOpacity>
 
       {Platform.OS === 'android' && show && (
@@ -115,7 +117,6 @@ const makeStyles = ({ colors }: Theme) =>
   },
   value: { color: colors.text, fontSize: 15 },
   placeholder: { color: colors.subtle, fontSize: 15 },
-  icon: { fontSize: 16 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.surface,

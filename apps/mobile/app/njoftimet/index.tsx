@@ -20,6 +20,7 @@ import { rideAlerts, type RideAlert } from '../../lib/ride-alerts';
 import { ErrorScreen, EmptyState } from '../../components/States';
 import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import Icon from '../../components/ui/Icon';
 import PlacesAutocomplete from '../../components/PlacesAutocomplete';
 import DateTimeField from '../../components/DateTimeField';
 import type { PlaceDetail } from '../../lib/places';
@@ -178,13 +179,13 @@ export default function RideAlertsScreen() {
         </View>
 
         <View style={{ marginHorizontal: 16, marginTop: 14 }}>
-          <PrimaryButton label="Shto njoftim" icon="+" onPress={() => setShowCreate(true)} />
+          <PrimaryButton label="Shto njoftim" icon="plus" onPress={() => setShowCreate(true)} />
         </View>
 
         {alerts.length === 0 ? (
           <View style={{ marginTop: 30 }}>
             <EmptyState
-              icon="🔔"
+              icon="bell"
               title="Nuk keni njoftime aktive"
               subtitle="Shto një njoftim për t&apos;u lajmëruar kur publikohet një udhëtim."
             />
@@ -213,10 +214,11 @@ export default function RideAlertsScreen() {
                   />
                 </View>
                 <Text style={s.alertMeta}>
+                  <Icon name="calendar" size={12} color={colors.subtle} />{' '}
                   {a.date
-                    ? `📅 ${new Date(a.date).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', year: 'numeric' })}`
-                    : '📅 Çdo datë'}{' '}
-                  · 📏 {a.searchRadiusM} m
+                    ? new Date(a.date).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : 'Çdo datë'}{' '}
+                  · <Icon name="ruler" size={12} color={colors.subtle} /> {a.searchRadiusM} m
                 </Text>
                 <Text style={s.alertExpiry}>
                   {expired

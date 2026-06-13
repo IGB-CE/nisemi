@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useColors, useThemedStyles, type Theme } from '../lib/theme';
+import Icon from './ui/Icon';
 import {
   autocompletePlaces,
   getCurrentLocationAsPlace,
@@ -127,7 +128,9 @@ export default function PlacesAutocomplete({
           {locating ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Text style={s.locBtnText}>📍 Përdor vendndodhjen aktuale</Text>
+            <Text style={s.locBtnText}>
+              <Icon name="location" size={13} color={colors.primary} /> Përdor vendndodhjen aktuale
+            </Text>
           )}
         </TouchableOpacity>
       )}

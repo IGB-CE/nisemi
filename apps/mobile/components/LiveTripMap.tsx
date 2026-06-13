@@ -4,6 +4,7 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { io, type Socket } from 'socket.io-client';
 import { BASE } from '../lib/api';
 import { useColors, useThemedStyles, type Theme } from '../lib/theme';
+import Icon from './ui/Icon';
 
 interface Position {
   lat: number;
@@ -109,7 +110,7 @@ export default function LiveTripMap({ tripId, token, origin, destination, onTrip
             anchor={{ x: 0.5, y: 0.5 }}
           >
             <View style={[s.driverMarker, stale && s.driverMarkerStale]}>
-              <Text style={s.driverEmoji}>🚗</Text>
+              <Icon name="carFilled" size={18} color="#fff" />
             </View>
           </Marker>
         )}

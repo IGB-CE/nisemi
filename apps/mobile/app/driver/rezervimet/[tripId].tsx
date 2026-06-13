@@ -9,6 +9,7 @@ import { useColors, useThemedStyles, type Theme } from '../../../lib/theme';
 import type { Palette } from '../../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../../components/States';
 import PrimaryButton from '../../../components/ui/PrimaryButton';
+import Icon from '../../../components/ui/Icon';
 import {
   requestDriverLocationPermissions,
   startDriverTracking,
@@ -182,7 +183,7 @@ export default function TripReservations() {
             )}
             <PrimaryButton
               label={isInProgress ? 'Përfundo udhëtimin' : 'Fillo udhëtimin'}
-              icon={isInProgress ? '🏁' : '🚗'}
+              icon={isInProgress ? 'flag' : 'car'}
               onPress={isInProgress ? endTrip : startTrip}
               loading={tripActionLoading}
               variant={isInProgress ? 'outline' : 'primary'}
@@ -215,7 +216,7 @@ export default function TripReservations() {
         {reservations.length === 0 ? (
           <View style={{ marginTop: 20 }}>
             <EmptyState
-              icon="👥"
+              icon="people"
               title="Nuk ka rezervime ende"
               subtitle="Pasagjerët do të shfaqen këtu sapo të rezervojnë."
             />
@@ -241,7 +242,7 @@ export default function TripReservations() {
                       {r.passenger.firstName} {r.passenger.lastName}
                     </Text>
                     <Text style={s.passengerSeats}>
-                      💺 {r.seats} vend{r.seats > 1 ? 'e' : ''}
+                      <Icon name="seats" size={13} color={colors.subtle} /> {r.seats} vend{r.seats > 1 ? 'e' : ''}
                     </Text>
                   </View>
                   <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
@@ -253,12 +254,12 @@ export default function TripReservations() {
                   <View style={s.pickupBlock}>
                     {r.pickupLabel && (
                       <Text style={s.pickupLine} numberOfLines={2}>
-                        📍 Marrja: {r.pickupLabel}
+                        <Icon name="location" size={13} color={colors.subtle} /> Marrja: {r.pickupLabel}
                       </Text>
                     )}
                     {r.dropoffLabel && (
                       <Text style={s.pickupLine} numberOfLines={2}>
-                        🏁 Lëshimi: {r.dropoffLabel}
+                        <Icon name="flag" size={13} color={colors.subtle} /> Lëshimi: {r.dropoffLabel}
                       </Text>
                     )}
                   </View>
@@ -268,10 +269,10 @@ export default function TripReservations() {
                   {r.status === 'PENDING' && (
                     <>
                       <View style={{ flex: 1 }}>
-                        <PrimaryButton label="✓ Prano" onPress={() => action(r.id, 'accept')} />
+                        <PrimaryButton label="Prano" icon="checkmark" onPress={() => action(r.id, 'accept')} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <PrimaryButton label="✕ Refuzo" onPress={() => action(r.id, 'reject')} variant="outline" />
+                        <PrimaryButton label="Refuzo" icon="close" onPress={() => action(r.id, 'reject')} variant="outline" />
                       </View>
                     </>
                   )}
@@ -280,7 +281,7 @@ export default function TripReservations() {
                       <View style={{ flex: 1 }}>
                         <PrimaryButton
                           label="Kontakto"
-                          icon="💬"
+                          icon="chat"
                           onPress={() =>
                             router.push({
                               pathname: '/chat/[tripId]/[userId]',

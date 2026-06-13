@@ -73,7 +73,7 @@ export default function BlockedUsersScreen() {
 
         {items.length === 0 ? (
           <View style={{ marginTop: 30 }}>
-            <EmptyState icon="🚫" title="Nuk keni bllokuar askënd" />
+            <EmptyState icon="blocked" title="Nuk keni bllokuar askënd" />
           </View>
         ) : (
           items.map((b) => (

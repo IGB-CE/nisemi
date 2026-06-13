@@ -10,6 +10,7 @@ import Card from '../../components/ui/Card';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import PlacesAutocomplete from '../../components/PlacesAutocomplete';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import Icon from '../../components/ui/Icon';
 import type { PlaceDetail } from '../../lib/places';
 import { formatDistanceKm, formatDurationMin } from '../../lib/directions';
 
@@ -262,10 +263,11 @@ export default function Search() {
           />
           <View style={s.searchActions}>
             <View style={{ flex: 1 }}>
-              <PrimaryButton label="Kërko" icon="🔍" onPress={search} loading={loading} />
+              <PrimaryButton label="Kërko" icon="search" onPress={search} loading={loading} />
             </View>
             <TouchableOpacity style={s.filterBtn} onPress={() => setFilterOpen(true)} activeOpacity={0.85}>
-              <Text style={s.filterBtnText}>⚙︎ Filtro</Text>
+              <Icon name="filter" size={16} color={colors.text} />
+              <Text style={s.filterBtnText}>Filtro</Text>
               {activeFilterCount > 0 && (
                 <View style={s.filterBadge}>
                   <Text style={s.filterBadgeText}>{activeFilterCount}</Text>
@@ -285,7 +287,7 @@ export default function Search() {
         {!loading && visible.length === 0 && (
           <View style={{ marginTop: 12 }}>
             <EmptyState
-              icon={searched ? '🔍' : '🚗'}
+              icon={searched ? 'search' : 'car'}
               title={error ? 'Kërkimi dështoi' : searched ? 'Nuk u gjetën udhëtime' : 'Nuk ka udhëtime aktive'}
               subtitle={
                 error ??
@@ -296,7 +298,7 @@ export default function Search() {
               <View style={{ marginHorizontal: 16, marginTop: 10 }}>
                 <PrimaryButton
                   label="Më njofto kur publikohet"
-                  icon="🔔"
+                  icon="bell"
                   onPress={() => {
                     const qp: Record<string, string> = {
                       originLat: String(from.lat),
@@ -366,7 +368,7 @@ export default function Search() {
                     })}
                   </Text>
                   <Text style={s.tripSeats}>
-                    💺 {trip.seatsAvailable}/{trip.totalSeats}
+                    <Icon name="seats" size={11} color={colors.subtle} /> {trip.seatsAvailable}/{trip.totalSeats}
                     {trip.routeDistanceM != null && trip.routeDurationS != null
                       ? ` · ${formatDistanceKm(trip.routeDistanceM)} · ${formatDurationMin(trip.routeDurationS)}`
                       : ''}
@@ -403,7 +405,7 @@ export default function Search() {
                   ))}
                 </View>
                 <TouchableOpacity style={s.dirBtn} onPress={() => setSortAsc((v) => !v)}>
-                  <Text style={s.dirBtnText}>{sortAsc ? '↑' : '↓'}</Text>
+                  <Icon name={sortAsc ? 'arrowUp' : 'arrowDown'} size={18} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
@@ -558,7 +560,6 @@ const makeStyles = ({ colors, typography }: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    dirBtnText: { fontSize: 18, color: colors.text, fontWeight: '700' },
 
     chipWrap: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', flex: 1 },
     chip: {

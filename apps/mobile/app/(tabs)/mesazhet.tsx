@@ -110,7 +110,7 @@ export default function Mesazhet() {
 
         {conversations.length === 0 ? (
           <View style={{ marginTop: 40 }}>
-            <EmptyState icon="💬" title="Nuk keni biseda ende" subtitle="Hap një udhëtim dhe kontakto shoferin." />
+            <EmptyState icon="chat" title="Nuk keni biseda ende" subtitle="Hap një udhëtim dhe kontakto shoferin." />
           </View>
         ) : (
           <View style={s.list}>

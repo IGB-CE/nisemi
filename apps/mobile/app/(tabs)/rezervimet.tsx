@@ -20,6 +20,7 @@ import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import type { Palette } from '../../lib/colors';
 import { ErrorScreen, EmptyState } from '../../components/States';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import Icon from '../../components/ui/Icon';
 
 const statusMapFor = (colors: Palette): Record<string, { label: string; color: string }> => ({
   PENDING: { label: 'Në pritje', color: colors.warning },
@@ -162,7 +163,7 @@ export default function Rezervimet() {
         {reservations.length === 0 ? (
           <View style={{ marginTop: 24 }}>
             <EmptyState
-              icon="🎫"
+              icon="ticket"
               title="Nuk keni rezervime ende"
               subtitle="Kërko një udhëtim dhe rezervo vendin tënd."
             />
@@ -192,7 +193,7 @@ export default function Rezervimet() {
                   </View>
                   <View style={s.metaRow}>
                     <Text style={s.metaItem}>
-                      📅{' '}
+                      <Icon name="calendar" size={12} color={colors.subtle} />{' '}
                       {new Date(r.trip.departureAt).toLocaleDateString('sq-AL', {
                         day: 'numeric',
                         month: 'short',
@@ -201,7 +202,9 @@ export default function Rezervimet() {
                       })}
                     </Text>
                     <Text style={s.metaDot}>·</Text>
-                    <Text style={s.metaItem}>💺 {r.seats}</Text>
+                    <Text style={s.metaItem}>
+                      <Icon name="seats" size={12} color={colors.subtle} /> {r.seats}
+                    </Text>
                     <Text style={s.metaDot}>·</Text>
                     <Text style={s.metaItem}>
                       {r.trip.driver.firstName} {r.trip.driver.lastName}

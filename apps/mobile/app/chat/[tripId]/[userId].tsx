@@ -18,6 +18,7 @@ import { useDialog } from '../../../lib/dialog';
 import { useUnread } from '../../../lib/unread';
 import { setActiveChat, clearActiveChat } from '../../../lib/notifications';
 import { blocks as blocksApi } from '../../../lib/blocks';
+import Icon from '../../../components/ui/Icon';
 
 interface Message {
   id: string;
@@ -153,10 +154,10 @@ export default function Chat() {
         </TouchableOpacity>
         <Text style={s.headerTitle}>{otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'Bisedë'}</Text>
         <TouchableOpacity onPress={deleteChat} style={s.headerAction} hitSlop={8}>
-          <Text style={s.headerActionText}>🗑️</Text>
+          <Icon name="trash" size={20} color={colors.textDim} />
         </TouchableOpacity>
         <TouchableOpacity onPress={blockUser} style={s.headerAction} hitSlop={8}>
-          <Text style={s.headerActionText}>🚫</Text>
+          <Icon name="blocked" size={20} color={colors.textDim} />
         </TouchableOpacity>
       </View>
 
@@ -174,7 +175,7 @@ export default function Chat() {
           >
             {messages.length === 0 ? (
               <View style={s.empty}>
-                <Text style={s.emptyIcon}>💬</Text>
+                <Icon name="chat" size={40} color={colors.subtle} style={{ marginBottom: 8 }} />
                 <Text style={s.emptyText}>Filloni bisedën</Text>
               </View>
             ) : (

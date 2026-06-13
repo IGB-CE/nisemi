@@ -36,8 +36,7 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Kërko', tabBarIcon: () => <TabIcon label="🔍" /> }} />
-      <Tabs.Screen name="udhetimet" options={{ title: 'Udhëtimet', tabBarIcon: () => <TabIcon label="🚌" /> }} />
+      <Tabs.Screen name="index" options={{ title: 'Udhëtimet', tabBarIcon: () => <TabIcon label="🚌" /> }} />
       <Tabs.Screen name="rezervimet" options={{ title: 'Rezervimet', tabBarIcon: () => <TabIcon label="🎫" /> }} />
       <Tabs.Screen
         name="mesazhet"

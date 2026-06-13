@@ -4,6 +4,7 @@
     "slug": "albania-rides",
     "scheme": "nisemi",
     "version": "1.0.0",
+    "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",

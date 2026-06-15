@@ -77,10 +77,6 @@ export default function Shofer() {
   const upcoming = trips.filter((t) => new Date(t.departureAt).getTime() > now && t.status === 'SCHEDULED');
   const active = trips.filter(isActive);
   const history = trips.filter((t) => !isActive(t));
-  const totalEarnings = trips.reduce((sum, t) => {
-    const accepted = (t.reservations ?? []).filter((r: any) => r.status === 'ACCEPTED');
-    return sum + accepted.reduce((s: number, r: any) => s + r.seats * Number(t.pricePerSeat), 0);
-  }, 0);
 
   const renderTrip = (trip: any, past = false) => {
     const pendingCount = (trip.reservations ?? []).filter((r: any) => r.status === 'PENDING').length;
@@ -188,13 +184,9 @@ export default function Shofer() {
             <Text style={s.statLabel}>Totale</Text>
             <Text style={s.statValue}>{trips.length}</Text>
           </View>
-          <View style={s.statCell}>
+          <View style={[s.statCell, { borderRightWidth: 0 }]}>
             <Text style={s.statLabel}>Të ardhshme</Text>
             <Text style={s.statValue}>{upcoming.length}</Text>
-          </View>
-          <View style={[s.statCell, { borderRightWidth: 0 }]}>
-            <Text style={s.statLabel}>Të ardhura</Text>
-            <Text style={s.statValue}>{totalEarnings > 0 ? `${totalEarnings.toFixed(0)}L` : '—'}</Text>
           </View>
         </View>
 

@@ -461,4 +461,110 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
   res.json(updated);
 });
 
+router.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
+  const parsed = tripSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const data = parsed.data;
+
+  const existing = await prisma.trip.findUnique({ where: { id: req.params.id } });
+  if (!existing) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
+  if (existing.driverId !== req.userId && !isAdmin(req.userRole)) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  if (existing.status !== 'SCHEDULED') {
+    res.status(400).json({ error: 'Mund të modifikohen vetëm udhëtimet e planifikuara' });
+    return;
+  }
+  const reservationCount = await prisma.reservation.count({ where: { tripId: req.params.id } });
+  if (reservationCount > 0) {
+    res.status(400).json({ error: 'Nuk mund të modifikoni një udhëtim që ka rezervime' });
+    return;
+  }
+
+  if (!data.originCityId && (data.originLat === undefined || data.originLng === undefined)) {
+    res.status(400).json({ error: 'Origin city or coordinates required' });
+    return;
+  }
+  if (!data.destCityId && (data.destLat === undefined || data.destLng === undefined)) {
+    res.status(400).json({ error: 'Destination city or coordinates required' });
+    return;
+  }
+  if (
+    data.routePolyline &&
+    data.originLat !== undefined &&
+    data.originLng !== undefined &&
+    data.destLat !== undefined &&
+    data.destLng !== undefined
+  ) {
+    const valid = validatePolylineEndpoints(
+      data.routePolyline,
+      { lat: data.originLat, lng: data.originLng },
+      { lat: data.destLat, lng: data.destLng },
+      1000,
+    );
+    if (!valid) {
+      res.status(400).json({ error: 'Route polyline endpoints do not match origin/destination' });
+      return;
+    }
+  }
+
+  const departureAt = new Date(data.departureAt);
+  if (!isAdmin(req.userRole)) {
+    if (isWithinCancelWindow(departureAt)) {
+      res.status(400).json({ error: 'Ora e nisjes duhet të jetë të paktën 1 orë nga tani' });
+      return;
+    }
+    const overlap = await driverHasOverlappingTrip(
+      req.userId!,
+      departureAt,
+      data.routeDurationS ?? null,
+      req.params.id,
+    );
+    if (overlap) {
+      res.status(400).json({ error: 'Keni një udhëtim tjetër aktiv që mbivendoset me këtë orë nisjeje' });
+      return;
+    }
+  }
+
+  const { totalSeats, ...rest } = data;
+  const trip = await prisma.trip.update({
+    where: { id: req.params.id },
+    data: { ...rest, totalSeats, seatsAvailable: totalSeats, departureAt },
+    include: { originCity: true, destCity: true },
+  });
+  res.json(trip);
+});
+
+router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
+  const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
+  if (!trip) {
+    res.status(404).json({ error: 'Trip not found' });
+    return;
+  }
+  if (trip.driverId !== req.userId && !isAdmin(req.userRole)) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  // Only allow a hard delete when nothing references the trip; otherwise the
+  // driver should cancel it (which keeps the record and notifies passengers).
+  const [reservations, messages, reviews] = await Promise.all([
+    prisma.reservation.count({ where: { tripId: req.params.id } }),
+    prisma.message.count({ where: { tripId: req.params.id } }),
+    prisma.review.count({ where: { tripId: req.params.id } }),
+  ]);
+  if (reservations > 0 || messages > 0 || reviews > 0) {
+    res.status(400).json({ error: 'Ky udhëtim ka ndërveprime — anuloni atë në vend që ta fshini.' });
+    return;
+  }
+  await prisma.trip.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
 export default router;

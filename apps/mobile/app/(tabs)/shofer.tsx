@@ -63,6 +63,39 @@ export default function Shofer() {
 
   useFocusEffect(load);
 
+  const cancelTrip = useCallback(
+    async (tripId: string) => {
+      const ok = await dialog.confirm(
+        'Anulo udhëtimin?',
+        'Pasagjerët me rezervime do të njoftohen. Ky veprim nuk mund të zhbëhet.',
+        'Po, anulo',
+        true,
+      );
+      if (!ok) return;
+      try {
+        await api.patch(`/api/v1/trips/${tripId}/cancel`, {}, token ?? undefined);
+        load();
+      } catch (e: any) {
+        await dialog.alert('Gabim', e.message);
+      }
+    },
+    [dialog, token, load],
+  );
+
+  const deleteTrip = useCallback(
+    async (tripId: string) => {
+      const ok = await dialog.confirm('Fshi udhëtimin?', 'Udhëtimi do të fshihet përfundimisht.', 'Fshi', true);
+      if (!ok) return;
+      try {
+        await api.delete(`/api/v1/trips/${tripId}`, token ?? undefined);
+        load();
+      } catch (e: any) {
+        await dialog.alert('Gabim', e.message);
+      }
+    },
+    [dialog, token, load],
+  );
+
   if (loading)
     return (
       <View style={s.center}>
@@ -89,6 +122,9 @@ export default function Shofer() {
     const isBoosted = trip.boostedUntil && new Date(trip.boostedUntil).getTime() > now;
     const isUpcoming = new Date(trip.departureAt).getTime() > now && trip.status === 'SCHEDULED';
     const canBoost = isUpcoming && !isBoosted;
+    const reservationCount = trip.reservations?.length ?? 0;
+    const canModify = isUpcoming && reservationCount === 0;
+    const canCancel = isUpcoming && reservationCount > 0;
     return (
       <TouchableOpacity
         key={trip.id}
@@ -163,6 +199,43 @@ export default function Shofer() {
               {boostingId === trip.id ? 'Po ngarkohet…' : '⚡ Promovo udhëtimin 12h'}
             </Text>
           </TouchableOpacity>
+        )}
+        {(canModify || canCancel) && (
+          <View style={s.tripActions}>
+            {canModify && (
+              <TouchableOpacity
+                style={s.tripActionBtn}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  router.push(`/driver/publiko?editId=${trip.id}` as any);
+                }}
+              >
+                <Text style={s.tripActionText}>Modifiko</Text>
+              </TouchableOpacity>
+            )}
+            {canModify && (
+              <TouchableOpacity
+                style={[s.tripActionBtn, s.tripActionDanger]}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  deleteTrip(trip.id);
+                }}
+              >
+                <Text style={[s.tripActionText, s.tripActionDangerText]}>Fshi</Text>
+              </TouchableOpacity>
+            )}
+            {canCancel && (
+              <TouchableOpacity
+                style={[s.tripActionBtn, s.tripActionDanger]}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  cancelTrip(trip.id);
+                }}
+              >
+                <Text style={[s.tripActionText, s.tripActionDangerText]}>Anulo udhëtimin</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </TouchableOpacity>
     );
@@ -329,6 +402,19 @@ const makeStyles = ({ colors, typography }: Theme) =>
 
   cardBoosted: { borderColor: colors.primary },
   cardPast: { opacity: 0.6 },
+
+  tripActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  tripActionBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 9,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tripActionText: { color: colors.text, fontSize: 12, fontWeight: '700' },
+  tripActionDanger: { borderColor: colors.danger },
+  tripActionDangerText: { color: colors.danger },
 
   historyToggle: {
     flexDirection: 'row',

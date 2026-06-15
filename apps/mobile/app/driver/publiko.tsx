@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
@@ -40,6 +40,14 @@ export default function Publiko() {
   const s = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
 
+  const { editId } = useLocalSearchParams<{ editId?: string }>();
+  const isEditing = !!editId;
+  const [loadingTrip, setLoadingTrip] = useState(isEditing);
+  // When prefilling for an edit we must not let the trip-type effect reset the
+  // saved detour, and we must restore the saved route once routes reload.
+  const skipDetourResetRef = useRef(false);
+  const pendingRouteIndexRef = useRef<number | null>(null);
+
   const [origin, setOrigin] = useState<PlaceDetail | null>(null);
   const [dest, setDest] = useState<PlaceDetail | null>(null);
   const [waypoints, setWaypoints] = useState<PlaceDetail[]>([]);
@@ -58,6 +66,10 @@ export default function Publiko() {
   const [maxDetourM, setMaxDetourM] = useState(500);
 
   useEffect(() => {
+    if (skipDetourResetRef.current) {
+      skipDetourResetRef.current = false;
+      return;
+    }
     setMaxDetourM(tripType === 'INTRACITY' ? 200 : 500);
   }, [tripType]);
 
@@ -79,7 +91,13 @@ export default function Publiko() {
       .then((r) => {
         if (cancelled) return;
         setRoutes(r);
-        setSelectedRouteIndex(0);
+        const pending = pendingRouteIndexRef.current;
+        if (pending != null) {
+          setSelectedRouteIndex(pending < r.length ? pending : 0);
+          pendingRouteIndexRef.current = null;
+        } else {
+          setSelectedRouteIndex(0);
+        }
       })
       .catch((e) => {
         if (cancelled) return;
@@ -99,6 +117,51 @@ export default function Publiko() {
   const [totalSeats, setTotalSeats] = useState('3');
   const [notes, setNotes] = useState('');
   const [genderRestriction, setGenderRestriction] = useState<'ANY' | 'FEMALE_ONLY' | 'MALE_ONLY'>('ANY');
+
+  // Prefill the form when editing an existing trip.
+  useEffect(() => {
+    if (!editId) return;
+    let cancelled = false;
+    api
+      .get<any>(`/api/v1/trips/${editId}`, token ?? undefined)
+      .then((t) => {
+        if (cancelled) return;
+        skipDetourResetRef.current = true;
+        pendingRouteIndexRef.current = t.routeAltIndex ?? 0;
+        if (t.originLat != null && t.originLng != null) {
+          setOrigin({
+            lat: t.originLat,
+            lng: t.originLng,
+            label: t.originLabel ?? t.originCity?.name ?? 'Nisja',
+            cityName: t.originCity?.name ?? null,
+          });
+        }
+        if (t.destLat != null && t.destLng != null) {
+          setDest({
+            lat: t.destLat,
+            lng: t.destLng,
+            label: t.destLabel ?? t.destCity?.name ?? 'Destinacioni',
+            cityName: t.destCity?.name ?? null,
+          });
+        }
+        setDepartureAt(new Date(t.departureAt));
+        setPricePerSeat(String(Number(t.pricePerSeat)));
+        setTotalSeats(String(t.totalSeats));
+        setNotes(t.notes ?? '');
+        setGenderRestriction(t.genderRestriction ?? 'ANY');
+        setMaxDetourM(t.maxDetourM ?? 500);
+      })
+      .catch((e) => {
+        if (!cancelled) dialog.alert('Gabim', e.message ?? 'Nuk u ngarkua udhëtimi');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingTrip(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
   const [saving, setSaving] = useState(false);
 
   const selectedRoute = routes[selectedRouteIndex];
@@ -121,32 +184,34 @@ export default function Publiko() {
       return;
     }
     setSaving(true);
+    const body = {
+      originLat: origin.lat,
+      originLng: origin.lng,
+      originLabel: origin.label,
+      destLat: dest.lat,
+      destLng: dest.lng,
+      destLabel: dest.label,
+      routePolyline: selectedRoute.polyline,
+      routeDistanceM: selectedRoute.distanceM,
+      routeDurationS: selectedRoute.durationS,
+      routeAltIndex: selectedRouteIndex,
+      tripType,
+      maxDetourM,
+      genderRestriction,
+      departureAt: departureAt.toISOString(),
+      pricePerSeat: Number(pricePerSeat),
+      totalSeats: Number(totalSeats),
+      notes: notes || undefined,
+    };
     try {
-      await api.post(
-        '/api/v1/trips',
-        {
-          originLat: origin.lat,
-          originLng: origin.lng,
-          originLabel: origin.label,
-          destLat: dest.lat,
-          destLng: dest.lng,
-          destLabel: dest.label,
-          routePolyline: selectedRoute.polyline,
-          routeDistanceM: selectedRoute.distanceM,
-          routeDurationS: selectedRoute.durationS,
-          routeAltIndex: selectedRouteIndex,
-          tripType,
-          maxDetourM,
-          genderRestriction,
-          departureAt: departureAt.toISOString(),
-          pricePerSeat: Number(pricePerSeat),
-          totalSeats: Number(totalSeats),
-          notes: notes || undefined,
-        },
-        token ?? undefined,
-      );
-      await dialog.alert('Sukses', 'Udhëtimi u publikua.');
-      showInterstitialAfterPublish();
+      if (isEditing) {
+        await api.patch(`/api/v1/trips/${editId}`, body, token ?? undefined);
+        await dialog.alert('Sukses', 'Udhëtimi u përditësua.');
+      } else {
+        await api.post('/api/v1/trips', body, token ?? undefined);
+        await dialog.alert('Sukses', 'Udhëtimi u publikua.');
+        showInterstitialAfterPublish();
+      }
       router.back();
     } catch (e: any) {
       await dialog.alert('Gabim', e.message);
@@ -154,6 +219,14 @@ export default function Publiko() {
       setSaving(false);
     }
   };
+
+  if (loadingTrip) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -170,7 +243,7 @@ export default function Publiko() {
             <Text style={s.backText}>← Kthehu</Text>
           </TouchableOpacity>
           <Text style={s.brand}>NISEMI</Text>
-          <Text style={s.title}>Publiko</Text>
+          <Text style={s.title}>{isEditing ? 'Modifiko' : 'Publiko'}</Text>
         </View>
 
         <Card style={s.card}>
@@ -385,7 +458,12 @@ export default function Publiko() {
         </Card>
 
         <View style={{ marginHorizontal: 16, marginTop: 20 }}>
-          <PrimaryButton label="Publiko udhëtimin" icon="car" onPress={publish} loading={saving} />
+          <PrimaryButton
+            label={isEditing ? 'Ruaj ndryshimet' : 'Publiko udhëtimin'}
+            icon="car"
+            onPress={publish}
+            loading={saving}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

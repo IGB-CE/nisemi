@@ -196,10 +196,14 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     data.destLat !== undefined &&
     data.destLng !== undefined
   ) {
+    // Directions snaps origin/dest to the nearest routable road, which can be
+    // several hundred metres from an address centroid or Plus Code. Use a loose
+    // tolerance so this only rejects a grossly mismatched/forged polyline.
     const valid = validatePolylineEndpoints(
       data.routePolyline,
       { lat: data.originLat, lng: data.originLng },
       { lat: data.destLat, lng: data.destLng },
+      1000,
     );
     if (!valid) {
       res.status(400).json({ error: 'Route polyline endpoints do not match origin/destination' });

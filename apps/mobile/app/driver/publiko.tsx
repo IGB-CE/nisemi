@@ -115,6 +115,10 @@ export default function Publiko() {
       await dialog.alert('Gabim', 'Plotëso datën dhe çmimin');
       return;
     }
+    if (departureAt.getTime() - Date.now() < 60 * 60 * 1000) {
+      await dialog.alert('Gabim', 'Ora e nisjes duhet të jetë të paktën 1 orë nga tani');
+      return;
+    }
     setSaving(true);
     try {
       await api.post(
@@ -307,6 +311,7 @@ export default function Publiko() {
             onChange={setDepartureAt}
             mode="datetime"
             placeholder="Zgjidhni datën dhe orën"
+            minimumDate={new Date(Date.now() + 60 * 60 * 1000)}
           />
 
           <Text style={s.fieldLabel}>Çmimi për vend (L) *</Text>

@@ -210,6 +210,12 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const departureAt = new Date(data.departureAt);
 
   if (!isAdmin(req.userRole)) {
+    if (isWithinCancelWindow(departureAt)) {
+      res.status(400).json({
+        error: 'Ora e nisjes duhet të jetë të paktën 1 orë nga tani',
+      });
+      return;
+    }
     const overlap = await driverHasOverlappingTrip(req.userId!, departureAt, data.routeDurationS ?? null);
     if (overlap) {
       res.status(400).json({

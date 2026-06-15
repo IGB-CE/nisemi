@@ -9,9 +9,16 @@ interface Props {
   onChange: (date: Date) => void;
   mode?: 'date' | 'datetime';
   placeholder?: string;
+  minimumDate?: Date;
 }
 
-export default function DateTimeField({ value, onChange, mode = 'date', placeholder = 'Zgjidhni datën' }: Props) {
+export default function DateTimeField({
+  value,
+  onChange,
+  mode = 'date',
+  placeholder = 'Zgjidhni datën',
+  minimumDate,
+}: Props) {
   const s = useThemedStyles(makeStyles);
   const colors = useColors();
   const [show, setShow] = useState(false);
@@ -25,8 +32,12 @@ export default function DateTimeField({ value, onChange, mode = 'date', placehol
     return `${datePart}  ${timePart}`;
   };
 
+  const minDate = minimumDate ?? new Date();
+
   const open = () => {
-    setTempDate(value ?? new Date());
+    // Open at the current value, or the earliest allowed time if unset, so the
+    // picker never starts below its minimum.
+    setTempDate(value ?? (minDate.getTime() > Date.now() ? minDate : new Date()));
     setAndroidStep('date');
     setShow(true);
   };
@@ -65,7 +76,7 @@ export default function DateTimeField({ value, onChange, mode = 'date', placehol
           mode={androidStep}
           display="default"
           onChange={handleAndroid}
-          minimumDate={androidStep === 'date' ? new Date() : undefined}
+          minimumDate={androidStep === 'date' ? minDate : undefined}
         />
       )}
 
@@ -91,7 +102,7 @@ export default function DateTimeField({ value, onChange, mode = 'date', placehol
                 mode={mode}
                 display="spinner"
                 onChange={handleIOS}
-                minimumDate={new Date()}
+                minimumDate={minDate}
                 locale="sq"
                 style={s.iosPicker}
               />

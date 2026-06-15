@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 const SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-me';
-const EXPIRES_IN = '7d';
+const EXPIRES_IN = '90d';
 
 export interface JwtPayload {
   sub: string;

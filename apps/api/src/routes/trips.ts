@@ -323,6 +323,7 @@ router.post('/:id/start', requireAuth, async (req: AuthRequest, res) => {
       tokens,
       'Udhëtimi nisi',
       'Shoferi nisi udhëtimin. Mund të ndiqni vendndodhjen në kohë reale.',
+      { type: 'trip', tripId: req.params.id },
     );
   }
 

@@ -198,6 +198,7 @@ router.patch('/:id/accept', requireAuth, async (req: AuthRequest, res) => {
     tokens.map((t) => t.token),
     'Rezervimi u pranua ✅',
     `Udhëtimi ${reservation.trip.originCity?.name ?? reservation.trip.originLabel ?? 'Origjina'} → ${reservation.trip.destCity?.name ?? reservation.trip.destLabel ?? 'Destinacioni'} u konfirmua.`,
+    { type: 'reservation', tripId: reservation.tripId },
   );
 
   res.json(updated);
@@ -231,6 +232,7 @@ router.patch('/:id/reject', requireAuth, async (req: AuthRequest, res) => {
     tokens.map((t) => t.token),
     'Rezervimi u refuzua ❌',
     `Udhëtimi ${reservation.trip.originCity?.name ?? reservation.trip.originLabel ?? 'Origjina'} → ${reservation.trip.destCity?.name ?? reservation.trip.destLabel ?? 'Destinacioni'} u refuzua nga shoferi.`,
+    { type: 'reservation', tripId: reservation.tripId },
   );
 
   res.json(updated);
@@ -310,6 +312,7 @@ router.patch('/:id/remove', requireAuth, async (req: AuthRequest, res) => {
     tokens.map((t) => t.token),
     'Shoferi ju hoqi nga udhëtimi',
     `Udhëtimi ${reservation.trip.originCity?.name ?? reservation.trip.originLabel ?? 'Origjina'} → ${reservation.trip.destCity?.name ?? reservation.trip.destLabel ?? 'Destinacioni'}`,
+    { type: 'reservation', tripId: reservation.tripId },
   );
 
   res.json(updated);

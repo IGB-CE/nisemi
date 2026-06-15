@@ -9,6 +9,7 @@ export async function sendPushNotifications(
   data?: Record<string, unknown>,
 ) {
   const valid = tokens.filter((t) => /^ExponentPushToken\[.+\]$/.test(t));
+  console.log(`[push] "${title}" → ${valid.length}/${tokens.length} valid token(s)`);
   if (!valid.length) return;
 
   try {
@@ -38,6 +39,9 @@ export async function sendPushNotifications(
     if (deadTokens.length) {
       await prisma.pushToken.deleteMany({ where: { token: { in: deadTokens } } }).catch(() => {});
     }
+
+    const okCount = tickets.filter((t) => t?.status === 'ok').length;
+    console.log(`[push] "${title}" Expo accepted ${okCount}/${tickets.length} ticket(s)`);
 
     const errors = tickets.filter((t) => t?.status === 'error');
     if (errors.length) console.error('[push] Expo ticket errors', JSON.stringify(errors));

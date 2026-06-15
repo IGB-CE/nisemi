@@ -190,7 +190,9 @@
   font-weight: 600;
   color: var(--subtle);
 }
-.field input {
+.field input,
+.field select,
+.field textarea {
   padding: 11px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -199,10 +201,27 @@
   background: var(--bg);
   outline: none;
   transition: border-color 0.15s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
-.field input:focus {
+.field textarea {
+  resize: vertical;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
   border-color: var(--primary);
   background: #fff;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 14px;
 }
 
 .alert-error {

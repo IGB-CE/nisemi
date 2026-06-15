@@ -2,6 +2,9 @@ import { prisma } from './prisma.js';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
+// Expo accepts at most 100 messages per request.
+const EXPO_BATCH_SIZE = 100;
+
 export async function sendPushNotifications(
   tokens: string[],
   title: string,
@@ -12,6 +15,17 @@ export async function sendPushNotifications(
   console.log(`[push] "${title}" → ${valid.length}/${tokens.length} valid token(s)`);
   if (!valid.length) return;
 
+  for (let i = 0; i < valid.length; i += EXPO_BATCH_SIZE) {
+    await sendBatch(valid.slice(i, i + EXPO_BATCH_SIZE), title, body, data);
+  }
+}
+
+async function sendBatch(
+  valid: string[],
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+) {
   try {
     const res = await fetch(EXPO_PUSH_URL, {
       method: 'POST',

@@ -276,6 +276,19 @@ enum ReportStatus {
   DISMISSED
 }
 
+model Broadcast {
+  id             String   @id @default(cuid())
+  title          String
+  body           String
+  audience       String
+  recipientCount Int
+  sentById       String
+  sentByName     String
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model PushToken {
   id        String   @id @default(cuid())
   userId    String

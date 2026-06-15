@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
-import { requireAdmin } from '../middleware/auth.js';
+import { requireAdmin, type AuthRequest } from '../middleware/auth.js';
 import { supabase, DRIVER_DOCS_BUCKET } from '../lib/supabase.js';
 import { sendPushNotifications } from '../lib/push.js';
 
@@ -200,6 +200,91 @@ router.patch('/reports/:id/resolve', async (req, res) => {
 router.patch('/reports/:id/dismiss', async (req, res) => {
   const report = await prisma.report.update({ where: { id: req.params.id }, data: { status: 'DISMISSED' } });
   res.json(report);
+});
+
+// --- Broadcast push notifications -----------------------------------------
+
+type Audience = 'ALL' | 'DRIVERS' | 'PASSENGERS';
+
+function audienceWhere(audience: Audience) {
+  if (audience === 'DRIVERS') return { user: { is: { role: 'DRIVER' as const } } };
+  if (audience === 'PASSENGERS') return { user: { is: { role: 'PASSENGER' as const } } };
+  return undefined;
+}
+
+// Counts of users/devices reachable for each audience, used to show the admin
+// how many people a broadcast would reach before sending.
+router.get('/broadcast/recipients', async (_req, res) => {
+  const rows = await prisma.pushToken.findMany({
+    select: { userId: true, user: { select: { role: true } } },
+  });
+  const tally = (pred: (role: string) => boolean) => {
+    const users = new Set<string>();
+    let devices = 0;
+    for (const r of rows) {
+      if (pred(r.user.role)) {
+        users.add(r.userId);
+        devices++;
+      }
+    }
+    return { users: users.size, devices };
+  };
+  res.json({
+    all: tally(() => true),
+    drivers: tally((role) => role === 'DRIVER'),
+    passengers: tally((role) => role === 'PASSENGER'),
+  });
+});
+
+router.get('/broadcasts', async (_req, res) => {
+  const broadcasts = await prisma.broadcast.findMany({ orderBy: { createdAt: 'desc' }, take: 50 });
+  res.json(broadcasts);
+});
+
+const broadcastSchema = z.object({
+  title: z.string().min(1).max(120),
+  body: z.string().min(1).max(400),
+  audience: z.enum(['ALL', 'DRIVERS', 'PASSENGERS']),
+});
+
+router.post('/broadcast', async (req: AuthRequest, res) => {
+  const parsed = broadcastSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { title, body, audience } = parsed.data;
+
+  const tokens = await prisma.pushToken.findMany({
+    where: audienceWhere(audience),
+    select: { token: true, userId: true },
+  });
+  const recipientCount = new Set(tokens.map((t) => t.userId)).size;
+
+  const admin = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { firstName: true, lastName: true },
+  });
+  const broadcast = await prisma.broadcast.create({
+    data: {
+      title,
+      body,
+      audience,
+      recipientCount,
+      sentById: req.userId!,
+      sentByName: `${admin?.firstName ?? ''} ${admin?.lastName ?? ''}`.trim() || 'Admin',
+    },
+  });
+
+  // Fire-and-forget so the request returns immediately; sending is batched.
+  void sendPushNotifications(
+    tokens.map((t) => t.token),
+    title,
+    body,
+    { type: 'announcement' },
+  );
+
+  res.status(201).json({ broadcast, recipientCount, deviceCount: tokens.length });
 });
 
 export default router;

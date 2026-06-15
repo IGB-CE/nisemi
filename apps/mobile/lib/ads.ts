@@ -102,13 +102,9 @@ export async function bootstrapAds(): Promise<void> {
   }
 }
 
-let sessionBookingCount = 0;
-let interstitialShownThisSession = false;
-
-// Loads and shows a single interstitial, at most once per app session. Shared
-// by the booking and publish triggers.
+// Loads and shows an interstitial. Triggered after every booking and every
+// trip publish.
 function loadAndShowInterstitial(): void {
-  if (interstitialShownThisSession) return;
   if (!initialized) {
     console.log('[ads] interstitial skipped — SDK not initialized');
     return;
@@ -119,7 +115,6 @@ function loadAndShowInterstitial(): void {
   });
   const unsubLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
     console.log('[ads] interstitial LOADED, showing');
-    interstitialShownThisSession = true;
     ad.show();
   });
   const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
@@ -138,14 +133,12 @@ function loadAndShowInterstitial(): void {
 }
 
 export function maybeShowInterstitialAfterBooking(): void {
-  sessionBookingCount += 1;
-  console.log('[ads] booking #', sessionBookingCount, 'shown?', interstitialShownThisSession);
-  if (sessionBookingCount < 2) return;
+  console.log('[ads] booking interstitial requested');
   loadAndShowInterstitial();
 }
 
 export function showInterstitialAfterPublish(): void {
-  console.log('[ads] publish interstitial requested, shown?', interstitialShownThisSession);
+  console.log('[ads] publish interstitial requested');
   loadAndShowInterstitial();
 }
 

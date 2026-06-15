@@ -67,6 +67,15 @@ export function setupNotificationTapHandler() {
       } as any);
       return;
     }
+    if (data?.type === 'verification') {
+      router.push('/(tabs)/profili' as any);
+      return;
+    }
+    // Driver-facing booking events open the trip's reservation manager.
+    if (data?.type === 'booking' && data.tripId) {
+      router.push(`/driver/rezervimet/${data.tripId}` as any);
+      return;
+    }
     if (data?.tripId) {
       router.push(`/udhetime/${data.tripId}` as any);
     }

@@ -135,6 +135,22 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     },
     include: { trip: { include: { originCity: true, destCity: true } } },
   });
+
+  const passenger = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { firstName: true, lastName: true },
+  });
+  const driverTokens = await prisma.pushToken.findMany({
+    where: { userId: trip.driverId },
+    select: { token: true },
+  });
+  void sendPushNotifications(
+    driverTokens.map((t) => t.token),
+    'Rezervim i ri 🎟️',
+    `${`${passenger?.firstName ?? ''} ${passenger?.lastName ?? ''}`.trim() || 'Një pasagjer'} rezervoi ${seats} vend(e) — ${reservation.trip.originCity?.name ?? reservation.trip.originLabel ?? 'Origjina'} → ${reservation.trip.destCity?.name ?? reservation.trip.destLabel ?? 'Destinacioni'}`,
+    { type: 'booking', tripId },
+  );
+
   res.status(201).json(reservation);
 });
 
@@ -239,7 +255,13 @@ router.patch('/:id/reject', requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
-  const reservation = await prisma.reservation.findUnique({ where: { id: req.params.id }, include: { trip: true } });
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: req.params.id },
+    include: {
+      trip: { include: { originCity: true, destCity: true } },
+      passenger: { select: { firstName: true, lastName: true } },
+    },
+  });
   if (!reservation) {
     res.status(404).json({ error: 'Reservation not found' });
     return;
@@ -269,6 +291,18 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
     );
   }
   const [updated] = await prisma.$transaction(ops);
+
+  const driverTokens = await prisma.pushToken.findMany({
+    where: { userId: reservation.trip.driverId },
+    select: { token: true },
+  });
+  void sendPushNotifications(
+    driverTokens.map((t) => t.token),
+    'Një rezervim u anulua',
+    `${`${reservation.passenger.firstName} ${reservation.passenger.lastName}`.trim()} anuloi rezervimin — ${reservation.trip.originCity?.name ?? reservation.trip.originLabel ?? 'Origjina'} → ${reservation.trip.destCity?.name ?? reservation.trip.destLabel ?? 'Destinacioni'}`,
+    { type: 'booking', tripId: reservation.tripId },
+  );
+
   res.json(updated);
 });
 

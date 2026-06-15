@@ -3,6 +3,12 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { supabase, DRIVER_DOCS_BUCKET } from '../lib/supabase.js';
+import { sendPushNotifications } from '../lib/push.js';
+
+async function notifyUser(userId: string, title: string, body: string, data?: Record<string, unknown>) {
+  const tokens = await prisma.pushToken.findMany({ where: { userId }, select: { token: true } });
+  await sendPushNotifications(tokens.map((t) => t.token), title, body, data);
+}
 
 const router = Router();
 
@@ -102,6 +108,12 @@ router.patch('/drivers/:userId/verify', async (req, res) => {
     data: { verificationStatus: 'APPROVED', verifiedAt: new Date(), rejectionReason: null },
     select: { id: true, verificationStatus: true, verifiedAt: true },
   });
+  void notifyUser(
+    req.params.userId,
+    'Llogaria u verifikua ✅',
+    'Profili juaj si shofer u aprovua. Tani mund të publikoni udhëtime.',
+    { type: 'verification' },
+  );
   res.json(profile);
 });
 
@@ -122,6 +134,14 @@ router.patch('/drivers/:userId/reject', async (req, res) => {
     },
     select: { id: true, verificationStatus: true, rejectionReason: true },
   });
+  void notifyUser(
+    req.params.userId,
+    'Verifikimi u refuzua',
+    parsed.data.reason
+      ? `Profili juaj si shofer nuk u aprovua: ${parsed.data.reason}`
+      : 'Profili juaj si shofer nuk u aprovua. Kontrolloni dokumentet dhe provoni përsëri.',
+    { type: 'verification' },
+  );
   res.json(profile);
 });
 

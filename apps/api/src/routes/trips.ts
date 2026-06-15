@@ -355,6 +355,21 @@ router.post('/:id/end', requireAuth, async (req: AuthRequest, res) => {
     data: { status: 'COMPLETED', endedAt: new Date() },
   });
   await endTripRoom(req.params.id);
+
+  const accepted = await prisma.reservation.findMany({
+    where: { tripId: req.params.id, status: 'ACCEPTED' },
+    include: { passenger: { include: { pushTokens: true } } },
+  });
+  const endTokens = accepted.flatMap((r) => r.passenger.pushTokens.map((t) => t.token));
+  if (endTokens.length) {
+    void sendPushNotifications(
+      endTokens,
+      'Udhëtimi përfundoi',
+      'Faleminderit që udhëtuat me Nisemi! Vlerësoni shoferin tuaj.',
+      { type: 'reservation', tripId: req.params.id },
+    );
+  }
+
   res.json(updated);
 });
 
@@ -392,7 +407,10 @@ router.get('/:id/locations', requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
-  const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
+  const trip = await prisma.trip.findUnique({
+    where: { id: req.params.id },
+    include: { originCity: true, destCity: true },
+  });
   if (!trip) {
     res.status(404).json({ error: 'Trip not found' });
     return;
@@ -415,10 +433,27 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const wasInProgress = trip.status === 'IN_PROGRESS';
+
+  const affected = await prisma.reservation.findMany({
+    where: { tripId: req.params.id, status: { in: ['PENDING', 'ACCEPTED'] } },
+    include: { passenger: { include: { pushTokens: true } } },
+  });
+
   const updated = await prisma.trip.update({ where: { id: req.params.id }, data: { status: 'CANCELLED' } });
   if (wasInProgress) {
     await endTripRoom(req.params.id);
   }
+
+  const cancelTokens = affected.flatMap((r) => r.passenger.pushTokens.map((t) => t.token));
+  if (cancelTokens.length) {
+    void sendPushNotifications(
+      cancelTokens,
+      'Udhëtimi u anulua',
+      `Shoferi anuloi udhëtimin ${trip.originCity?.name ?? trip.originLabel ?? 'Origjina'} → ${trip.destCity?.name ?? trip.destLabel ?? 'Destinacioni'}.`,
+      { type: 'reservation', tripId: req.params.id },
+    );
+  }
+
   res.json(updated);
 });
 

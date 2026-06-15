@@ -23,6 +23,7 @@ import PlacesAutocomplete from '../../components/PlacesAutocomplete';
 import RoutePicker from '../../components/RoutePicker';
 import { fetchDirections, formatDistanceKm, formatDurationMin, type RouteAlt } from '../../lib/directions';
 import type { PlaceDetail } from '../../lib/places';
+import { showInterstitialAfterPublish } from '../../lib/ads';
 
 const DETOUR_OPTIONS = [
   { value: 100, label: '100 m' },
@@ -145,6 +146,7 @@ export default function Publiko() {
         token ?? undefined,
       );
       await dialog.alert('Sukses', 'Udhëtimi u publikua.');
+      showInterstitialAfterPublish();
       router.back();
     } catch (e: any) {
       await dialog.alert('Gabim', e.message);

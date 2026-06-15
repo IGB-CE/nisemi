@@ -105,10 +105,9 @@ export async function bootstrapAds(): Promise<void> {
 let sessionBookingCount = 0;
 let interstitialShownThisSession = false;
 
-export function maybeShowInterstitialAfterBooking(): void {
-  sessionBookingCount += 1;
-  console.log('[ads] booking #', sessionBookingCount, 'shown?', interstitialShownThisSession);
-  if (sessionBookingCount < 2) return;
+// Loads and shows a single interstitial, at most once per app session. Shared
+// by the booking and publish triggers.
+function loadAndShowInterstitial(): void {
   if (interstitialShownThisSession) return;
   if (!initialized) {
     console.log('[ads] interstitial skipped — SDK not initialized');
@@ -136,6 +135,18 @@ export function maybeShowInterstitialAfterBooking(): void {
     unsubError();
   });
   ad.load();
+}
+
+export function maybeShowInterstitialAfterBooking(): void {
+  sessionBookingCount += 1;
+  console.log('[ads] booking #', sessionBookingCount, 'shown?', interstitialShownThisSession);
+  if (sessionBookingCount < 2) return;
+  loadAndShowInterstitial();
+}
+
+export function showInterstitialAfterPublish(): void {
+  console.log('[ads] publish interstitial requested, shown?', interstitialShownThisSession);
+  loadAndShowInterstitial();
 }
 
 export async function showRewardedAd(): Promise<boolean> {

@@ -62,6 +62,7 @@ export default function Rezervimet() {
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -134,6 +135,75 @@ export default function Rezervimet() {
   const active = reservations.filter((r) => ['PENDING', 'ACCEPTED'].includes(r.status));
   const totalSeats = reservations.reduce((sum, r) => sum + (r.status === 'ACCEPTED' ? r.seats : 0), 0);
 
+  // Current = still-actionable bookings on trips that haven't departed yet.
+  // Everything else (past trips, rejected, cancelled) goes to the collapsible
+  // history, mirroring the driver dashboard.
+  const isCurrent = (r: any) =>
+    ['PENDING', 'ACCEPTED'].includes(r.status) && new Date(r.trip.departureAt) >= new Date();
+  const current = reservations.filter(isCurrent);
+  const history = reservations.filter((r) => !isCurrent(r));
+
+  const renderReservation = (r: any) => {
+    const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
+    const isPast = new Date(r.trip.departureAt) < new Date();
+    const canRate = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length === 0;
+    const hasReview = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length > 0;
+    return (
+      <View key={r.id} style={s.card}>
+        <TouchableOpacity onPress={() => router.push(`/udhetime/${r.trip.id}` as any)} activeOpacity={0.85}>
+          <View style={s.cardTop}>
+            <View style={s.routeDots}>
+              <View style={s.dotPrimary} />
+              <View style={s.dotLine} />
+              <View style={s.dotEnd} />
+            </View>
+            <View style={s.routeBody}>
+              <Text style={s.city} numberOfLines={1}>{r.trip.originLabel ?? r.trip.originCity?.name ?? '?'}</Text>
+              <Text style={s.cityDest} numberOfLines={1}>{r.trip.destLabel ?? r.trip.destCity?.name ?? '?'}</Text>
+            </View>
+            <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
+              <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
+            </View>
+          </View>
+          <View style={s.metaRow}>
+            <Text style={s.metaItem}>
+              <Icon name="calendar" size={12} color={colors.subtle} />{' '}
+              {new Date(r.trip.departureAt).toLocaleDateString('sq-AL', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+            <Text style={s.metaDot}>·</Text>
+            <Text style={s.metaItem}>
+              <Icon name="seats" size={12} color={colors.subtle} /> {r.seats}
+            </Text>
+            <Text style={s.metaDot}>·</Text>
+            <Text style={s.metaItem}>
+              {r.trip.driver.firstName} {r.trip.driver.lastName}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {(canRate || hasReview || (['PENDING', 'ACCEPTED'].includes(r.status) && !isPast)) && (
+          <View style={s.actionRow}>
+            {canRate && (
+              <TouchableOpacity style={s.rateBtn} onPress={() => openRating(r)}>
+                <Text style={s.rateBtnText}>★ Vlerëso</Text>
+              </TouchableOpacity>
+            )}
+            {hasReview && <Text style={s.rated}>★ Vlerësuar</Text>}
+            {['PENDING', 'ACCEPTED'].includes(r.status) && !isPast && (
+              <TouchableOpacity style={s.cancelBtn} onPress={() => cancel(r.id)}>
+                <Text style={s.cancelText}>Anulo</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </View>
+    );
+  };
+
   return (
     <View style={s.container}>
       <ScrollView
@@ -160,6 +230,11 @@ export default function Rezervimet() {
           </View>
         </View>
 
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>Rezervimet e mia</Text>
+          <Text style={s.sectionMeta}>{current.length} aktive</Text>
+        </View>
+
         {reservations.length === 0 ? (
           <View style={{ marginTop: 24 }}>
             <EmptyState
@@ -168,67 +243,28 @@ export default function Rezervimet() {
               subtitle="Kërko një udhëtim dhe rezervo vendin tënd."
             />
           </View>
+        ) : current.length === 0 ? (
+          <View style={{ marginTop: 20 }}>
+            <EmptyState
+              icon="ticket"
+              title="Nuk keni rezervime aktive"
+              subtitle="Rezervimet e kaluara i gjeni te historiku më poshtë."
+            />
+          </View>
         ) : (
-          reservations.map((r) => {
-            const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
-            const isPast = new Date(r.trip.departureAt) < new Date();
-            const canRate = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length === 0;
-            const hasReview = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length > 0;
-            return (
-              <View key={r.id} style={s.card}>
-                <TouchableOpacity onPress={() => router.push(`/udhetime/${r.trip.id}` as any)} activeOpacity={0.85}>
-                  <View style={s.cardTop}>
-                    <View style={s.routeDots}>
-                      <View style={s.dotPrimary} />
-                      <View style={s.dotLine} />
-                      <View style={s.dotEnd} />
-                    </View>
-                    <View style={s.routeBody}>
-                      <Text style={s.city} numberOfLines={1}>{r.trip.originLabel ?? r.trip.originCity?.name ?? '?'}</Text>
-                      <Text style={s.cityDest} numberOfLines={1}>{r.trip.destLabel ?? r.trip.destCity?.name ?? '?'}</Text>
-                    </View>
-                    <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
-                      <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
-                    </View>
-                  </View>
-                  <View style={s.metaRow}>
-                    <Text style={s.metaItem}>
-                      <Icon name="calendar" size={12} color={colors.subtle} />{' '}
-                      {new Date(r.trip.departureAt).toLocaleDateString('sq-AL', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                    <Text style={s.metaDot}>·</Text>
-                    <Text style={s.metaItem}>
-                      <Icon name="seats" size={12} color={colors.subtle} /> {r.seats}
-                    </Text>
-                    <Text style={s.metaDot}>·</Text>
-                    <Text style={s.metaItem}>
-                      {r.trip.driver.firstName} {r.trip.driver.lastName}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-                {(canRate || hasReview || (['PENDING', 'ACCEPTED'].includes(r.status) && !isPast)) && (
-                  <View style={s.actionRow}>
-                    {canRate && (
-                      <TouchableOpacity style={s.rateBtn} onPress={() => openRating(r)}>
-                        <Text style={s.rateBtnText}>★ Vlerëso</Text>
-                      </TouchableOpacity>
-                    )}
-                    {hasReview && <Text style={s.rated}>★ Vlerësuar</Text>}
-                    {['PENDING', 'ACCEPTED'].includes(r.status) && !isPast && (
-                      <TouchableOpacity style={s.cancelBtn} onPress={() => cancel(r.id)}>
-                        <Text style={s.cancelText}>Anulo</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
-              </View>
-            );
-          })
+          current.map((r) => renderReservation(r))
+        )}
+
+        {history.length > 0 && (
+          <>
+            <TouchableOpacity style={s.historyToggle} onPress={() => setShowHistory((v) => !v)} activeOpacity={0.7}>
+              <Text style={s.historyToggleText}>
+                {showHistory ? 'Fshih historikun' : `Shfaq historikun (${history.length})`}
+              </Text>
+              <Text style={s.historyToggleIcon}>{showHistory ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {showHistory && history.map((r) => renderReservation(r))}
+          </>
         )}
       </ScrollView>
 
@@ -298,6 +334,34 @@ const makeStyles = ({ colors, typography }: Theme) =>
     letterSpacing: 0.5,
   },
   statValue: { ...typography.h2, marginTop: 4 },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginHorizontal: 24,
+    marginTop: 14,
+    marginBottom: 12,
+  },
+  sectionTitle: { ...typography.h2 },
+  sectionMeta: { ...typography.caption, color: colors.textDim },
+
+  historyToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
+  },
+  historyToggleText: { ...typography.label, color: colors.textDim },
+  historyToggleIcon: { color: colors.textDim, fontSize: 11 },
 
   card: {
     marginHorizontal: 16,

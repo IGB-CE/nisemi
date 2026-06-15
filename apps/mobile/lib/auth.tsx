@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { setUnauthorizedHandler } from './api';
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
@@ -63,6 +64,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     setUser(null);
   };
+
+  // When any authenticated request comes back 401 (expired/invalid token),
+  // clear the session so the root redirect sends the user to login.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void signOut();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   const updateUser = async (u: User) => {
     await SecureStore.setItemAsync(USER_KEY, JSON.stringify(u));

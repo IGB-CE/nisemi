@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
-import { supabase, CAR_PHOTOS_BUCKET } from '../lib/supabase.js';
+import { supabase, CAR_PHOTOS_BUCKET, DRIVER_DOCS_BUCKET } from '../lib/supabase.js';
 import { albanianMobileSchema } from '../lib/phone.js';
 
 const router = Router();
@@ -136,6 +136,89 @@ router.post('/me/avatar', requireAuth, async (req: AuthRequest, res) => {
     select: { id: true, email: true, firstName: true, lastName: true, phone: true, avatarUrl: true, role: true },
   });
   res.json(user);
+});
+
+// Permanently delete the current user's account. We keep the User row but strip
+// every piece of personal data and destroy all login paths (one-way anonymize),
+// which satisfies Apple 5.1.1(v) and Google Play deletion rules while leaving
+// other users' trip/review history intact. Re-registering creates a fresh
+// account because the email/phone/googleId are released.
+router.delete('/me', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.userId!;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      avatarUrl: true,
+      driverProfile: { select: { carPhotoUrl: true, licenseUrl: true } },
+    },
+  });
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  // Seats held by the user's accepted reservations must be returned to those
+  // trips before the reservations are cancelled.
+  const acceptedReservations = await prisma.reservation.findMany({
+    where: { passengerId: userId, status: 'ACCEPTED' },
+    select: { tripId: true, seats: true },
+  });
+
+  await prisma.$transaction([
+    ...acceptedReservations.map((r) =>
+      prisma.trip.update({
+        where: { id: r.tripId },
+        data: { seatsAvailable: { increment: r.seats } },
+      }),
+    ),
+    prisma.reservation.updateMany({
+      where: { passengerId: userId, status: { in: ['PENDING', 'ACCEPTED'] } },
+      data: { status: 'CANCELLED' },
+    }),
+    // Cancel the user's own upcoming/active trips so passengers aren't left
+    // waiting on a ghost trip.
+    prisma.trip.updateMany({
+      where: { driverId: userId, status: { in: ['SCHEDULED', 'IN_PROGRESS'] } },
+      data: { status: 'CANCELLED' },
+    }),
+    // Drop records that are purely personal to this user.
+    prisma.message.deleteMany({ where: { OR: [{ senderId: userId }, { receiverId: userId }] } }),
+    prisma.pushToken.deleteMany({ where: { userId } }),
+    prisma.rideAlert.deleteMany({ where: { passengerId: userId } }),
+    prisma.block.deleteMany({ where: { OR: [{ blockerId: userId }, { blockedId: userId }] } }),
+    prisma.conversationDeletion.deleteMany({ where: { userId } }),
+    prisma.tripHistoryHidden.deleteMany({ where: { userId } }),
+    prisma.driverProfile.deleteMany({ where: { userId } }),
+    // Scrub the surviving row: remove all PII and any credential that could log
+    // back in. Reviews, ratings and completed trips stay, now shown as a
+    // generic deleted user.
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: `deleted-${userId}@deleted.nisemi.al`,
+        phone: null,
+        firstName: 'Përdorues',
+        lastName: 'i fshirë',
+        passwordHash: null,
+        googleId: null,
+        avatarUrl: null,
+        gender: 'UNSPECIFIED',
+        status: 'DELETED',
+      },
+    }),
+  ]);
+
+  // Best-effort storage purge (outside the DB transaction). carPhoto/avatar are
+  // public URLs; licenseUrl is the raw object path in the private docs bucket.
+  const avatarPath = user.avatarUrl?.split(`/${CAR_PHOTOS_BUCKET}/`)[1];
+  if (avatarPath) await supabase.storage.from(CAR_PHOTOS_BUCKET).remove([avatarPath]).catch(() => {});
+  const carPhotoPath = user.driverProfile?.carPhotoUrl?.split(`/${CAR_PHOTOS_BUCKET}/`)[1];
+  if (carPhotoPath) await supabase.storage.from(CAR_PHOTOS_BUCKET).remove([carPhotoPath]).catch(() => {});
+  const licensePath = user.driverProfile?.licenseUrl;
+  if (licensePath) await supabase.storage.from(DRIVER_DOCS_BUCKET).remove([licensePath]).catch(() => {});
+
+  res.json({ ok: true });
 });
 
 router.get('/:id', async (req, res) => {

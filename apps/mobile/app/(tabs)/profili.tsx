@@ -97,6 +97,25 @@ export default function Profili() {
     if (ok) await signOut();
   };
 
+  const handleDeleteAccount = async () => {
+    const ok = await dialog.confirm(
+      'Fshi llogarinë?',
+      'Të dhënat tuaja personale (emri, email-i, telefoni, fotoja) do të fshihen përfundimisht dhe nuk mund të riktheheni. Udhëtimet aktive do të anulohen. Ky veprim nuk mund të zhbëhet.',
+      'Po, fshi',
+      true,
+    );
+    if (!ok) return;
+    setSaving(true);
+    try {
+      await api.delete('/api/v1/users/me', token ?? undefined);
+      await signOut();
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const saveProfile = async () => {
     if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
       await dialog.alert('Gabim', 'Emri dhe mbiemri janë të detyrueshme');
@@ -441,6 +460,12 @@ export default function Profili() {
         <View style={s.section}>
           <PrimaryButton label="Dil nga llogaria" onPress={handleLogout} variant="ghost" />
         </View>
+
+        <View style={s.section}>
+          <TouchableOpacity onPress={handleDeleteAccount} disabled={saving} style={s.deleteAccountRow}>
+            <Text style={s.deleteAccountText}>Fshi llogarinë</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -498,6 +523,9 @@ const makeStyles = ({ colors, typography }: Theme) =>
     fontSize: 15,
     color: colors.text,
   },
+
+  deleteAccountRow: { alignItems: 'center', paddingVertical: 12 },
+  deleteAccountText: { color: colors.danger, fontSize: 14, fontWeight: '600' },
 
   legalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
   legalIcon: { fontSize: 18, marginRight: 12 },

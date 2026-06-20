@@ -109,6 +109,7 @@ enum UserStatus {
   PENDING
   ACTIVE
   BLOCKED
+  DELETED
 }
 
 enum Gender {

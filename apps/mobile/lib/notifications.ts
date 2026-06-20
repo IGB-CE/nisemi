@@ -57,30 +57,50 @@ Notifications.setNotificationHandler({
   },
 });
 
+// Guards against routing the same tap twice — getLastNotificationResponseAsync
+// (cold start) and the live listener can both surface the same response.
+let lastHandledNotificationId: string | null = null;
+
+function routeFromNotification(response: Notifications.NotificationResponse | null) {
+  if (!response) return;
+  const id = response.notification.request.identifier;
+  if (id && id === lastHandledNotificationId) return;
+  lastHandledNotificationId = id;
+
+  const data = response.notification.request.content.data as MessageData | undefined;
+  if (data?.type === 'message' && data.tripId && data.senderId) {
+    router.push({
+      pathname: '/chat/[tripId]/[userId]',
+      params: { tripId: data.tripId, userId: data.senderId },
+    } as any);
+    return;
+  }
+  if (data?.type === 'verification') {
+    router.push('/(tabs)/profili' as any);
+    return;
+  }
+  // Driver-facing booking events open the trip's reservation manager.
+  if (data?.type === 'booking' && data.tripId) {
+    router.push(`/driver/rezervimet/${data.tripId}` as any);
+    return;
+  }
+  if (data?.tripId) {
+    router.push(`/udhetime/${data.tripId}` as any);
+  }
+}
+
+// Handles taps while the app is already running (foreground/background).
 export function setupNotificationTapHandler() {
-  const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as MessageData | undefined;
-    if (data?.type === 'message' && data.tripId && data.senderId) {
-      router.push({
-        pathname: '/chat/[tripId]/[userId]',
-        params: { tripId: data.tripId, userId: data.senderId },
-      } as any);
-      return;
-    }
-    if (data?.type === 'verification') {
-      router.push('/(tabs)/profili' as any);
-      return;
-    }
-    // Driver-facing booking events open the trip's reservation manager.
-    if (data?.type === 'booking' && data.tripId) {
-      router.push(`/driver/rezervimet/${data.tripId}` as any);
-      return;
-    }
-    if (data?.tripId) {
-      router.push(`/udhetime/${data.tripId}` as any);
-    }
-  });
+  const sub = Notifications.addNotificationResponseReceivedListener(routeFromNotification);
   return () => sub.remove();
+}
+
+// Handles the tap that cold-started the app from a killed state — the live
+// listener above never fires for that one, so without this the app just opens
+// on the default tab. Call once navigation and the session are ready.
+export async function handleColdStartNotification() {
+  const response = await Notifications.getLastNotificationResponseAsync();
+  routeFromNotification(response);
 }
 
 export async function registerPushToken(authToken: string) {

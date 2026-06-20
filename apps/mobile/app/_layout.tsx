@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from '../lib/auth';
 import { ThemeProvider, useTheme } from '../lib/theme';
 import { UnreadProvider } from '../lib/unread';
 import { DialogProvider } from '../lib/dialog';
-import { registerPushToken, setupNotificationTapHandler } from '../lib/notifications';
+import { registerPushToken, setupNotificationTapHandler, handleColdStartNotification } from '../lib/notifications';
 import { bootstrapAds } from '../lib/ads';
 import '../lib/location';
 
@@ -29,7 +29,25 @@ function AdsBootstrap() {
 }
 
 function NotificationTapHandler() {
+  const { token, loading } = useAuth();
+  const coldStartHandled = useRef(false);
+
+  // Live taps (app already running).
   useEffect(() => setupNotificationTapHandler(), []);
+
+  // Cold-start tap: wait until the session is resolved so the deep screen
+  // stacks on top of the post-login tabs (with a working back button) rather
+  // than racing the initial redirect. Run once.
+  useEffect(() => {
+    if (loading || coldStartHandled.current) return;
+    coldStartHandled.current = true;
+    if (!token) return;
+    const timer = setTimeout(() => {
+      void handleColdStartNotification();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [loading, token]);
+
   return null;
 }
 

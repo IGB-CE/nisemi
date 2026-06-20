@@ -24,6 +24,7 @@ import RoutePicker from '../../components/RoutePicker';
 import { fetchDirections, formatDistanceKm, formatDurationMin, type RouteAlt } from '../../lib/directions';
 import type { PlaceDetail } from '../../lib/places';
 import { showInterstitialAfterPublish } from '../../lib/ads';
+import { scheduleTripStartReminder } from '../../lib/tripReminders';
 
 const DETOUR_OPTIONS = [
   { value: 100, label: '100 m' },
@@ -204,11 +205,14 @@ export default function Publiko() {
       notes: notes || undefined,
     };
     try {
+      const reminderTrip = { departureAt: body.departureAt, originLabel: origin.label, destLabel: dest.label };
       if (isEditing) {
         await api.patch(`/api/v1/trips/${editId}`, body, token ?? undefined);
+        await scheduleTripStartReminder({ id: editId!, ...reminderTrip });
         await dialog.alert('Sukses', 'Udhëtimi u përditësua.');
       } else {
-        await api.post('/api/v1/trips', body, token ?? undefined);
+        const created = await api.post<{ id: string }>('/api/v1/trips', body, token ?? undefined);
+        await scheduleTripStartReminder({ id: created.id, ...reminderTrip });
         await dialog.alert('Sukses', 'Udhëtimi u publikua.');
         showInterstitialAfterPublish();
       }

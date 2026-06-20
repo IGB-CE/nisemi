@@ -15,6 +15,7 @@ import {
   startDriverTracking,
   stopDriverTracking,
 } from '../../../lib/location';
+import { cancelTripStartReminder } from '../../../lib/tripReminders';
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
@@ -113,6 +114,7 @@ export default function TripReservations() {
       }
       await api.post(`/api/v1/trips/${trip.id}/start`, {}, token);
       await startDriverTracking(trip.id, token);
+      await cancelTripStartReminder(trip.id);
       load();
     } catch (e: any) {
       await stopDriverTracking();

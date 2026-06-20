@@ -10,6 +10,7 @@ import { ErrorScreen, EmptyState } from '../../components/States';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import Icon from '../../components/ui/Icon';
 import { showRewardedAd } from '../../lib/ads';
+import { cancelTripStartReminder } from '../../lib/tripReminders';
 
 export default function Shofer() {
   const { token } = useAuth();
@@ -74,6 +75,7 @@ export default function Shofer() {
       if (!ok) return;
       try {
         await api.patch(`/api/v1/trips/${tripId}/cancel`, {}, token ?? undefined);
+        await cancelTripStartReminder(tripId);
         load();
       } catch (e: any) {
         await dialog.alert('Gabim', e.message);
@@ -88,6 +90,7 @@ export default function Shofer() {
       if (!ok) return;
       try {
         await api.delete(`/api/v1/trips/${tripId}`, token ?? undefined);
+        await cancelTripStartReminder(tripId);
         load();
       } catch (e: any) {
         await dialog.alert('Gabim', e.message);

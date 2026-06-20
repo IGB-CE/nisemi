@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { supabase, CAR_PHOTOS_BUCKET, DRIVER_DOCS_BUCKET } from '../lib/supabase.js';
 import { albanianMobileSchema } from '../lib/phone.js';
+import { sendPushNotifications } from '../lib/push.js';
 
 const router = Router();
 
@@ -165,6 +166,20 @@ router.delete('/me', requireAuth, async (req: AuthRequest, res) => {
     select: { tripId: true, seats: true },
   });
 
+  // The user's own upcoming/active trips will be cancelled below; collect their
+  // passengers' push tokens now so we can warn them afterwards.
+  const cancelledTrips = await prisma.trip.findMany({
+    where: { driverId: userId, status: { in: ['SCHEDULED', 'IN_PROGRESS'] } },
+    include: {
+      originCity: true,
+      destCity: true,
+      reservations: {
+        where: { status: { in: ['PENDING', 'ACCEPTED'] } },
+        include: { passenger: { include: { pushTokens: true } } },
+      },
+    },
+  });
+
   await prisma.$transaction([
     ...acceptedReservations.map((r) =>
       prisma.trip.update({
@@ -217,6 +232,18 @@ router.delete('/me', requireAuth, async (req: AuthRequest, res) => {
   if (carPhotoPath) await supabase.storage.from(CAR_PHOTOS_BUCKET).remove([carPhotoPath]).catch(() => {});
   const licensePath = user.driverProfile?.licenseUrl;
   if (licensePath) await supabase.storage.from(DRIVER_DOCS_BUCKET).remove([licensePath]).catch(() => {});
+
+  // Warn passengers whose trips were cancelled by this account's deletion.
+  for (const trip of cancelledTrips) {
+    const tokens = trip.reservations.flatMap((r) => r.passenger.pushTokens.map((t) => t.token));
+    if (!tokens.length) continue;
+    void sendPushNotifications(
+      tokens,
+      'Udhëtimi u anulua',
+      `Shoferi anuloi udhëtimin ${trip.originCity?.name ?? trip.originLabel ?? 'Origjina'} → ${trip.destCity?.name ?? trip.destLabel ?? 'Destinacioni'}.`,
+      { type: 'reservation', tripId: trip.id },
+    );
+  }
 
   res.json({ ok: true });
 });

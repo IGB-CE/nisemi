@@ -52,7 +52,9 @@ export default function TripReservations() {
   const [tripActionLoading, setTripActionLoading] = useState(false);
   const [ratings, setRatings] = useState<Record<string, boolean | null>>({});
   const [autoStartCountdown, setAutoStartCountdown] = useState<number | null>(null);
-  const autoStartCancelledRef = useRef(false);
+  // Set once auto-start has been resolved for this screen (fired or cancelled)
+  // so it never re-arms — e.g. in the gap before load() flips status off SCHEDULED.
+  const autoStartDoneRef = useRef(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -169,14 +171,14 @@ export default function TripReservations() {
   // never from a closed app.
   useEffect(() => {
     if (!trip || !trip.autoStart || trip.status !== 'SCHEDULED') return;
-    if (autoStartCancelledRef.current || autoStartCountdown !== null) return;
+    if (autoStartDoneRef.current || autoStartCountdown !== null) return;
     const ms = new Date(trip.departureAt).getTime() - Date.now();
     if (ms <= 0) {
       setAutoStartCountdown(AUTO_START_COUNTDOWN_S);
       return;
     }
     const timer = setTimeout(() => {
-      if (!autoStartCancelledRef.current) setAutoStartCountdown(AUTO_START_COUNTDOWN_S);
+      if (!autoStartDoneRef.current) setAutoStartCountdown(AUTO_START_COUNTDOWN_S);
     }, ms);
     return () => clearTimeout(timer);
   }, [trip, autoStartCountdown]);
@@ -184,6 +186,7 @@ export default function TripReservations() {
   useEffect(() => {
     if (autoStartCountdown === null) return;
     if (autoStartCountdown <= 0) {
+      autoStartDoneRef.current = true;
       setAutoStartCountdown(null);
       void startTrip();
       return;
@@ -195,7 +198,7 @@ export default function TripReservations() {
   }, [autoStartCountdown]);
 
   const cancelAutoStart = () => {
-    autoStartCancelledRef.current = true;
+    autoStartDoneRef.current = true;
     setAutoStartCountdown(null);
   };
 

@@ -44,7 +44,9 @@ export type IconName =
   | 'ruler'
   | 'close'
   | 'people'
-  | 'checkmark';
+  | 'checkmark'
+  | 'thumbsUp'
+  | 'thumbsDown';
 
 const GLYPHS: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   search: 'search-outline',
@@ -84,6 +86,8 @@ const GLYPHS: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   close: 'close',
   people: 'people-outline',
   checkmark: 'checkmark-circle',
+  thumbsUp: 'thumbs-up-outline',
+  thumbsDown: 'thumbs-down-outline',
 };
 
 interface Props {

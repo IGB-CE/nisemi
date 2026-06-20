@@ -27,6 +27,8 @@ model User {
   reservations     Reservation[]
   reviewsGiven     Review[]       @relation("ReviewsGiven")
   reviewsReceived  Review[]       @relation("ReviewsReceived")
+  passengerRatingsGiven    PassengerRating[] @relation("PassengerRatingsByDriver")
+  passengerRatingsReceived PassengerRating[] @relation("PassengerRatingsReceived")
   pushTokens       PushToken[]
   reportsBy        Report[]       @relation("ReportsBy")
   reportsAgainst   Report[]       @relation("ReportsAgainst")
@@ -183,10 +185,11 @@ model Trip {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  reservations Reservation[]
-  messages     Message[]
-  reviews      Review[]
-  locations    TripLocation[]
+  reservations     Reservation[]
+  messages         Message[]
+  reviews          Review[]
+  passengerRatings PassengerRating[]
+  locations        TripLocation[]
 }
 
 enum TripStatus {
@@ -257,6 +260,22 @@ model Review {
   createdAt DateTime @default(now())
 
   @@unique([tripId, authorId])
+}
+
+model PassengerRating {
+  id          String   @id @default(cuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id])
+  driverId    String
+  driver      User     @relation("PassengerRatingsByDriver", fields: [driverId], references: [id])
+  passengerId String
+  passenger   User     @relation("PassengerRatingsReceived", fields: [passengerId], references: [id])
+  liked       Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tripId, passengerId])
+  @@index([passengerId])
 }
 
 model Report {

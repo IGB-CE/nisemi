@@ -18,6 +18,16 @@ import {
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
+type PassengerStats = { trips: number; likes: number; dislikes: number; likePercent: number | null };
+
+const passengerStatLabel = (stats: PassengerStats | null | undefined): string | null => {
+  if (!stats) return null;
+  if (stats.trips === 0 && stats.likePercent === null) return 'Pasagjer i ri';
+  const tripLabel = `${stats.trips} udhëtim${stats.trips === 1 ? '' : 'e'}`;
+  if (stats.likePercent === null) return tripLabel;
+  return `${tripLabel} · ${stats.likePercent}% 👍`;
+};
+
 const statusMapFor = (colors: Palette): Record<string, { label: string; color: string }> => ({
   PENDING: { label: 'Në pritje', color: colors.warning },
   ACCEPTED: { label: 'Pranuar', color: colors.success },
@@ -38,13 +48,19 @@ export default function TripReservations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tripActionLoading, setTripActionLoading] = useState(false);
+  const [ratings, setRatings] = useState<Record<string, boolean | null>>({});
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
     api
       .get<any>(`/api/v1/trips/${tripId}`, token ?? undefined)
-      .then(setTrip)
+      .then((t) => {
+        setTrip(t);
+        const seeded: Record<string, boolean | null> = {};
+        for (const r of t.reservations ?? []) seeded[r.passenger.id] = r.myRating ?? null;
+        setRatings(seeded);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [tripId, token]);
@@ -106,6 +122,23 @@ export default function TripReservations() {
     }
   };
 
+  const rate = async (passengerId: string, liked: boolean) => {
+    if (!token || !trip) return;
+    const prev = ratings[passengerId] ?? null;
+    const next = prev === liked ? prev : liked;
+    setRatings((m) => ({ ...m, [passengerId]: next }));
+    try {
+      await api.post(
+        '/api/v1/passenger-ratings',
+        { tripId: trip.id, passengerId, liked },
+        token,
+      );
+    } catch (e: any) {
+      setRatings((m) => ({ ...m, [passengerId]: prev }));
+      await dialog.alert('Gabim', e.message ?? 'Nuk u arrit të ruhej vlerësimi.');
+    }
+  };
+
   const endTrip = async () => {
     if (!token || !trip) return;
     const proceed = await dialog.confirm(
@@ -141,6 +174,7 @@ export default function TripReservations() {
   const msUntilDeparture = new Date(trip.departureAt).getTime() - Date.now();
   const canStart = trip.status === 'SCHEDULED' && msUntilDeparture < TWO_HOURS_MS;
   const isInProgress = trip.status === 'IN_PROGRESS';
+  const isCompleted = trip.status === 'COMPLETED';
 
   return (
     <View style={s.container}>
@@ -244,6 +278,9 @@ export default function TripReservations() {
                     <Text style={s.passengerSeats}>
                       <Icon name="seats" size={13} color={colors.subtle} /> {r.seats} vend{r.seats > 1 ? 'e' : ''}
                     </Text>
+                    {passengerStatLabel(r.passenger.stats) && (
+                      <Text style={s.passengerStats}>{passengerStatLabel(r.passenger.stats)}</Text>
+                    )}
                   </View>
                   <View style={[s.statusPill, { borderColor: st.color, backgroundColor: st.color + '15' }]}>
                     <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
@@ -276,7 +313,7 @@ export default function TripReservations() {
                       </View>
                     </>
                   )}
-                  {r.status === 'ACCEPTED' && (
+                  {r.status === 'ACCEPTED' && !isCompleted && (
                     <>
                       <View style={{ flex: 1 }}>
                         <PrimaryButton
@@ -301,6 +338,52 @@ export default function TripReservations() {
                     </>
                   )}
                 </View>
+
+                {isCompleted && r.status === 'ACCEPTED' && (
+                  <View style={s.ratingBlock}>
+                    <Text style={s.ratingPrompt}>Si ishte pasagjeri?</Text>
+                    <View style={s.ratingRow}>
+                      <TouchableOpacity
+                        style={[s.ratingBtn, ratings[r.passenger.id] === true && s.ratingBtnLikeActive]}
+                        onPress={() => rate(r.passenger.id, true)}
+                        activeOpacity={0.8}
+                      >
+                        <Icon
+                          name="thumbsUp"
+                          size={18}
+                          color={ratings[r.passenger.id] === true ? '#fff' : colors.success}
+                        />
+                        <Text
+                          style={[
+                            s.ratingBtnText,
+                            { color: ratings[r.passenger.id] === true ? '#fff' : colors.success },
+                          ]}
+                        >
+                          Pëlqej
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[s.ratingBtn, ratings[r.passenger.id] === false && s.ratingBtnDislikeActive]}
+                        onPress={() => rate(r.passenger.id, false)}
+                        activeOpacity={0.8}
+                      >
+                        <Icon
+                          name="thumbsDown"
+                          size={18}
+                          color={ratings[r.passenger.id] === false ? '#fff' : colors.danger}
+                        />
+                        <Text
+                          style={[
+                            s.ratingBtnText,
+                            { color: ratings[r.passenger.id] === false ? '#fff' : colors.danger },
+                          ]}
+                        >
+                          Nuk pëlqej
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
             );
           })
@@ -386,11 +469,29 @@ const makeStyles = ({ colors, typography }: Theme) =>
   avatarText: { fontSize: 16, fontWeight: '800', color: colors.text },
   passengerName: { ...typography.h3, fontSize: 15 },
   passengerSeats: { ...typography.caption, marginTop: 2 },
+  passengerStats: { ...typography.caption, marginTop: 2, color: colors.textDim, fontSize: 12 },
 
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
   statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
 
   actionRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  ratingBlock: { marginTop: 14, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },
+  ratingPrompt: { ...typography.caption, color: colors.textDim, marginBottom: 8 },
+  ratingRow: { flexDirection: 'row', gap: 8 },
+  ratingBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  ratingBtnLikeActive: { backgroundColor: colors.success, borderColor: colors.success },
+  ratingBtnDislikeActive: { backgroundColor: colors.danger, borderColor: colors.danger },
+  ratingBtnText: { fontSize: 14, fontWeight: '700' },
   pickupBlock: { marginTop: 10, gap: 4 },
   pickupLine: { ...typography.caption, color: colors.textDim, fontSize: 12 },
 

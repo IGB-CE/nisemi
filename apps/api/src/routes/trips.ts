@@ -7,6 +7,7 @@ import { endTripRoom } from '../realtime/index.js';
 import { matchesRoute, validatePolylineEndpoints } from '../lib/routeMatch.js';
 import { notifyMatchingAlerts } from '../lib/rideAlerts.js';
 import { driverHasOverlappingTrip, isAdmin, isWithinCancelWindow } from '../lib/tripRules.js';
+import { getPassengerStats } from '../lib/passengerStats.js';
 
 const router = Router();
 
@@ -292,16 +293,38 @@ router.get('/:id', async (req, res) => {
           id: true,
           seats: true,
           status: true,
+          pickupLat: true,
+          pickupLng: true,
+          pickupLabel: true,
+          dropoffLat: true,
+          dropoffLng: true,
+          dropoffLabel: true,
           passenger: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
         },
       },
+      passengerRatings: { select: { passengerId: true, liked: true } },
     },
   });
   if (!trip) {
     res.status(404).json({ error: 'Trip not found' });
     return;
   }
-  res.json(trip);
+
+  // Attach each passenger's reputation (completed trips + like ratio) and the
+  // driver's own like/dislike for this trip, so the reservation screen can show
+  // the badge and pre-fill the rating buttons.
+  const statsMap = await getPassengerStats(trip.reservations.map((r) => r.passenger.id));
+  const ratingMap = new Map(trip.passengerRatings.map((r) => [r.passengerId, r.liked]));
+  const { passengerRatings, ...tripRest } = trip;
+  const enriched = {
+    ...tripRest,
+    reservations: trip.reservations.map((r) => ({
+      ...r,
+      passenger: { ...r.passenger, stats: statsMap.get(r.passenger.id) ?? null },
+      myRating: ratingMap.has(r.passenger.id) ? ratingMap.get(r.passenger.id) : null,
+    })),
+  };
+  res.json(enriched);
 });
 
 router.post('/:id/start', requireAuth, async (req: AuthRequest, res) => {

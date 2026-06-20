@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 // minutes before departure to remind them. Local (device-scheduled) keeps this
 // working regardless of the backend, which sleeps on Render's free tier.
 
-const REMINDER_LEAD_MS = 5 * 60 * 1000;
+const REMINDER_LEAD_MS = 10 * 60 * 1000;
 const REMINDER_KIND = 'tripStartReminder';
 const CHANNEL_ID = 'trip-reminders';
 

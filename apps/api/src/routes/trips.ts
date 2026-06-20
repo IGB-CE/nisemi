@@ -34,6 +34,7 @@ const tripSchema = z.object({
   tripType: z.enum(['INTERCITY', 'INTRACITY']).optional(),
   maxDetourM: z.number().int().min(50).max(5000).optional(),
   genderRestriction: z.enum(['ANY', 'FEMALE_ONLY', 'MALE_ONLY']).optional(),
+  autoStart: z.boolean().optional(),
   departureAt: z.string().datetime(),
   pricePerSeat: z.number().positive(),
   totalSeats: z.number().int().min(1).max(8),

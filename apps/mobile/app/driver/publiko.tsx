@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -25,6 +26,7 @@ import { fetchDirections, formatDistanceKm, formatDurationMin, type RouteAlt } f
 import type { PlaceDetail } from '../../lib/places';
 import { showInterstitialAfterPublish } from '../../lib/ads';
 import { scheduleTripStartReminder } from '../../lib/tripReminders';
+import { getAutoStartDefault } from '../../lib/autoStart';
 
 const DETOUR_OPTIONS = [
   { value: 100, label: '100 m' },
@@ -118,6 +120,14 @@ export default function Publiko() {
   const [totalSeats, setTotalSeats] = useState('3');
   const [notes, setNotes] = useState('');
   const [genderRestriction, setGenderRestriction] = useState<'ANY' | 'FEMALE_ONLY' | 'MALE_ONLY'>('ANY');
+  const [autoStart, setAutoStart] = useState(false);
+
+  // New trips inherit the driver's global auto-start default; edits keep the
+  // trip's own saved value (set in the prefill effect below).
+  useEffect(() => {
+    if (isEditing) return;
+    getAutoStartDefault().then(setAutoStart);
+  }, [isEditing]);
 
   // Prefill the form when editing an existing trip.
   useEffect(() => {
@@ -151,6 +161,7 @@ export default function Publiko() {
         setNotes(t.notes ?? '');
         setGenderRestriction(t.genderRestriction ?? 'ANY');
         setMaxDetourM(t.maxDetourM ?? 500);
+        setAutoStart(t.autoStart ?? false);
       })
       .catch((e) => {
         if (!cancelled) dialog.alert('Gabim', e.message ?? 'Nuk u ngarkua udhëtimi');
@@ -203,6 +214,7 @@ export default function Publiko() {
       pricePerSeat: Number(pricePerSeat),
       totalSeats: Number(totalSeats),
       notes: notes || undefined,
+      autoStart,
     };
     try {
       const reminderTrip = { departureAt: body.departureAt, originLabel: origin.label, destLabel: dest.label };
@@ -450,6 +462,24 @@ export default function Publiko() {
         </Card>
 
         <Card style={s.card}>
+          <View style={s.toggleRow}>
+            <View style={{ flex: 1, paddingRight: 12 }}>
+              <Text style={s.cardLabel}>Fillim automatik</Text>
+              <Text style={s.hint}>
+                Kur ora e nisjes mbërrin dhe aplikacioni është i hapur, udhëtimi fillon vetë (me një
+                numërim mbrapsht për ta anuluar).
+              </Text>
+            </View>
+            <Switch
+              value={autoStart}
+              onValueChange={setAutoStart}
+              trackColor={{ true: colors.primary, false: colors.border }}
+              thumbColor="#fff"
+            />
+          </View>
+        </Card>
+
+        <Card style={s.card}>
           <Text style={s.cardLabel}>Shënime</Text>
           <TextInput
             style={[s.input, { height: 90, textAlignVertical: 'top' }]}
@@ -496,6 +526,7 @@ const makeStyles = ({ colors, typography }: Theme) =>
     marginTop: 6,
   },
   hint: { ...typography.caption, marginTop: 8 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   error: { ...typography.caption, color: colors.danger, marginTop: 8 },
   center: { alignItems: 'center', paddingVertical: 16 },
 

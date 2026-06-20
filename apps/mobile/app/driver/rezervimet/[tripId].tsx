@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import {
 import { cancelTripStartReminder } from '../../../lib/tripReminders';
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+const AUTO_START_COUNTDOWN_S = 10;
 
 type PassengerStats = { trips: number; likes: number; dislikes: number; likePercent: number | null };
 
@@ -50,6 +51,8 @@ export default function TripReservations() {
   const [error, setError] = useState<string | null>(null);
   const [tripActionLoading, setTripActionLoading] = useState(false);
   const [ratings, setRatings] = useState<Record<string, boolean | null>>({});
+  const [autoStartCountdown, setAutoStartCountdown] = useState<number | null>(null);
+  const autoStartCancelledRef = useRef(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -160,6 +163,42 @@ export default function TripReservations() {
     }
   };
 
+  // Auto-start: when enabled for this trip and the departure time arrives while
+  // the app is open, run a short countdown then start the trip (which also kicks
+  // off live tracking). Only ever flips status when tracking truly starts —
+  // never from a closed app.
+  useEffect(() => {
+    if (!trip || !trip.autoStart || trip.status !== 'SCHEDULED') return;
+    if (autoStartCancelledRef.current || autoStartCountdown !== null) return;
+    const ms = new Date(trip.departureAt).getTime() - Date.now();
+    if (ms <= 0) {
+      setAutoStartCountdown(AUTO_START_COUNTDOWN_S);
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (!autoStartCancelledRef.current) setAutoStartCountdown(AUTO_START_COUNTDOWN_S);
+    }, ms);
+    return () => clearTimeout(timer);
+  }, [trip, autoStartCountdown]);
+
+  useEffect(() => {
+    if (autoStartCountdown === null) return;
+    if (autoStartCountdown <= 0) {
+      setAutoStartCountdown(null);
+      void startTrip();
+      return;
+    }
+    const t = setTimeout(() => setAutoStartCountdown((c) => (c === null ? null : c - 1)), 1000);
+    return () => clearTimeout(t);
+    // startTrip is recreated each render; depending on it would reset the timer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStartCountdown]);
+
+  const cancelAutoStart = () => {
+    autoStartCancelledRef.current = true;
+    setAutoStartCountdown(null);
+  };
+
   if (loading)
     return (
       <View style={s.center}>
@@ -208,6 +247,17 @@ export default function TripReservations() {
             })}
           </Text>
         </View>
+
+        {autoStartCountdown !== null && (
+          <View style={s.autoStartBanner}>
+            <Text style={s.autoStartText}>
+              Udhëtimi fillon automatikisht në {autoStartCountdown}s…
+            </Text>
+            <TouchableOpacity onPress={cancelAutoStart} style={s.autoStartCancel} hitSlop={8}>
+              <Text style={s.autoStartCancelText}>Anulo</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {(canStart || isInProgress) && (
           <View style={s.tripActionWrap}>
@@ -496,6 +546,30 @@ const makeStyles = ({ colors, typography }: Theme) =>
   ratingBtnText: { fontSize: 14, fontWeight: '700' },
   pickupBlock: { marginTop: 10, gap: 4 },
   pickupLine: { ...typography.caption, color: colors.textDim, fontSize: 12 },
+
+  autoStartBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '15',
+  },
+  autoStartText: { ...typography.body, color: colors.text, fontWeight: '700', flex: 1, fontSize: 14 },
+  autoStartCancel: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  autoStartCancelText: { color: colors.danger, fontSize: 13, fontWeight: '700' },
 
   tripActionWrap: { marginHorizontal: 16, marginTop: 20 },
   livePill: {

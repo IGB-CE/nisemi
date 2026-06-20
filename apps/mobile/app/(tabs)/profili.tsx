@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Switch } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
@@ -20,6 +20,7 @@ import CarPhotoUploader from '../../components/CarPhotoUploader';
 import LicenseUploader from '../../components/LicenseUploader';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import AvatarUploader from '../../components/AvatarUploader';
+import { getAutoStartDefault, setAutoStartDefault } from '../../lib/autoStart';
 
 const MONTHS = ['J', 'F', 'M', 'A', 'M', 'Q', 'K', 'G', 'S', 'T', 'N', 'D'];
 
@@ -37,6 +38,16 @@ export default function Profili() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [autoStartDefault, setAutoStartDefaultState] = useState(false);
+
+  useEffect(() => {
+    getAutoStartDefault().then(setAutoStartDefaultState);
+  }, []);
+
+  const toggleAutoStartDefault = (value: boolean) => {
+    setAutoStartDefaultState(value);
+    void setAutoStartDefault(value);
+  };
   const [editForm, setEditForm] = useState<{
     firstName: string;
     lastName: string;
@@ -368,6 +379,25 @@ export default function Profili() {
           </View>
         </Card>
 
+        {isDriver && (
+          <Card style={s.section}>
+            <View style={s.toggleRow}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text style={s.cardLabel}>Fillim automatik</Text>
+                <Text style={s.toggleHint}>
+                  Vlera e parazgjedhur për udhëtimet e reja. Mund ta ndryshoni për çdo udhëtim kur e publikoni.
+                </Text>
+              </View>
+              <Switch
+                value={autoStartDefault}
+                onValueChange={toggleAutoStartDefault}
+                trackColor={{ true: colors.primary, false: colors.border }}
+                thumbColor="#fff"
+              />
+            </View>
+          </Card>
+        )}
+
         <Card style={s.section}>
           <Text style={s.cardLabel}>Njoftimet</Text>
           <TouchableOpacity style={s.legalRow} onPress={() => router.push('/njoftimet' as any)}>
@@ -454,6 +484,8 @@ const makeStyles = ({ colors, typography }: Theme) =>
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   email: { ...typography.caption, color: colors.textDim },
   cardLabel: { ...typography.label },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  toggleHint: { ...typography.caption, color: colors.textDim, marginTop: 6 },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 8 },
 
   fieldLabel: { ...typography.label, marginBottom: 6 },

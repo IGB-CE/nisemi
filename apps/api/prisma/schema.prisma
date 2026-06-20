@@ -185,6 +185,7 @@ model Trip {
   tripType          TripType?
   maxDetourM        Int               @default(500)
   genderRestriction GenderRestriction @default(ANY)
+  autoStart         Boolean           @default(false)
 
   departureAt    DateTime
   pricePerSeat   Decimal

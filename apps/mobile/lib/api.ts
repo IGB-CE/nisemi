@@ -20,13 +20,33 @@ async function request<T>(path: string, options: RequestInit & { token?: string 
     ...init,
     headers: { ...headers, ...((init.headers as Record<string, string>) ?? {}) },
   });
-  const data = await res.json();
+
+  // The server normally replies with JSON, but error pages (404/500/502 from
+  // the host or a proxy) come back as HTML. Parse defensively so those surface
+  // as a readable error instead of a raw "JSON Parse error: <" crash.
+  const raw = await res.text();
+  let data: any = null;
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = null;
+    }
+  }
+
   if (!res.ok) {
     // A 401 on a request we authenticated means the stored token expired or is
     // no longer valid — drop the session so the user can sign back in.
     if (res.status === 401 && token) onUnauthorized?.();
-    throw new Error(data.error ?? 'Gabim i serverit');
+    const message = typeof data?.error === 'string' ? data.error : null;
+    throw new Error(
+      message ??
+        (res.status >= 500
+          ? 'Serveri ndeshi një gabim. Provoni më vonë.'
+          : 'Gabim i serverit. Provoni përsëri.'),
+    );
   }
+
   return data as T;
 }
 

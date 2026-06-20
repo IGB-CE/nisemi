@@ -18,6 +18,7 @@ export const BUSINESS = {
   domain: 'nisemi.al',
   privacyUrl: '/privacy',
   termsUrl: '/terms',
+  dataDeletionUrl: '/data-deletion',
 };
 
 export const FORMATTED_ADDRESS = `${BUSINESS.address.street}, ${BUSINESS.address.postalCode} ${BUSINESS.address.city}, ${BUSINESS.address.country}`;

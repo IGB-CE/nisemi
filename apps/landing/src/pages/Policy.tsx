@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { marked } from 'marked';
 
 interface Props {
-  slug: 'privacy' | 'terms';
+  slug: 'privacy' | 'terms' | 'data-deletion';
 }
 
 const TITLES: Record<Props['slug'], string> = {
   privacy: 'Politika e Privatësisë',
   terms: 'Kushtet e Përdorimit',
+  'data-deletion': 'Fshirja e të dhënave',
 };
 
 export default function Policy({ slug }: Props) {

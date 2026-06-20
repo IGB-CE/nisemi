@@ -22,6 +22,7 @@ export default function App() {
           <Route path="/kontakt" element={<Contact />} />
           <Route path="/privacy" element={<Policy slug="privacy" />} />
           <Route path="/terms" element={<Policy slug="terms" />} />
+          <Route path="/data-deletion" element={<Policy slug="data-deletion" />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

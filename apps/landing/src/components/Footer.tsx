@@ -43,6 +43,9 @@ export default function Footer() {
             <li>
               <Link to={BUSINESS.termsUrl}>Kushtet e Përdorimit</Link>
             </li>
+            <li>
+              <Link to={BUSINESS.dataDeletionUrl}>Fshirja e të dhënave</Link>
+            </li>
           </ul>
         </div>
 

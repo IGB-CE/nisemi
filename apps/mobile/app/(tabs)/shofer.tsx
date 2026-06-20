@@ -96,6 +96,45 @@ export default function Shofer() {
     [dialog, token, load],
   );
 
+  const hideFromHistory = useCallback(
+    async (tripId: string) => {
+      const ok = await dialog.confirm(
+        'Fshi nga historiku?',
+        'Udhëtimi do të hiqet nga historiku juaj. Pasagjerët nuk preken.',
+        'Fshi',
+        true,
+      );
+      if (!ok) return;
+      try {
+        await api.post('/api/v1/trips/hide', { tripIds: [tripId] }, token ?? undefined);
+        setTrips((prev) => prev.filter((t) => t.id !== tripId));
+      } catch (e: any) {
+        await dialog.alert('Gabim', e.message);
+      }
+    },
+    [dialog, token],
+  );
+
+  const clearHistory = useCallback(
+    async (ids: string[]) => {
+      if (ids.length === 0) return;
+      const ok = await dialog.confirm(
+        'Pastro historikun?',
+        `${ids.length} udhëtime do të hiqen nga historiku juaj.`,
+        'Pastro',
+        true,
+      );
+      if (!ok) return;
+      try {
+        await api.post('/api/v1/trips/hide', { tripIds: ids }, token ?? undefined);
+        setTrips((prev) => prev.filter((t) => !ids.includes(t.id)));
+      } catch (e: any) {
+        await dialog.alert('Gabim', e.message);
+      }
+    },
+    [dialog, token],
+  );
+
   if (loading)
     return (
       <View style={s.center}>
@@ -237,6 +276,19 @@ export default function Shofer() {
             )}
           </View>
         )}
+        {past && (
+          <View style={s.tripActions}>
+            <TouchableOpacity
+              style={[s.tripActionBtn, s.tripActionDanger]}
+              onPress={(e) => {
+                e.stopPropagation?.();
+                hideFromHistory(trip.id);
+              }}
+            >
+              <Text style={[s.tripActionText, s.tripActionDangerText]}>Fshi nga historiku</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
@@ -296,7 +348,18 @@ export default function Shofer() {
               </Text>
               <Text style={s.historyToggleIcon}>{showHistory ? '▲' : '▼'}</Text>
             </TouchableOpacity>
-            {showHistory && history.map((trip) => renderTrip(trip, true))}
+            {showHistory && (
+              <>
+                <TouchableOpacity
+                  style={s.clearHistoryBtn}
+                  onPress={() => clearHistory(history.map((t) => t.id))}
+                  activeOpacity={0.7}
+                >
+                  <Text style={s.clearHistoryText}>Pastro historikun</Text>
+                </TouchableOpacity>
+                {history.map((trip) => renderTrip(trip, true))}
+              </>
+            )}
           </>
         )}
       </ScrollView>
@@ -432,6 +495,19 @@ const makeStyles = ({ colors, typography }: Theme) =>
   },
   historyToggleText: { ...typography.label, color: colors.textDim },
   historyToggleIcon: { color: colors.textDim, fontSize: 11 },
+
+  clearHistoryBtn: {
+    alignSelf: 'flex-end',
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  clearHistoryText: { color: colors.danger, fontSize: 12, fontWeight: '700' },
 
   boostPill: {
     alignSelf: 'flex-start',

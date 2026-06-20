@@ -87,6 +87,39 @@ export default function Rezervimet() {
     }
   };
 
+  const hideFromHistory = async (tripId: string) => {
+    const ok = await dialog.confirm(
+      'Fshi nga historiku?',
+      'Rezervimi do të hiqet nga historiku juaj. Shoferi nuk preket.',
+      'Fshi',
+      true,
+    );
+    if (!ok) return;
+    try {
+      await api.post('/api/v1/trips/hide', { tripIds: [tripId] }, token ?? undefined);
+      setReservations((prev) => prev.filter((r) => r.trip.id !== tripId));
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    }
+  };
+
+  const clearHistory = async (tripIds: string[]) => {
+    if (tripIds.length === 0) return;
+    const ok = await dialog.confirm(
+      'Pastro historikun?',
+      `${tripIds.length} udhëtime do të hiqen nga historiku juaj.`,
+      'Pastro',
+      true,
+    );
+    if (!ok) return;
+    try {
+      await api.post('/api/v1/trips/hide', { tripIds }, token ?? undefined);
+      setReservations((prev) => prev.filter((r) => !tripIds.includes(r.trip.id)));
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    }
+  };
+
   const openRating = (r: any) => {
     setStars(5);
     setComment('');
@@ -143,7 +176,7 @@ export default function Rezervimet() {
   const current = reservations.filter(isCurrent);
   const history = reservations.filter((r) => !isCurrent(r));
 
-  const renderReservation = (r: any) => {
+  const renderReservation = (r: any, inHistory = false) => {
     const st = statusMap[r.status] ?? { label: r.status, color: colors.subtle };
     const isPast = new Date(r.trip.departureAt) < new Date();
     const canRate = r.status === 'ACCEPTED' && isPast && r.trip.reviews?.length === 0;
@@ -185,7 +218,7 @@ export default function Rezervimet() {
             </Text>
           </View>
         </TouchableOpacity>
-        {(canRate || hasReview || (['PENDING', 'ACCEPTED'].includes(r.status) && !isPast)) && (
+        {(canRate || hasReview || inHistory || (['PENDING', 'ACCEPTED'].includes(r.status) && !isPast)) && (
           <View style={s.actionRow}>
             {canRate && (
               <TouchableOpacity style={s.rateBtn} onPress={() => openRating(r)}>
@@ -196,6 +229,11 @@ export default function Rezervimet() {
             {['PENDING', 'ACCEPTED'].includes(r.status) && !isPast && (
               <TouchableOpacity style={s.cancelBtn} onPress={() => cancel(r.id)}>
                 <Text style={s.cancelText}>Anulo</Text>
+              </TouchableOpacity>
+            )}
+            {inHistory && (
+              <TouchableOpacity style={s.cancelBtn} onPress={() => hideFromHistory(r.trip.id)}>
+                <Text style={s.cancelText}>Fshi nga historiku</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -263,7 +301,18 @@ export default function Rezervimet() {
               </Text>
               <Text style={s.historyToggleIcon}>{showHistory ? '▲' : '▼'}</Text>
             </TouchableOpacity>
-            {showHistory && history.map((r) => renderReservation(r))}
+            {showHistory && (
+              <>
+                <TouchableOpacity
+                  style={s.clearHistoryBtn}
+                  onPress={() => clearHistory([...new Set(history.map((r) => r.trip.id as string))])}
+                  activeOpacity={0.7}
+                >
+                  <Text style={s.clearHistoryText}>Pastro historikun</Text>
+                </TouchableOpacity>
+                {history.map((r) => renderReservation(r, true))}
+              </>
+            )}
           </>
         )}
       </ScrollView>
@@ -362,6 +411,19 @@ const makeStyles = ({ colors, typography }: Theme) =>
   },
   historyToggleText: { ...typography.label, color: colors.textDim },
   historyToggleIcon: { color: colors.textDim, fontSize: 11 },
+
+  clearHistoryBtn: {
+    alignSelf: 'flex-end',
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  clearHistoryText: { color: colors.danger, fontSize: 12, fontWeight: '700' },
 
   card: {
     marginHorizontal: 16,

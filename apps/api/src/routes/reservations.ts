@@ -156,7 +156,10 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 
 router.get('/my', requireAuth, async (req: AuthRequest, res) => {
   const reservations = await prisma.reservation.findMany({
-    where: { passengerId: req.userId },
+    where: {
+      passengerId: req.userId,
+      trip: { hiddenBy: { none: { userId: req.userId! } } },
+    },
     include: {
       trip: {
         include: {

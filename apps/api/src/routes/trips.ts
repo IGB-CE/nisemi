@@ -245,9 +245,59 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   res.status(201).json(trip);
 });
 
+const hideSchema = z.object({ tripIds: z.array(z.string()).min(1).max(500) });
+
+// Hide one or more past trips from the caller's own history. This is a
+// per-user soft hide (mirrors ConversationDeletion) — the trip, its reviews
+// and ratings stay intact for the other party.
+router.post('/hide', requireAuth, async (req: AuthRequest, res) => {
+  const parsed = hideSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const userId = req.userId!;
+  const trips = await prisma.trip.findMany({
+    where: {
+      id: { in: parsed.data.tripIds },
+      OR: [{ driverId: userId }, { reservations: { some: { passengerId: userId } } }],
+    },
+    select: {
+      id: true,
+      status: true,
+      departureAt: true,
+      driverId: true,
+      reservations: { where: { passengerId: userId }, select: { status: true } },
+    },
+  });
+
+  // Only past/finished trips belong in history. A trip is still "active" for the
+  // driver while it's upcoming or in progress; for a passenger it's only active
+  // while they hold a live (pending/accepted) booking — a rejected or cancelled
+  // booking on an upcoming trip is already history from their side.
+  const now = Date.now();
+  const tripIsLive = (t: { status: string; departureAt: Date }) =>
+    t.status === 'IN_PROGRESS' || (t.status === 'SCHEDULED' && t.departureAt.getTime() > now);
+  const hideable = trips.filter((t) => {
+    if (!tripIsLive(t)) return true;
+    if (t.driverId === userId) return false;
+    return !t.reservations.some((r) => r.status === 'PENDING' || r.status === 'ACCEPTED');
+  });
+  if (hideable.length === 0) {
+    res.status(400).json({ error: 'Nuk ka udhëtime për të fshirë nga historiku' });
+    return;
+  }
+
+  await prisma.tripHistoryHidden.createMany({
+    data: hideable.map((t) => ({ userId, tripId: t.id })),
+    skipDuplicates: true,
+  });
+  res.json({ hidden: hideable.length });
+});
+
 router.get('/my', requireAuth, async (req: AuthRequest, res) => {
   const trips = await prisma.trip.findMany({
-    where: { driverId: req.userId },
+    where: { driverId: req.userId, hiddenBy: { none: { userId: req.userId } } },
     include: {
       originCity: true,
       destCity: true,

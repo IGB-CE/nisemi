@@ -19,13 +19,13 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const { reportedId, reason } = parsed.data;
 
   if (reportedId === req.userId) {
-    res.status(400).json({ error: 'Cannot report yourself' });
+    res.status(400).json({ error: 'Nuk mund të raportoni veten' });
     return;
   }
 
   const reported = await prisma.user.findUnique({ where: { id: reportedId } });
   if (!reported) {
-    res.status(404).json({ error: 'User not found' });
+    res.status(404).json({ error: 'Përdoruesi nuk u gjet' });
     return;
   }
 

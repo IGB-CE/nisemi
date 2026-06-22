@@ -55,7 +55,7 @@ router.post('/register', async (req, res) => {
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    res.status(409).json({ error: 'Email already in use' });
+    res.status(409).json({ error: 'Ky email është tashmë në përdorim' });
     return;
   }
 
@@ -73,7 +73,10 @@ router.post('/register', async (req, res) => {
       const target = err.meta?.target;
       const field = Array.isArray(target) ? target[0] : target;
       res.status(409).json({
-        error: field === 'phone' ? 'Phone number already in use' : 'Email already in use',
+        error:
+          field === 'phone'
+            ? 'Ky numër telefoni është tashmë në përdorim'
+            : 'Ky email është tashmë në përdorim',
       });
       return;
     }
@@ -94,11 +97,11 @@ router.post('/login', async (req, res) => {
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
-    res.status(401).json({ error: 'Invalid credentials' });
+    res.status(401).json({ error: 'Kredencialet nuk janë të sakta' });
     return;
   }
   if (user.status === 'BLOCKED') {
-    res.status(403).json({ error: 'Account blocked' });
+    res.status(403).json({ error: 'Llogaria juaj është bllokuar' });
     return;
   }
 
@@ -125,7 +128,7 @@ router.post('/google', async (req, res) => {
     return;
   }
   if (GOOGLE_AUDIENCES.length === 0) {
-    res.status(500).json({ error: 'Google sign-in not configured on server' });
+    res.status(500).json({ error: 'Identifikimi me Google nuk është konfiguruar në server' });
     return;
   }
 
@@ -137,11 +140,11 @@ router.post('/google', async (req, res) => {
     });
     payload = ticket.getPayload();
   } catch {
-    res.status(401).json({ error: 'Invalid Google token' });
+    res.status(401).json({ error: 'Token-i i Google nuk është i vlefshëm' });
     return;
   }
   if (!payload || !payload.sub || !payload.email) {
-    res.status(401).json({ error: 'Invalid Google token' });
+    res.status(401).json({ error: 'Token-i i Google nuk është i vlefshëm' });
     return;
   }
 
@@ -166,7 +169,7 @@ router.post('/google', async (req, res) => {
         },
       });
     } else if (byEmail && !emailVerified) {
-      res.status(409).json({ error: 'Email already in use' });
+      res.status(409).json({ error: 'Ky email është tashmë në përdorim' });
       return;
     } else {
       user = await prisma.user.create({
@@ -182,7 +185,7 @@ router.post('/google', async (req, res) => {
   }
 
   if (user.status === 'BLOCKED') {
-    res.status(403).json({ error: 'Account blocked' });
+    res.status(403).json({ error: 'Llogaria juaj është bllokuar' });
     return;
   }
 

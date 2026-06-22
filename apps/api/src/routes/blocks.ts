@@ -12,7 +12,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
   if (parsed.data.blockedId === req.userId) {
-    res.status(400).json({ error: 'Cannot block yourself' });
+    res.status(400).json({ error: 'Nuk mund të bllokoni veten' });
     return;
   }
   const block = await prisma.block.upsert({

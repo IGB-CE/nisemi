@@ -34,15 +34,15 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip || trip.status !== 'SCHEDULED') {
-    res.status(404).json({ error: 'Trip not available' });
+    res.status(404).json({ error: 'Udhëtimi nuk është i disponueshëm' });
     return;
   }
   if (trip.driverId === req.userId) {
-    res.status(400).json({ error: 'Cannot book your own trip' });
+    res.status(400).json({ error: 'Nuk mund të rezervoni udhëtimin tuaj' });
     return;
   }
   if (trip.seatsAvailable < seats) {
-    res.status(400).json({ error: 'Not enough seats available' });
+    res.status(400).json({ error: 'Nuk ka vende të mjaftueshme' });
     return;
   }
 
@@ -67,7 +67,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const hasPickup = pickupLat !== undefined && pickupLng !== undefined;
   const hasDropoff = dropoffLat !== undefined && dropoffLng !== undefined;
   if (hasPickup !== hasDropoff) {
-    res.status(400).json({ error: 'Pickup and dropoff must be provided together' });
+    res.status(400).json({ error: 'Vendi i marrjes dhe i zbritjes duhen dhënë bashkë' });
     return;
   }
   if (hasPickup && trip.routePolyline) {
@@ -92,7 +92,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     where: { tripId, passengerId: req.userId, status: { in: ['PENDING', 'ACCEPTED'] } },
   });
   if (existing) {
-    res.status(409).json({ error: 'Already have an active reservation for this trip' });
+    res.status(409).json({ error: 'Keni tashmë një rezervim aktiv për këtë udhëtim' });
     return;
   }
 
@@ -189,15 +189,15 @@ router.patch('/:id/accept', requireAuth, async (req: AuthRequest, res) => {
     include: { trip: { include: { originCity: true, destCity: true } } },
   });
   if (!reservation) {
-    res.status(404).json({ error: 'Reservation not found' });
+    res.status(404).json({ error: 'Rezervimi nuk u gjet' });
     return;
   }
   if (reservation.trip.driverId !== req.userId) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (reservation.status !== 'PENDING') {
-    res.status(400).json({ error: 'Reservation is not pending' });
+    res.status(400).json({ error: 'Rezervimi nuk është në pritje' });
     return;
   }
 
@@ -229,15 +229,15 @@ router.patch('/:id/reject', requireAuth, async (req: AuthRequest, res) => {
     include: { trip: { include: { originCity: true, destCity: true } } },
   });
   if (!reservation) {
-    res.status(404).json({ error: 'Reservation not found' });
+    res.status(404).json({ error: 'Rezervimi nuk u gjet' });
     return;
   }
   if (reservation.trip.driverId !== req.userId) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (reservation.status !== 'PENDING') {
-    res.status(400).json({ error: 'Reservation is not pending' });
+    res.status(400).json({ error: 'Rezervimi nuk është në pritje' });
     return;
   }
 
@@ -266,15 +266,15 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
     },
   });
   if (!reservation) {
-    res.status(404).json({ error: 'Reservation not found' });
+    res.status(404).json({ error: 'Rezervimi nuk u gjet' });
     return;
   }
   if (reservation.passengerId !== req.userId && !isAdmin(req.userRole)) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (!['PENDING', 'ACCEPTED'].includes(reservation.status)) {
-    res.status(400).json({ error: 'Cannot cancel this reservation' });
+    res.status(400).json({ error: 'Ky rezervim nuk mund të anulohet' });
     return;
   }
   if (!isAdmin(req.userRole) && isWithinCancelWindow(reservation.trip.departureAt)) {
@@ -315,11 +315,11 @@ router.patch('/:id/remove', requireAuth, async (req: AuthRequest, res) => {
     include: { trip: { include: { originCity: true, destCity: true } } },
   });
   if (!reservation) {
-    res.status(404).json({ error: 'Reservation not found' });
+    res.status(404).json({ error: 'Rezervimi nuk u gjet' });
     return;
   }
   if (reservation.trip.driverId !== req.userId && !isAdmin(req.userRole)) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (reservation.status !== 'ACCEPTED') {

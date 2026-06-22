@@ -23,11 +23,11 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
   if (trip.driverId !== req.userId) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (trip.status !== 'COMPLETED') {

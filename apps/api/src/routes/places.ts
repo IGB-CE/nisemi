@@ -32,7 +32,7 @@ router.get('/autocomplete', requireAuth, async (req, res) => {
   }
   const key = KEY();
   if (!key) {
-    res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not configured' });
+    res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY nuk është konfiguruar' });
     return;
   }
   const body: Record<string, unknown> = {
@@ -92,7 +92,7 @@ router.get('/details', requireAuth, async (req, res) => {
   }
   const key = KEY();
   if (!key) {
-    res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not configured' });
+    res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY nuk është konfiguruar' });
     return;
   }
   const fieldMask = 'location,formattedAddress,displayName,addressComponents';
@@ -155,7 +155,7 @@ router.post('/directions', requireAuth, async (req, res) => {
   }
   const key = KEY();
   if (!key) {
-    res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not configured' });
+    res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY nuk është konfiguruar' });
     return;
   }
   const params = new URLSearchParams({

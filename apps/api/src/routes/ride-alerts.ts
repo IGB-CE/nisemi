@@ -69,7 +69,7 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   }
   const alert = await prisma.rideAlert.findUnique({ where: { id: req.params.id } });
   if (!alert || alert.passengerId !== req.userId) {
-    res.status(404).json({ error: 'Alert not found' });
+    res.status(404).json({ error: 'Njoftimi nuk u gjet' });
     return;
   }
   const updated = await prisma.rideAlert.update({
@@ -82,7 +82,7 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
 router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
   const alert = await prisma.rideAlert.findUnique({ where: { id: req.params.id } });
   if (!alert || alert.passengerId !== req.userId) {
-    res.status(404).json({ error: 'Alert not found' });
+    res.status(404).json({ error: 'Njoftimi nuk u gjet' });
     return;
   }
   await prisma.rideAlert.delete({ where: { id: req.params.id } });

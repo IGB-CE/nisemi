@@ -21,13 +21,13 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const { tripId, targetId, rating, comment } = parsed.data;
 
   if (targetId === req.userId) {
-    res.status(400).json({ error: 'Cannot review yourself' });
+    res.status(400).json({ error: 'Nuk mund të vlerësoni veten' });
     return;
   }
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
 
@@ -47,7 +47,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 
     res.status(201).json(review);
   } catch {
-    res.status(409).json({ error: 'Already reviewed this trip' });
+    res.status(409).json({ error: 'E keni vlerësuar tashmë këtë udhëtim' });
   }
 });
 

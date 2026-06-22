@@ -50,7 +50,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const { tripId, receiverId, content } = parsed.data;
 
   if (receiverId === req.userId) {
-    res.status(400).json({ error: 'Cannot message yourself' });
+    res.status(400).json({ error: 'Nuk mund të dërgoni mesazh te vetja' });
     return;
   }
 
@@ -65,14 +65,14 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     },
   });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
 
   const isDriver = trip.driverId === req.userId;
   const otherIsDriver = trip.driverId === receiverId;
   if (!isDriver && !otherIsDriver) {
-    res.status(403).json({ error: 'Conversation must involve the driver' });
+    res.status(403).json({ error: 'Biseda duhet të përfshijë shoferin' });
     return;
   }
 

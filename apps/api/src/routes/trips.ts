@@ -147,11 +147,11 @@ router.get('/', async (req: AuthRequest, res) => {
 router.post('/:id/boost', requireAuth, async (req: AuthRequest, res) => {
   const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
   if (trip.driverId !== req.userId) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (trip.status !== 'SCHEDULED') {
@@ -176,18 +176,18 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 
   const driverProfile = await prisma.driverProfile.findUnique({ where: { userId: req.userId } });
   if (!driverProfile) {
-    res.status(403).json({ error: 'Must have a driver profile to publish trips' });
+    res.status(403).json({ error: 'Duhet të keni një profil shoferi për të publikuar udhëtime' });
     return;
   }
 
   const data = parsed.data;
 
   if (!data.originCityId && (data.originLat === undefined || data.originLng === undefined)) {
-    res.status(400).json({ error: 'Origin city or coordinates required' });
+    res.status(400).json({ error: 'Kërkohet qyteti i nisjes ose koordinatat' });
     return;
   }
   if (!data.destCityId && (data.destLat === undefined || data.destLng === undefined)) {
-    res.status(400).json({ error: 'Destination city or coordinates required' });
+    res.status(400).json({ error: 'Kërkohet qyteti i destinacionit ose koordinatat' });
     return;
   }
 
@@ -208,7 +208,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
       1000,
     );
     if (!valid) {
-      res.status(400).json({ error: 'Route polyline endpoints do not match origin/destination' });
+      res.status(400).json({ error: 'Pikat e itinerarit nuk përputhen me nisjen/destinacionin' });
       return;
     }
   }
@@ -357,7 +357,7 @@ router.get('/:id', async (req, res) => {
     },
   });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
 
@@ -381,11 +381,11 @@ router.get('/:id', async (req, res) => {
 router.post('/:id/start', requireAuth, async (req: AuthRequest, res) => {
   const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
   if (trip.driverId !== req.userId) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (trip.status !== 'SCHEDULED') {
@@ -417,11 +417,11 @@ router.post('/:id/start', requireAuth, async (req: AuthRequest, res) => {
 router.post('/:id/end', requireAuth, async (req: AuthRequest, res) => {
   const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
   if (trip.driverId !== req.userId) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (trip.status !== 'IN_PROGRESS') {
@@ -454,7 +454,7 @@ router.post('/:id/end', requireAuth, async (req: AuthRequest, res) => {
 router.get('/:id/locations', requireAuth, async (req: AuthRequest, res) => {
   const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
   const isDriver = trip.driverId === req.userId;
@@ -466,7 +466,7 @@ router.get('/:id/locations', requireAuth, async (req: AuthRequest, res) => {
     isAcceptedPassenger = Boolean(reservation);
   }
   if (!isDriver && !isAcceptedPassenger && req.userRole !== 'ADMIN') {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   const locations = await prisma.tripLocation.findMany({
@@ -490,11 +490,11 @@ router.patch('/:id/cancel', requireAuth, async (req: AuthRequest, res) => {
     include: { originCity: true, destCity: true },
   });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
   if (trip.driverId !== req.userId && !isAdmin(req.userRole)) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
 
@@ -545,11 +545,11 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
 
   const existing = await prisma.trip.findUnique({ where: { id: req.params.id } });
   if (!existing) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
   if (existing.driverId !== req.userId && !isAdmin(req.userRole)) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   if (existing.status !== 'SCHEDULED') {
@@ -563,11 +563,11 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   }
 
   if (!data.originCityId && (data.originLat === undefined || data.originLng === undefined)) {
-    res.status(400).json({ error: 'Origin city or coordinates required' });
+    res.status(400).json({ error: 'Kërkohet qyteti i nisjes ose koordinatat' });
     return;
   }
   if (!data.destCityId && (data.destLat === undefined || data.destLng === undefined)) {
-    res.status(400).json({ error: 'Destination city or coordinates required' });
+    res.status(400).json({ error: 'Kërkohet qyteti i destinacionit ose koordinatat' });
     return;
   }
   if (
@@ -584,7 +584,7 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
       1000,
     );
     if (!valid) {
-      res.status(400).json({ error: 'Route polyline endpoints do not match origin/destination' });
+      res.status(400).json({ error: 'Pikat e itinerarit nuk përputhen me nisjen/destinacionin' });
       return;
     }
   }
@@ -619,11 +619,11 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
 router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
   const trip = await prisma.trip.findUnique({ where: { id: req.params.id } });
   if (!trip) {
-    res.status(404).json({ error: 'Trip not found' });
+    res.status(404).json({ error: 'Udhëtimi nuk u gjet' });
     return;
   }
   if (trip.driverId !== req.userId && !isAdmin(req.userRole)) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Nuk keni leje' });
     return;
   }
   // Only allow a hard delete when nothing references the trip; otherwise the

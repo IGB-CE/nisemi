@@ -26,7 +26,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 
   const existing = await prisma.driverProfile.findUnique({ where: { userId: req.userId } });
   if (existing) {
-    res.status(409).json({ error: 'Driver profile already exists' });
+    res.status(409).json({ error: 'Profili i shoferit ekziston tashmë' });
     return;
   }
 
@@ -40,7 +40,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
 router.get('/me', requireAuth, async (req: AuthRequest, res) => {
   const profile = await prisma.driverProfile.findUnique({ where: { userId: req.userId } });
   if (!profile) {
-    res.status(404).json({ error: 'Driver profile not found' });
+    res.status(404).json({ error: 'Profili i shoferit nuk u gjet' });
     return;
   }
   res.json(profile);
@@ -65,7 +65,7 @@ router.post('/me/car-photo', requireAuth, async (req: AuthRequest, res) => {
 
   const profile = await prisma.driverProfile.findUnique({ where: { userId: req.userId } });
   if (!profile) {
-    res.status(404).json({ error: 'Driver profile not found' });
+    res.status(404).json({ error: 'Profili i shoferit nuk u gjet' });
     return;
   }
 
@@ -87,7 +87,7 @@ router.post('/me/car-photo', requireAuth, async (req: AuthRequest, res) => {
     upsert: true,
   });
   if (error) {
-    res.status(500).json({ error: `Upload failed: ${error.message}` });
+    res.status(500).json({ error: `Ngarkimi dështoi: ${error.message}` });
     return;
   }
 
@@ -108,7 +108,7 @@ router.post('/me/license', requireAuth, async (req: AuthRequest, res) => {
 
   const profile = await prisma.driverProfile.findUnique({ where: { userId: req.userId } });
   if (!profile) {
-    res.status(404).json({ error: 'Driver profile not found' });
+    res.status(404).json({ error: 'Profili i shoferit nuk u gjet' });
     return;
   }
 
@@ -129,7 +129,7 @@ router.post('/me/license', requireAuth, async (req: AuthRequest, res) => {
     upsert: true,
   });
   if (error) {
-    res.status(500).json({ error: `Upload failed: ${error.message}` });
+    res.status(500).json({ error: `Ngarkimi dështoi: ${error.message}` });
     return;
   }
 
@@ -148,7 +148,7 @@ router.get('/:userId', async (req, res) => {
     include: { user: { select: { firstName: true, lastName: true, avatarUrl: true, createdAt: true } } },
   });
   if (!profile) {
-    res.status(404).json({ error: 'Driver profile not found' });
+    res.status(404).json({ error: 'Profili i shoferit nuk u gjet' });
     return;
   }
   // Never expose the private license path publicly.

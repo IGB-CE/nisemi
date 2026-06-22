@@ -46,7 +46,7 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
     },
   });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
+    res.status(404).json({ error: 'Përdoruesi nuk u gjet' });
     return;
   }
   res.json(user);
@@ -79,7 +79,7 @@ router.patch('/me', requireAuth, async (req: AuthRequest, res) => {
     // A duplicate phone trips the unique constraint; report it as a clean 409
     // instead of letting it bubble up as an unhandled 500.
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-      res.status(409).json({ error: 'Phone number already in use' });
+      res.status(409).json({ error: 'Ky numër telefoni është tashmë në përdorim' });
       return;
     }
     throw err;
@@ -94,16 +94,16 @@ router.post('/me/password', requireAuth, async (req: AuthRequest, res) => {
   }
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
+    res.status(404).json({ error: 'Përdoruesi nuk u gjet' });
     return;
   }
   if (!user.passwordHash) {
-    res.status(400).json({ error: 'Account uses social sign-in — no password to change' });
+    res.status(400).json({ error: 'Llogaria përdor identifikim social — nuk ka fjalëkalim për të ndryshuar' });
     return;
   }
   const match = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
   if (!match) {
-    res.status(401).json({ error: 'Current password is incorrect' });
+    res.status(401).json({ error: 'Fjalëkalimi aktual nuk është i saktë' });
     return;
   }
   const newHash = await bcrypt.hash(parsed.data.newPassword, 12);
@@ -137,7 +137,7 @@ router.post('/me/avatar', requireAuth, async (req: AuthRequest, res) => {
     upsert: true,
   });
   if (error) {
-    res.status(500).json({ error: `Upload failed: ${error.message}` });
+    res.status(500).json({ error: `Ngarkimi dështoi: ${error.message}` });
     return;
   }
 
@@ -166,7 +166,7 @@ router.delete('/me', requireAuth, async (req: AuthRequest, res) => {
     },
   });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
+    res.status(404).json({ error: 'Përdoruesi nuk u gjet' });
     return;
   }
 
@@ -281,7 +281,7 @@ router.get('/:id', async (req, res) => {
     },
   });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
+    res.status(404).json({ error: 'Përdoruesi nuk u gjet' });
     return;
   }
   res.json(user);

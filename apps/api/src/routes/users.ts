@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { supabase, CAR_PHOTOS_BUCKET, DRIVER_DOCS_BUCKET } from '../lib/supabase.js';
@@ -57,22 +58,32 @@ router.patch('/me', requireAuth, async (req: AuthRequest, res) => {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const user = await prisma.user.update({
-    where: { id: req.userId },
-    data: parsed.data,
-    select: {
-      id: true,
-      email: true,
-      firstName: true,
-      lastName: true,
-      phone: true,
-      avatarUrl: true,
-      role: true,
-      status: true,
-      gender: true,
-    },
-  });
-  res.json(user);
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data: parsed.data,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        avatarUrl: true,
+        role: true,
+        status: true,
+        gender: true,
+      },
+    });
+    res.json(user);
+  } catch (err) {
+    // A duplicate phone trips the unique constraint; report it as a clean 409
+    // instead of letting it bubble up as an unhandled 500.
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      res.status(409).json({ error: 'Phone number already in use' });
+      return;
+    }
+    throw err;
+  }
 });
 
 router.post('/me/password', requireAuth, async (req: AuthRequest, res) => {

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/jwt.js';
 import { albanianMobileSchema } from '../lib/phone.js';
@@ -59,10 +60,25 @@ router.post('/register', async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const user = await prisma.user.create({
-    data: { email, passwordHash, firstName, lastName, phone },
-    select: userPublicFields,
-  });
+  let user;
+  try {
+    user = await prisma.user.create({
+      data: { email, passwordHash, firstName, lastName, phone },
+      select: userPublicFields,
+    });
+  } catch (err) {
+    // The email is pre-checked above, but phone is unique too — and either could
+    // still collide on a race. Map the constraint to a clean 409 instead of a 500.
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      const target = err.meta?.target;
+      const field = Array.isArray(target) ? target[0] : target;
+      res.status(409).json({
+        error: field === 'phone' ? 'Phone number already in use' : 'Email already in use',
+      });
+      return;
+    }
+    throw err;
+  }
 
   const token = signToken({ sub: user.id, role: user.role });
   res.status(201).json({ token, user });

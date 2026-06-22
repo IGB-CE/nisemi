@@ -19,6 +19,7 @@ module.exports = {
     },
     plugins: [
       ...(base.expo.plugins ?? []),
+      './plugins/withGoogleModularHeaders',
       '@react-native-community/datetimepicker',
       [
         'react-native-google-mobile-ads',

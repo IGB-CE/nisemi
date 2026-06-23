@@ -116,6 +116,8 @@ router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
           id: true,
           originCity: { select: { name: true } },
           destCity: { select: { name: true } },
+          originLabel: true,
+          destLabel: true,
           departureAt: true,
         },
       },

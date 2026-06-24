@@ -27,13 +27,20 @@
     "production": {
       "autoIncrement": true,
       "channel": "production",
+      "environment": "production",
       "android": {
         "buildType": "app-bundle"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.nisemi.al",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "1039009843352-ojie1l3tf40ps31um8ptaijcrsfn5p6c.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1039009843352-6k7m327kvdq8i6h39kbt34d51uqjvls5.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1039009843352-6k7m327kvdq8i6h39kbt34d51uqjvls5.apps.googleusercontent.com",
+        "ADMOB_ANDROID_APP_ID": "ca-app-pub-9267008304835430~7198390788",
+        "ADMOB_IOS_APP_ID": "ca-app-pub-9267008304835430~5886711486",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID": "ca-app-pub-9267008304835430/4410399746",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS": "ca-app-pub-9267008304835430/2426812775",
+        "EXPO_PUBLIC_ADMOB_REWARDED_ANDROID": "ca-app-pub-9267008304835430/9219451839",
+        "EXPO_PUBLIC_ADMOB_REWARDED_IOS": "ca-app-pub-9267008304835430/4573629817"
       }
     }
   },

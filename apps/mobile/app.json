@@ -4,7 +4,10 @@
     "slug": "albania-rides",
     "scheme": "nisemi",
     "version": "1.0.0",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -21,7 +24,7 @@
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "al.nisemi.app",
       "splash": {
         "image": "./assets/splash-icon.png",
@@ -38,8 +41,12 @@
         "NSUserNotificationUsageDescription": "Nisemi dërgon njoftime për rezervimet tuaja.",
         "NSLocationWhenInUseUsageDescription": "Nisemi përdor vendndodhjen tuaj për të ndarë pozicionin tuaj me pasagjerët gjatë udhëtimit.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Nisemi vazhdon të ndajë vendndodhjen tuaj me pasagjerët edhe kur aplikacioni është në sfond gjatë udhëtimit.",
-        "UIBackgroundModes": ["location", "fetch"]
-      }
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      },
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -65,7 +72,8 @@
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION"
-      ]
+      ],
+      "versionCode": 2
     },
     "web": {
       "bundler": "metro",

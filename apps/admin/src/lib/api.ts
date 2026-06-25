@@ -5,6 +5,10 @@ async function request<T>(path: string, options: RequestInit & { token?: string 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, { ...init, headers });
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('admin:unauthorized'));
+    throw new Error('Sesioni ka skaduar');
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? 'Server error');
   return data as T;

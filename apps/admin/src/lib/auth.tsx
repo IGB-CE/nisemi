@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 interface User {
   id: string;
@@ -42,6 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
   };
+
+  // A 401 from any API call means the stored token is expired/invalid:
+  // clear it so the app falls back to the login screen instead of showing
+  // a broken, empty dashboard.
+  useEffect(() => {
+    window.addEventListener('admin:unauthorized', signOut);
+    return () => window.removeEventListener('admin:unauthorized', signOut);
+  }, []);
 
   return <AuthContext.Provider value={{ token, user, signIn, signOut }}>{children}</AuthContext.Provider>;
 }

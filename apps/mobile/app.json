@@ -25,6 +25,7 @@
     },
     "ios": {
       "supportsTablet": false,
+      "usesAppleSignIn": true,
       "bundleIdentifier": "al.nisemi.app",
       "splash": {
         "image": "./assets/splash-icon.png",
@@ -82,6 +83,14 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nisemi përdor fotot tuaja për të vendosur foton e profilit, foton e makinës ose dokumentet e shoferit (p.sh. patentën).",
+          "cameraPermission": "Nisemi përdor kamerën për të bërë foton e profilit, foton e makinës ose dokumentet e shoferit (p.sh. patentën)."
+        }
+      ],
       [
         "expo-notifications",
         {

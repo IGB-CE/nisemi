@@ -21,6 +21,7 @@ import { normalizeAlbanianMobile } from '../../lib/phone';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import PasswordInput from '../../components/ui/PasswordInput';
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
+import AppleSignInButton from '../../components/auth/AppleSignInButton';
 
 export default function Register() {
   const { signIn } = useAuth();
@@ -34,14 +35,19 @@ export default function Register() {
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleRegister = async () => {
-    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.phone) {
+    if (!form.firstName || !form.lastName || !form.email || !form.password) {
       await dialog.alert('Gabim', 'Plotëso fushat e detyrueshme');
       return;
     }
-    const normalizedPhone = normalizeAlbanianMobile(form.phone);
-    if (!normalizedPhone) {
-      await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567');
-      return;
+    // Phone is optional, but if provided it must be a valid Albanian mobile.
+    let normalizedPhone: string | undefined;
+    if (form.phone.trim()) {
+      const n = normalizeAlbanianMobile(form.phone);
+      if (!n) {
+        await dialog.alert('Gabim', 'Numri i telefonit nuk është i vlefshëm. Shembull: 069 123 4567');
+        return;
+      }
+      normalizedPhone = n;
     }
     setLoading(true);
     try {
@@ -82,7 +88,7 @@ export default function Register() {
               { key: 'firstName', label: 'Emri', required: true },
               { key: 'lastName', label: 'Mbiemri', required: true },
               { key: 'email', label: 'Email', required: true, keyboard: 'email-address' as const },
-              { key: 'phone', label: 'Telefoni', required: true, keyboard: 'phone-pad' as const },
+              { key: 'phone', label: 'Telefoni (opsional)', required: false, keyboard: 'phone-pad' as const },
               { key: 'password', label: 'Fjalëkalimi', required: true, secure: true },
             ].map(({ key, label, required, keyboard, secure }) => (
               <View key={key}>
@@ -120,6 +126,7 @@ export default function Register() {
               <View style={s.dividerLine} />
             </View>
 
+            <AppleSignInButton />
             <GoogleSignInButton />
 
             <Link href="/(auth)/login" asChild>

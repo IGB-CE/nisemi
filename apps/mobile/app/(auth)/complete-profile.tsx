@@ -29,8 +29,9 @@ export default function CompleteProfile() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!phone) {
-      await dialog.alert('Gabim', 'Plotëso numrin e telefonit');
+    // Phone is optional — let users skip straight to the app.
+    if (!phone.trim()) {
+      router.replace('/(tabs)');
       return;
     }
     const normalizedPhone = normalizeAlbanianMobile(phone);
@@ -69,11 +70,11 @@ export default function CompleteProfile() {
           <Text style={s.title}>Edhe një hap</Text>
           <Text style={s.subtitle}>
             {user?.firstName ? `Përshëndetje ${user.firstName}, ` : ''}
-            na duhet numri yt i telefonit për të vazhduar
+            shto numrin tënd të telefonit (opsional) ose vazhdo
           </Text>
 
           <View style={s.form}>
-            <Text style={s.fieldLabel}>Numri i telefonit</Text>
+            <Text style={s.fieldLabel}>Numri i telefonit (opsional)</Text>
             <TextInput
               style={s.input}
               value={phone}

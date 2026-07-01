@@ -20,6 +20,7 @@ import { useTheme, useThemedStyles, type Theme } from '../../lib/theme';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import PasswordInput from '../../components/ui/PasswordInput';
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
+import AppleSignInButton from '../../components/auth/AppleSignInButton';
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -96,6 +97,7 @@ export default function Login() {
               <View style={s.dividerLine} />
             </View>
 
+            <AppleSignInButton />
             <GoogleSignInButton />
 
             <Link href="/(auth)/register" asChild>

@@ -15,6 +15,7 @@ model User {
   lastName     String
   passwordHash String?
   googleId     String?    @unique
+  appleId      String?    @unique
   avatarUrl    String?
   role         Role       @default(PASSENGER)
   status       UserStatus @default(ACTIVE)

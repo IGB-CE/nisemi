@@ -1,51 +1,69 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
-interface Reservation {
+interface ReservationRow {
   id: string;
-  passenger: { firstName: string; lastName: string };
-  trip: {
-    originCity: { name: string } | null;
-    destCity: { name: string } | null;
-    originLabel: string | null;
-    destLabel: string | null;
-    departureAt: string;
-  };
-  seatsReserved: number;
+  seats: number;
   status: string;
   createdAt: string;
+  passenger: { id: string; firstName: string; lastName: string };
+}
+
+interface TripGroup {
+  id: string;
+  departureAt: string;
+  originCity: { name: string } | null;
+  destCity: { name: string } | null;
+  originLabel: string | null;
+  destLabel: string | null;
+  driver: { id: string; firstName: string; lastName: string } | null;
+  reservations: ReservationRow[];
 }
 
 const STATUS_CLASS: Record<string, string> = {
   PENDING: 'badge-warning',
+  ACCEPTED: 'badge-success',
   CONFIRMED: 'badge-success',
   REJECTED: 'badge-danger',
   CANCELLED: 'badge-neutral',
+  REMOVED: 'badge-neutral',
 };
 
 export default function Reservations() {
   const { token } = useAuth();
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [trips, setTrips] = useState<TripGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     setLoading(true);
     api
-      .get<Reservation[]>('/api/v1/admin/reservations', token ?? undefined)
-      .then(setReservations)
+      .get<TripGroup[]>('/api/v1/admin/reservations', token ?? undefined)
+      .then(setTrips)
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token]);
 
   useEffect(load, [load]);
 
+  const toggle = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
   if (loading) return <div className="loading">Duke ngarkuar...</div>;
+
+  const totalReservations = trips.reduce((sum, t) => sum + t.reservations.length, 0);
 
   return (
     <div className="table-wrap">
       <div className="table-header">
-        <span className="table-count">{reservations.length} rezervime</span>
+        <span className="table-count">
+          {trips.length} udhëtime · {totalReservations} rezervime
+        </span>
         <button className="btn-outline btn-sm" onClick={load}>
           Rifresko
         </button>
@@ -53,41 +71,59 @@ export default function Reservations() {
       <table>
         <thead>
           <tr>
-            <th>Pasagjeri</th>
+            <th style={{ width: 32 }}></th>
             <th>Rruga</th>
+            <th>Shoferi</th>
             <th>Nisja</th>
-            <th>Vendet</th>
-            <th>Statusi</th>
-            <th>Rezervuar më</th>
+            <th>Pasagjerë</th>
           </tr>
         </thead>
         <tbody>
-          {reservations.map((r) => (
-            <tr key={r.id}>
-              <td className="fw-medium">
-                {r.passenger.firstName} {r.passenger.lastName}
-              </td>
-              <td>
-                {r.trip.originCity?.name ?? r.trip.originLabel ?? '—'} → {r.trip.destCity?.name ?? r.trip.destLabel ?? '—'}
-              </td>
-              <td className="text-subtle">
-                {new Date(r.trip.departureAt).toLocaleDateString('sq-AL', {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </td>
-              <td>{r.seatsReserved}</td>
-              <td>
-                <span className={`badge ${STATUS_CLASS[r.status] ?? 'badge-neutral'}`}>{r.status}</span>
-              </td>
-              <td className="text-subtle">{new Date(r.createdAt).toLocaleDateString('sq-AL')}</td>
-            </tr>
-          ))}
+          {trips.map((t) => {
+            const isOpen = expanded.has(t.id);
+            return (
+              <Fragment key={t.id}>
+                <tr
+                  onClick={() => toggle(t.id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td className="text-subtle" style={{ textAlign: 'center' }}>
+                    {isOpen ? '▾' : '▸'}
+                  </td>
+                  <td className="fw-medium">
+                    {t.originCity?.name ?? t.originLabel ?? '—'} → {t.destCity?.name ?? t.destLabel ?? '—'}
+                  </td>
+                  <td>{t.driver ? `${t.driver.firstName} ${t.driver.lastName}` : '—'}</td>
+                  <td className="text-subtle">
+                    {new Date(t.departureAt).toLocaleDateString('sq-AL', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </td>
+                  <td>{t.reservations.length}</td>
+                </tr>
+                {isOpen &&
+                  t.reservations.map((r) => (
+                    <tr key={r.id} style={{ background: 'var(--bg)' }}>
+                      <td></td>
+                      <td className="fw-medium" style={{ paddingLeft: 24 }}>
+                        {r.passenger.firstName} {r.passenger.lastName}
+                      </td>
+                      <td className="text-subtle">{r.seats} vend{r.seats === 1 ? '' : 'e'}</td>
+                      <td>
+                        <span className={`badge ${STATUS_CLASS[r.status] ?? 'badge-neutral'}`}>{r.status}</span>
+                      </td>
+                      <td className="text-subtle">{new Date(r.createdAt).toLocaleDateString('sq-AL')}</td>
+                    </tr>
+                  ))}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
-      {reservations.length === 0 && <div className="empty">Nuk ka rezervime.</div>}
+      {trips.length === 0 && <div className="empty">Nuk ka rezervime.</div>}
     </div>
   );
 }

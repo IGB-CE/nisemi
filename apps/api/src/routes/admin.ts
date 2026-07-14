@@ -154,13 +154,17 @@ router.patch('/drivers/:userId/demote', async (req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/trips', async (req, res) => {
-  const page = Number(req.query.page ?? 1);
-  const limit = 20;
+router.get('/trips', async (_req, res) => {
   const trips = await prisma.trip.findMany({
-    skip: (page - 1) * limit,
-    take: limit,
-    include: { originCity: true, destCity: true, driver: { select: { id: true, firstName: true, lastName: true } } },
+    include: {
+      originCity: true,
+      destCity: true,
+      driver: { select: { id: true, firstName: true, lastName: true } },
+      reservations: {
+        include: { passenger: { select: { id: true, firstName: true, lastName: true } } },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   });
   res.json(trips);

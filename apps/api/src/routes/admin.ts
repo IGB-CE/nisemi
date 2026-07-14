@@ -166,14 +166,10 @@ router.get('/trips', async (req, res) => {
   res.json(trips);
 });
 
-router.get('/reservations', async (req, res) => {
-  const page = Number(req.query.page ?? 1);
-  const limit = 50;
+router.get('/reservations', async (_req, res) => {
   // Grouped by trip: each trip carries the passengers who reserved it.
   const trips = await prisma.trip.findMany({
     where: { reservations: { some: {} } },
-    skip: (page - 1) * limit,
-    take: limit,
     include: {
       originCity: { select: { name: true } },
       destCity: { select: { name: true } },

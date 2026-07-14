@@ -43,6 +43,8 @@ export default function Reservations() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('ALL');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -64,10 +66,20 @@ export default function Reservations() {
 
   const q = query.trim().toLowerCase();
 
-  // Filter by status + search. A trip is kept only if it still has visible
-  // reservations after both filters are applied.
+  // Departure-date bounds (inclusive). `toDate` covers the whole day.
+  const fromMs = fromDate ? new Date(fromDate).getTime() : null;
+  const toMs = toDate ? new Date(toDate).getTime() + 24 * 60 * 60 * 1000 - 1 : null;
+
+  // Filter by date range + status + search. A trip is kept only if it still has
+  // visible reservations after all filters are applied.
   const filtered = useMemo(() => {
     return trips
+      .filter((t) => {
+        const dep = new Date(t.departureAt).getTime();
+        if (fromMs !== null && dep < fromMs) return false;
+        if (toMs !== null && dep > toMs) return false;
+        return true;
+      })
       .map((t) => {
         const tripMatch =
           !q ||
@@ -81,12 +93,12 @@ export default function Reservations() {
         return { ...t, reservations: res };
       })
       .filter((t) => t.reservations.length > 0);
-  }, [trips, q, status]);
+  }, [trips, q, status, fromMs, toMs]);
 
   if (loading) return <div className="loading">Duke ngarkuar...</div>;
 
   const totalReservations = filtered.reduce((sum, t) => sum + t.reservations.length, 0);
-  const anyFilter = q !== '' || status !== 'ALL';
+  const anyFilter = q !== '' || status !== 'ALL' || fromDate !== '' || toDate !== '';
 
   return (
     <div className="table-wrap">
@@ -112,6 +124,38 @@ export default function Reservations() {
               ))}
             </select>
           </div>
+          <div className="field">
+            <input
+              type="date"
+              aria-label="Nga data"
+              value={fromDate}
+              max={toDate || undefined}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+          </div>
+          <span className="text-subtle">–</span>
+          <div className="field">
+            <input
+              type="date"
+              aria-label="Deri më datë"
+              value={toDate}
+              min={fromDate || undefined}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </div>
+          {anyFilter && (
+            <button
+              className="btn-outline btn-sm"
+              onClick={() => {
+                setQuery('');
+                setStatus('ALL');
+                setFromDate('');
+                setToDate('');
+              }}
+            >
+              Pastro
+            </button>
+          )}
           <button className="btn-outline btn-sm" onClick={load}>
             Rifresko
           </button>

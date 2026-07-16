@@ -24,12 +24,8 @@ router.get('/stats', async (_req, res) => {
   res.json({ users, drivers, trips, reservations });
 });
 
-router.get('/users', async (req, res) => {
-  const page = Number(req.query.page ?? 1);
-  const limit = 20;
+router.get('/users', async (_req, res) => {
   const users = await prisma.user.findMany({
-    skip: (page - 1) * limit,
-    take: limit,
     select: {
       id: true,
       email: true,
@@ -72,12 +68,8 @@ router.patch('/users/:id/approve', async (req, res) => {
   res.json(user);
 });
 
-router.get('/drivers', async (req, res) => {
-  const page = Number(req.query.page ?? 1);
-  const limit = 20;
+router.get('/drivers', async (_req, res) => {
   const drivers = await prisma.driverProfile.findMany({
-    skip: (page - 1) * limit,
-    take: limit,
     include: {
       user: {
         select: { id: true, firstName: true, lastName: true, email: true, phone: true, status: true, createdAt: true },

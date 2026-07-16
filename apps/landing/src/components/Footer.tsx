@@ -50,6 +50,22 @@ export default function Footer() {
         </div>
 
         <div>
+          <h4 className="footer-h">Shkarko aplikacionin</h4>
+          <ul className="footer-list">
+            <li>
+              <a href={BUSINESS.playStoreUrl} target="_blank" rel="noopener noreferrer">
+                Google Play
+              </a>
+            </li>
+            <li>
+              <a href={BUSINESS.appStoreUrl} target="_blank" rel="noopener noreferrer">
+                App Store
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
           <h4 className="footer-h">Kontakt</h4>
           <address className="footer-address">
             {BUSINESS.legalName}

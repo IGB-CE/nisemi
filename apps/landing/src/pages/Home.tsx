@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { BUSINESS } from '../config';
 
 export default function Home() {
   return (
@@ -22,7 +23,32 @@ export default function Home() {
               Na kontaktoni
             </Link>
           </div>
-          <p className="hero-note">Aplikacioni mobil për Android dhe iOS — së shpejti.</p>
+          <div className="store-links">
+            <a
+              href={BUSINESS.playStoreUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="store-link"
+            >
+              <span className="store-link-icon">▶</span>
+              <span className="store-link-text">
+                <small>Shkarkoje nga</small>
+                Google Play
+              </span>
+            </a>
+            <a
+              href={BUSINESS.appStoreUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="store-link"
+            >
+              <span className="store-link-icon"></span>
+              <span className="store-link-text">
+                <small>Shkarkoje nga</small>
+                App Store
+              </span>
+            </a>
+          </div>
         </div>
       </section>
 
@@ -70,13 +96,16 @@ export default function Home() {
         <div className="container cta-band">
           <div>
             <h2 className="section-title">Gati për të udhëtuar?</h2>
-            <p className="cta-sub">
-              Aplikacioni Nisemi po vjen së shpejti në Google Play dhe App Store.
-            </p>
+            <p className="cta-sub">Aplikacioni Nisemi tashmë është në Google Play dhe App Store.</p>
           </div>
-          <Link to="/kontakt" className="btn btn-primary">
-            Na shkruani
-          </Link>
+          <div className="hero-cta">
+            <a href={BUSINESS.playStoreUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              Google Play
+            </a>
+            <a href={BUSINESS.appStoreUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline">
+              App Store
+            </a>
+          </div>
         </div>
       </section>
     </>

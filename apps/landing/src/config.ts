@@ -19,6 +19,8 @@ export const BUSINESS = {
   privacyUrl: '/privacy',
   termsUrl: '/terms',
   dataDeletionUrl: '/data-deletion',
+  playStoreUrl: 'https://play.google.com/store/apps/details?id=al.nisemi.app',
+  appStoreUrl: 'https://apps.apple.com/al/app/nisemi/id6783702819',
 };
 
 export const FORMATTED_ADDRESS = `${BUSINESS.address.street}, ${BUSINESS.address.postalCode} ${BUSINESS.address.city}, ${BUSINESS.address.country}`;

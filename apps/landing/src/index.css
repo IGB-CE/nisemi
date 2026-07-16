@@ -189,6 +189,40 @@ button {
   font-size: 13px;
   color: var(--subtle);
 }
+.store-links {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.store-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: #111827;
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid #111827;
+}
+.store-link-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.store-link-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.2;
+  font-weight: 600;
+  font-size: 15px;
+}
+.store-link-text small {
+  font-weight: 400;
+  font-size: 11px;
+  opacity: 0.8;
+}
 
 /* ── Buttons ── */
 .btn {
@@ -564,7 +598,7 @@ button {
 }
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
   gap: 32px;
   margin-bottom: 32px;
 }

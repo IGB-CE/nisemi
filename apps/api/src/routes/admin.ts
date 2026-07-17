@@ -151,9 +151,19 @@ router.get('/trips', async (_req, res) => {
     include: {
       originCity: true,
       destCity: true,
-      driver: { select: { id: true, firstName: true, lastName: true } },
+      driver: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          driverProfile: {
+            select: { carModel: true, carColor: true, carPlate: true, rating: true, verificationStatus: true },
+          },
+        },
+      },
       reservations: {
-        include: { passenger: { select: { id: true, firstName: true, lastName: true } } },
+        include: { passenger: { select: { id: true, firstName: true, lastName: true, phone: true } } },
         orderBy: { createdAt: 'desc' },
       },
     },

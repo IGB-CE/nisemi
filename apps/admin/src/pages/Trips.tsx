@@ -7,7 +7,17 @@ interface ReservationRow {
   seats: number;
   status: string;
   createdAt: string;
-  passenger: { id: string; firstName: string; lastName: string };
+  pickupLabel: string | null;
+  dropoffLabel: string | null;
+  passenger: { id: string; firstName: string; lastName: string; phone: string | null };
+}
+
+interface DriverProfileInfo {
+  carModel: string;
+  carColor: string;
+  carPlate: string;
+  rating: number;
+  verificationStatus: string;
 }
 
 interface Trip {
@@ -16,12 +26,23 @@ interface Trip {
   destCity: { name: string } | null;
   originLabel: string | null;
   destLabel: string | null;
-  driver: { firstName: string; lastName: string } | null;
+  driver: { firstName: string; lastName: string; phone: string | null; driverProfile: DriverProfileInfo | null } | null;
   departureAt: string;
   pricePerSeat: string;
   totalSeats: number;
   seatsAvailable: number;
   status: string;
+  tripType: string | null;
+  genderRestriction: string;
+  maxDetourM: number;
+  routePolyline: string | null;
+  routeDistanceM: number | null;
+  routeDurationS: number | null;
+  boostedUntil: string | null;
+  notes: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  endedAt: string | null;
   reservations: ReservationRow[];
 }
 
@@ -38,6 +59,19 @@ const RES_STATUS_CLASS: Record<string, string> = {
   REJECTED: 'badge-danger',
   CANCELLED: 'badge-neutral',
   REMOVED: 'badge-neutral',
+};
+
+const VERIFICATION_CLASS: Record<string, string> = {
+  APPROVED: 'badge-success',
+  PENDING: 'badge-warning',
+  UNVERIFIED: 'badge-neutral',
+  REJECTED: 'badge-danger',
+};
+
+const GENDER_LABEL: Record<string, string> = {
+  ANY: 'Të gjithë',
+  FEMALE_ONLY: 'Vetëm femra',
+  MALE_ONLY: 'Vetëm meshkuj',
 };
 
 const STATUS_OPTIONS = ['ALL', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
@@ -207,31 +241,99 @@ export default function Trips() {
                   <tr style={{ background: 'var(--bg)' }}>
                     <td></td>
                     <td colSpan={6} style={{ paddingTop: 8, paddingBottom: 8 }}>
-                      {t.reservations.length === 0 ? (
-                        <span className="text-subtle">Asnjë rezervim për këtë udhëtim.</span>
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {t.reservations.map((r) => (
-                            <div
-                              key={r.id}
-                              style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}
-                            >
-                              <span className="fw-medium" style={{ minWidth: 160 }}>
-                                {r.passenger.firstName} {r.passenger.lastName}
-                              </span>
-                              <span className="text-subtle">
-                                {r.seats} vend{r.seats === 1 ? '' : 'e'}
-                              </span>
-                              <span className={`badge ${RES_STATUS_CLASS[r.status] ?? 'badge-neutral'}`}>
-                                {r.status}
-                              </span>
-                              <span className="text-subtle">
-                                {new Date(r.createdAt).toLocaleDateString('sq-AL')}
-                              </span>
-                            </div>
-                          ))}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div>
+                          <div className="text-subtle" style={{ marginBottom: 4 }}>
+                            UDHËTIMI
+                          </div>
+                          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            {t.tripType && <span className="badge badge-neutral">{t.tripType}</span>}
+                            <span className="badge badge-neutral">{GENDER_LABEL[t.genderRestriction] ?? t.genderRestriction}</span>
+                            <span className="text-subtle">Devijim max: {t.maxDetourM}m</span>
+                            <span className="text-subtle">
+                              Rrugë: {t.routePolyline ? 'po' : 'jo'}
+                              {t.routeDistanceM != null ? `, ${(t.routeDistanceM / 1000).toFixed(1)} km` : ''}
+                              {t.routeDurationS != null ? `, ${Math.round(t.routeDurationS / 60)} min` : ''}
+                            </span>
+                            {t.boostedUntil && new Date(t.boostedUntil).getTime() > Date.now() && (
+                              <span className="badge badge-warning">Boost deri {new Date(t.boostedUntil).toLocaleString('sq-AL')}</span>
+                            )}
+                          </div>
+                          <div className="text-subtle" style={{ marginTop: 4 }}>
+                            Krijuar: {new Date(t.createdAt).toLocaleString('sq-AL')}
+                            {t.startedAt && ` · Filluar: ${new Date(t.startedAt).toLocaleString('sq-AL')}`}
+                            {t.endedAt && ` · Mbaruar: ${new Date(t.endedAt).toLocaleString('sq-AL')}`}
+                          </div>
+                          {t.notes && <div style={{ marginTop: 4 }}>Shënime: {t.notes}</div>}
                         </div>
-                      )}
+
+                        {t.driver && (
+                          <div>
+                            <div className="text-subtle" style={{ marginBottom: 4 }}>
+                              SHOFERI
+                            </div>
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                              <span className="fw-medium">
+                                {t.driver.firstName} {t.driver.lastName}
+                              </span>
+                              {t.driver.phone && <span className="text-subtle">{t.driver.phone}</span>}
+                              {t.driver.driverProfile && (
+                                <>
+                                  <span className="text-subtle">
+                                    {t.driver.driverProfile.carModel} · {t.driver.driverProfile.carColor} ·{' '}
+                                    {t.driver.driverProfile.carPlate}
+                                  </span>
+                                  <span className="text-subtle">★ {t.driver.driverProfile.rating.toFixed(1)}</span>
+                                  <span
+                                    className={`badge ${
+                                      VERIFICATION_CLASS[t.driver.driverProfile.verificationStatus] ?? 'badge-neutral'
+                                    }`}
+                                  >
+                                    {t.driver.driverProfile.verificationStatus}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <div className="text-subtle" style={{ marginBottom: 4 }}>
+                            REZERVIMET
+                          </div>
+                          {t.reservations.length === 0 ? (
+                            <span className="text-subtle">Asnjë rezervim për këtë udhëtim.</span>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {t.reservations.map((r) => (
+                                <div
+                                  key={r.id}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}
+                                >
+                                  <span className="fw-medium" style={{ minWidth: 160 }}>
+                                    {r.passenger.firstName} {r.passenger.lastName}
+                                  </span>
+                                  {r.passenger.phone && <span className="text-subtle">{r.passenger.phone}</span>}
+                                  <span className="text-subtle">
+                                    {r.seats} vend{r.seats === 1 ? '' : 'e'}
+                                  </span>
+                                  <span className={`badge ${RES_STATUS_CLASS[r.status] ?? 'badge-neutral'}`}>
+                                    {r.status}
+                                  </span>
+                                  {(r.pickupLabel || r.dropoffLabel) && (
+                                    <span className="text-subtle">
+                                      {r.pickupLabel ?? '—'} → {r.dropoffLabel ?? '—'}
+                                    </span>
+                                  )}
+                                  <span className="text-subtle">
+                                    {new Date(r.createdAt).toLocaleDateString('sq-AL')}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 )}

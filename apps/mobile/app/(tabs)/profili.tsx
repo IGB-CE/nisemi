@@ -19,6 +19,7 @@ import Pill from '../../components/ui/Pill';
 import CarPhotoUploader from '../../components/CarPhotoUploader';
 import LicenseUploader from '../../components/LicenseUploader';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import AdminBadge from '../../components/AdminBadge';
 import AvatarUploader from '../../components/AvatarUploader';
 import { getAutoStartDefault, setAutoStartDefault } from '../../lib/autoStart';
 
@@ -233,6 +234,7 @@ export default function Profili() {
           <View style={s.sectionHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Pill label={isDriver ? 'Shofer' : 'Pasagjer'} />
+              {profile?.role === 'ADMIN' && <AdminBadge size={18} label="Admin" />}
               {isDriver && dp?.verificationStatus === 'APPROVED' && <VerifiedBadge size={18} />}
             </View>
             <Text style={s.email}>{profile?.email}</Text>

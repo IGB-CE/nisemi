@@ -8,6 +8,7 @@ import { useColors, useThemedStyles, type Theme } from '../../lib/theme';
 import { useUnread } from '../../lib/unread';
 import { useDialog } from '../../lib/dialog';
 import { ErrorScreen, EmptyState } from '../../components/States';
+import AdminBadge from '../../components/AdminBadge';
 
 interface Conversation {
   tripId: string;
@@ -19,7 +20,7 @@ interface Conversation {
     destLabel?: string | null;
     departureAt: string;
   };
-  otherUser: { id: string; firstName: string; lastName: string; avatarUrl: string | null };
+  otherUser: { id: string; firstName: string; lastName: string; avatarUrl: string | null; role?: string };
   lastMessage: { content: string; createdAt: string; fromMe: boolean };
   unread: number;
 }
@@ -140,9 +141,12 @@ export default function Mesazhet() {
                   </View>
                   <View style={s.body}>
                     <View style={s.topRow}>
-                      <Text style={s.name} numberOfLines={1}>
-                        {c.otherUser.firstName} {c.otherUser.lastName}
-                      </Text>
+                      <View style={s.nameRow}>
+                        <Text style={s.name} numberOfLines={1}>
+                          {c.otherUser.firstName} {c.otherUser.lastName}
+                        </Text>
+                        {c.otherUser.role === 'ADMIN' && <AdminBadge size={14} />}
+                      </View>
                       <Text style={[s.time, isUnread && s.timeUnread]}>{formatTime(c.lastMessage.createdAt)}</Text>
                     </View>
                     <Text style={s.route} numberOfLines={1}>
@@ -215,7 +219,8 @@ const makeStyles = ({ colors, typography }: Theme) =>
   avatarText: { fontSize: 18, fontWeight: '800', color: colors.text },
   body: { flex: 1, justifyContent: 'center' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
-  name: { ...typography.h3, fontSize: 15, flex: 1 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, marginRight: 8 },
+  name: { ...typography.h3, fontSize: 15, flexShrink: 1 },
   time: { ...typography.caption, fontSize: 11 },
   timeUnread: { color: colors.primary, fontWeight: '700' },
   route: { ...typography.caption, marginBottom: 4 },

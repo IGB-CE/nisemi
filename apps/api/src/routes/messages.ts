@@ -121,8 +121,8 @@ router.get('/conversations', requireAuth, async (req: AuthRequest, res) => {
           departureAt: true,
         },
       },
-      sender: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
-      receiver: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+      sender: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true } },
+      receiver: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true } },
     },
   });
 

@@ -19,6 +19,7 @@ import { useUnread } from '../../../lib/unread';
 import { setActiveChat, clearActiveChat } from '../../../lib/notifications';
 import { blocks as blocksApi } from '../../../lib/blocks';
 import Icon from '../../../components/ui/Icon';
+import AdminBadge from '../../../components/AdminBadge';
 
 interface Message {
   id: string;
@@ -42,7 +43,7 @@ export default function Chat() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [otherUser, setOtherUser] = useState<{ firstName: string; lastName: string } | null>(null);
+  const [otherUser, setOtherUser] = useState<{ firstName: string; lastName: string; role?: string } | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
   const deleteChat = async () => {
@@ -119,7 +120,7 @@ export default function Chat() {
     if (otherUser) return;
     api
       .get<any>(`/api/v1/users/${userId}`, token ?? undefined)
-      .then((u) => setOtherUser({ firstName: u.firstName, lastName: u.lastName }))
+      .then((u) => setOtherUser({ firstName: u.firstName, lastName: u.lastName, role: u.role }))
       .catch(() => {});
   }, [userId, token, otherUser]);
 
@@ -152,7 +153,12 @@ export default function Chat() {
         <TouchableOpacity onPress={() => router.back()} style={s.back}>
           <Text style={s.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={s.headerTitle}>{otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'Bisedë'}</Text>
+        <View style={s.headerTitleRow}>
+          <Text style={s.headerTitle} numberOfLines={1}>
+            {otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'Bisedë'}
+          </Text>
+          {otherUser?.role === 'ADMIN' && <AdminBadge size={15} />}
+        </View>
         <TouchableOpacity onPress={deleteChat} style={s.headerAction} hitSlop={8}>
           <Icon name="trash" size={20} color={colors.textDim} />
         </TouchableOpacity>
@@ -235,7 +241,8 @@ const makeStyles = ({ colors }: Theme) =>
   backText: { fontSize: 24, color: colors.text },
   headerAction: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   headerActionText: { fontSize: 18 },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: colors.text, flex: 1, textAlign: 'center' },
+  headerTitleRow: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: colors.text, flexShrink: 1, textAlign: 'center' },
   list: { flex: 1 },
   empty: { alignItems: 'center', paddingTop: 80 },
   emptyIcon: { fontSize: 56, marginBottom: 12 },

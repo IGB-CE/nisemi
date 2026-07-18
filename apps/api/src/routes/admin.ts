@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { requireAdmin, type AuthRequest } from '../middleware/auth.js';
 import { supabase, DRIVER_DOCS_BUCKET } from '../lib/supabase.js';
 import { sendPushNotifications } from '../lib/push.js';
+import { deleteUserAccount } from '../lib/deleteUser.js';
 
 async function notifyUser(userId: string, title: string, body: string, data?: Record<string, unknown>) {
   const tokens = await prisma.pushToken.findMany({ where: { userId }, select: { token: true } });
@@ -66,6 +67,25 @@ router.patch('/users/:id/approve', async (req, res) => {
     select: { id: true, status: true },
   });
   res.json(user);
+});
+
+// Soft-delete a rule-breaking account: same one-way anonymize used for
+// self-service deletion (DELETE /users/me), just admin-initiated.
+router.delete('/users/:id', async (req, res) => {
+  const target = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    select: { role: true },
+  });
+  if (!target) {
+    res.status(404).json({ error: 'Përdoruesi nuk u gjet' });
+    return;
+  }
+  if (target.role === 'ADMIN') {
+    res.status(400).json({ error: 'Nuk mund të fshihet një llogari admin' });
+    return;
+  }
+  await deleteUserAccount(req.params.id);
+  res.json({ ok: true });
 });
 
 router.get('/drivers', async (_req, res) => {

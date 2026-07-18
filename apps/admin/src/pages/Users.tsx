@@ -17,6 +17,7 @@ const STATUS_CLASS: Record<string, string> = {
   ACTIVE: 'badge-success',
   BLOCKED: 'badge-danger',
   PENDING: 'badge-warning',
+  DELETED: 'badge-neutral',
 };
 const ROLE_CLASS: Record<string, string> = {
   ADMIN: 'badge-primary',
@@ -45,6 +46,19 @@ export default function Users() {
     setActionId(id);
     try {
       await api.patch(`/api/v1/admin/users/${id}/${action}`, {}, token ?? undefined);
+      load();
+    } catch {
+      /* ignore */
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const doDelete = async (id: string, name: string) => {
+    if (!confirm(`Të fshihet llogaria e "${name}"? Ky veprim është i pakthyeshëm.`)) return;
+    setActionId(id);
+    try {
+      await api.delete(`/api/v1/admin/users/${id}`, token ?? undefined);
       load();
     } catch {
       /* ignore */
@@ -91,7 +105,7 @@ export default function Users() {
               </td>
               <td className="text-subtle">{new Date(u.createdAt).toLocaleDateString('sq-AL')}</td>
               <td>
-                {u.role !== 'ADMIN' && (
+                {u.role !== 'ADMIN' && u.status !== 'DELETED' && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {u.status === 'PENDING' && (
                       <button
@@ -119,6 +133,13 @@ export default function Users() {
                         Blloko
                       </button>
                     )}
+                    <button
+                      className="btn-danger btn-sm"
+                      disabled={actionId === u.id}
+                      onClick={() => doDelete(u.id, `${u.firstName} ${u.lastName}`)}
+                    >
+                      Fshi
+                    </button>
                   </div>
                 )}
               </td>

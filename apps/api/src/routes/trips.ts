@@ -65,28 +65,13 @@ router.get('/', async (req: AuthRequest, res) => {
   const isGeoSearch =
     originLat !== undefined && originLng !== undefined && destLat !== undefined && destLng !== undefined;
 
-  let callerGender: 'MALE' | 'FEMALE' | 'UNSPECIFIED' = 'UNSPECIFIED';
-  const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith('Bearer ')) {
-    try {
-      const { verifyToken } = await import('../lib/jwt.js');
-      const payload = verifyToken(authHeader.slice(7));
-      const u = await prisma.user.findUnique({ where: { id: payload.sub }, select: { gender: true } });
-      if (u) callerGender = u.gender;
-    } catch {
-      // ignore — treat as unauthenticated
-    }
-  }
-
-  const allowedRestrictions: ('ANY' | 'FEMALE_ONLY' | 'MALE_ONLY')[] = ['ANY'];
-  if (callerGender === 'FEMALE') allowedRestrictions.push('FEMALE_ONLY');
-  if (callerGender === 'MALE') allowedRestrictions.push('MALE_ONLY');
-
+  // genderRestriction is advisory only — every trip is listed to every caller
+  // regardless of gender, and the badge on the card is what conveys the
+  // driver's preference. Nothing filters or blocks on it.
   const where: Record<string, unknown> = {
     status: 'SCHEDULED',
     seatsAvailable: { gte: seats },
     departureAt: { gte: new Date() },
-    genderRestriction: { in: allowedRestrictions },
   };
   if (from) where.originCityId = from;
   if (to) where.destCityId = to;

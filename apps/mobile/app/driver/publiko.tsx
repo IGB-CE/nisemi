@@ -280,6 +280,7 @@ export default function Publiko() {
             onChange={setDest}
             placeholder="Adresa e destinacionit"
             token={token ?? undefined}
+            onError={(msg) => dialog.alert('Adresa', msg)}
           />
 
           {origin && dest && (
@@ -351,6 +352,7 @@ export default function Publiko() {
                       }}
                       placeholder="Rruga ose vendi nga ku do të kaloni"
                       token={token ?? undefined}
+                      onError={(msg) => dialog.alert('Adresa', msg)}
                     />
                     <TouchableOpacity
                       style={s.waypointCancel}

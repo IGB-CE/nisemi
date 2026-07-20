@@ -86,8 +86,10 @@ export default function PlacesAutocomplete({
       setQuery(detail.label);
       setPredictions([]);
       sessionTokenRef.current = newSessionToken();
-    } catch {
-      // swallow
+    } catch (e: any) {
+      // Without this the field just silently stays empty with the dropdown open,
+      // which reads as the tap having done nothing at all.
+      onError?.(e.message ?? 'Adresa nuk u mor dot. Provoni përsëri.');
     } finally {
       setLoading(false);
     }

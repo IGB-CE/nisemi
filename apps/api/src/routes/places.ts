@@ -110,7 +110,9 @@ router.get('/details', requireAuth, async (req, res) => {
       location?: { latitude: number; longitude: number };
       formattedAddress?: string;
       displayName?: { text?: string };
-      addressComponents?: { longText: string; shortText: string; types: string[] }[];
+      // Google omits `types` (and sometimes `shortText`) on components it has no
+      // classification for, so both are optional.
+      addressComponents?: { longText: string; shortText?: string; types?: string[] }[];
       error?: { message?: string };
     };
     if (!r.ok || !data.location) {
@@ -118,7 +120,7 @@ router.get('/details', requireAuth, async (req, res) => {
       return;
     }
     const cityComp = data.addressComponents?.find(
-      (c) => c.types.includes('locality') || c.types.includes('administrative_area_level_2'),
+      (c) => c.types?.includes('locality') || c.types?.includes('administrative_area_level_2'),
     );
     res.json({
       lat: data.location.latitude,

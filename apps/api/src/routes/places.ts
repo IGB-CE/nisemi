@@ -122,11 +122,22 @@ router.get('/details', requireAuth, async (req, res) => {
     const cityComp = data.addressComponents?.find(
       (c) => c.types?.includes('locality') || c.types?.includes('administrative_area_level_2'),
     );
+    const cityName = cityComp?.longText ?? null;
+    // `formattedAddress` is the street address, which for a POI hides the name the
+    // driver actually searched for ("TEG" becomes "Rruga Nacionale, Autostrada...")
+    // and for some streets leads with a plus code. Prefer the place's own name and
+    // append the city, since `displayName` on its own carries no city context.
+    const displayName = data.displayName?.text?.trim();
+    const label = displayName
+      ? cityName && !displayName.includes(cityName)
+        ? `${displayName}, ${cityName}`
+        : displayName
+      : (data.formattedAddress ?? '');
     res.json({
       lat: data.location.latitude,
       lng: data.location.longitude,
-      label: data.formattedAddress ?? data.displayName?.text ?? '',
-      cityName: cityComp?.longText ?? null,
+      label,
+      cityName,
     });
   } catch (e) {
     res.status(502).json({ error: (e as Error).message });

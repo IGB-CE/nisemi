@@ -45,7 +45,6 @@ export default function PlacesAutocomplete({
       onChange(detail);
       setQuery(detail.label);
       setPredictions([]);
-      setFocused(false);
     } catch (e: any) {
       onError?.(e.message ?? 'Nuk u mor dot vendndodhja');
     } finally {
@@ -55,7 +54,10 @@ export default function PlacesAutocomplete({
 
   useEffect(() => {
     if (!focused) return;
-    if (query.length < 2) {
+    // Skip when the field holds an already-selected place: there is nothing to
+    // search for, and this is what prevents the dropdown from popping back open
+    // right after a selection sets `query` to the chosen label.
+    if (query.length < 2 || (value && query === value.label)) {
       setPredictions([]);
       return;
     }
@@ -74,7 +76,7 @@ export default function PlacesAutocomplete({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, focused, token]);
+  }, [query, focused, token, value]);
 
   const select = async (p: PlacePrediction) => {
     setLoading(true);
@@ -83,7 +85,6 @@ export default function PlacesAutocomplete({
       onChange(detail);
       setQuery(detail.label);
       setPredictions([]);
-      setFocused(false);
       sessionTokenRef.current = newSessionToken();
     } catch {
       // swallow
@@ -112,6 +113,7 @@ export default function PlacesAutocomplete({
             if (value && t !== value.label) onChange(null);
           }}
           onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           autoCapitalize="none"
           autoCorrect={false}
         />

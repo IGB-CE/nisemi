@@ -249,6 +249,9 @@ export default function Rezervimet() {
         showsVerticalScrollIndicator={false}
       >
         <View style={s.headerWrap}>
+          <TouchableOpacity onPress={() => router.back()} style={s.back}>
+            <Text style={s.backText}>← Kthehu</Text>
+          </TouchableOpacity>
           <Text style={s.brand}>NISEMI</Text>
           <Text style={s.title}>Rezervimet</Text>
         </View>
@@ -354,6 +357,8 @@ const makeStyles = ({ colors, typography }: Theme) =>
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 
   headerWrap: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 4 },
+  back: { marginBottom: 8 },
+  backText: { color: colors.textDim, fontSize: 14 },
   brand: { ...typography.label, color: colors.primary, fontSize: 10 },
   title: { ...typography.h1, marginTop: 4 },
 

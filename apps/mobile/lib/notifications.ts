@@ -4,15 +4,24 @@ import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { api } from './api';
 
-type MessageData = { type?: string; tripId?: string; senderId?: string };
+type MessageData = { type?: string; tripId?: string; requestId?: string; senderId?: string };
+
+// A conversation is keyed by its context — a trip or a passenger request.
+function chatKey(ctx: { tripId?: string; requestId?: string }, userId: string): string {
+  return ctx.requestId ? `r:${ctx.requestId}|${userId}` : `t:${ctx.tripId}|${userId}`;
+}
 
 // The chat screen currently in the foreground, so we can suppress redundant
 // banners for the conversation the user is already reading (WhatsApp-style).
 let activeChatKey: string | null = null;
 let activeChatOnMessage: (() => void) | null = null;
 
-export function setActiveChat(tripId: string, userId: string, onMessage?: () => void) {
-  activeChatKey = `${tripId}|${userId}`;
+export function setActiveChat(
+  ctx: { tripId?: string; requestId?: string },
+  userId: string,
+  onMessage?: () => void,
+) {
+  activeChatKey = chatKey(ctx, userId);
   activeChatOnMessage = onMessage ?? null;
 }
 
@@ -30,7 +39,7 @@ export function setOnIncomingMessage(cb: (() => void) | null) {
 }
 
 function isForOpenChat(data: MessageData | undefined): boolean {
-  return !!data && data.type === 'message' && `${data.tripId}|${data.senderId}` === activeChatKey;
+  return !!data && data.type === 'message' && !!data.senderId && chatKey(data, data.senderId) === activeChatKey;
 }
 
 Notifications.setNotificationHandler({
@@ -68,6 +77,18 @@ function routeFromNotification(response: Notifications.NotificationResponse | nu
   lastHandledNotificationId = id;
 
   const data = response.notification.request.content.data as MessageData | undefined;
+  if (data?.type === 'message' && data.requestId && data.senderId) {
+    router.push({
+      pathname: '/chat/kerkesa/[requestId]/[userId]',
+      params: { requestId: data.requestId, userId: data.senderId },
+    } as any);
+    return;
+  }
+  // A passenger published a request matching one of this driver's trips.
+  if (data?.type === 'trip-request' && data.requestId) {
+    router.push('/(tabs)/kerkesat' as any);
+    return;
+  }
   if (data?.type === 'message' && data.tripId && data.senderId) {
     router.push({
       pathname: '/chat/[tripId]/[userId]',

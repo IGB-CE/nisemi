@@ -420,7 +420,13 @@ export default function Profili() {
         )}
 
         <Card style={s.section}>
-          <Text style={s.cardLabel}>Njoftimet</Text>
+          <Text style={s.cardLabel}>Udhëtimet e mia</Text>
+          <TouchableOpacity style={s.legalRow} onPress={() => router.push('/rezervimet' as any)}>
+            <Icon name="ticket" size={18} color={colors.textDim} style={s.legalIcon} />
+            <Text style={s.legalLabel}>Rezervimet e mia</Text>
+            <Text style={s.legalChevron}>›</Text>
+          </TouchableOpacity>
+          <View style={s.divider} />
           <TouchableOpacity style={s.legalRow} onPress={() => router.push('/njoftimet' as any)}>
             <Icon name="bell" size={18} color={colors.textDim} style={s.legalIcon} />
             <Text style={s.legalLabel}>Njoftimet e udhëtimeve</Text>

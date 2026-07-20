@@ -64,6 +64,11 @@ export async function deleteUserAccount(userId: string): Promise<boolean> {
     // Drop records that are purely personal to this user.
     prisma.message.deleteMany({ where: { OR: [{ senderId: userId }, { receiverId: userId }] } }),
     prisma.pushToken.deleteMany({ where: { userId } }),
+    // Both this user's own deletions and any another user recorded against this
+    // user's requests — the latter would block the rideAlert delete below.
+    prisma.requestConversationDeletion.deleteMany({
+      where: { OR: [{ userId }, { request: { passengerId: userId } }] },
+    }),
     prisma.rideAlert.deleteMany({ where: { passengerId: userId } }),
     prisma.block.deleteMany({ where: { OR: [{ blockerId: userId }, { blockedId: userId }] } }),
     prisma.conversationDeletion.deleteMany({ where: { userId } }),

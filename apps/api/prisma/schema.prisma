@@ -39,6 +39,7 @@ model User {
   blocksMade       Block[]        @relation("BlocksMade")
   blocksReceived   Block[]        @relation("BlocksReceived")
   conversationDeletions ConversationDeletion[]
+  requestConversationDeletions RequestConversationDeletion[]
   hiddenTrips      TripHistoryHidden[]
 }
 
@@ -96,8 +97,23 @@ model RideAlert {
   notifiedTripIds String[]  @default([])
   createdAt       DateTime  @default(now())
 
+  pricePerSeat Decimal?
+  seats        Int      @default(1)
+  note         String?
+
+  // Defaults to false so alerts created before trip-requests existed stay
+  // private — they were made when only the passenger could see them. New
+  // requests are created with visibleToDrivers: true set explicitly in
+  // routes/ride-alerts.ts, so this default must NOT be flipped to true.
+  visibleToDrivers  Boolean  @default(false)
+  notifiedDriverIds String[] @default([])
+
+  messages             Message[]
+  conversationDeletions RequestConversationDeletion[]
+
   @@index([passengerId, active])
   @@index([active, expiresAt])
+  @@index([visibleToDrivers, active, expiresAt])
 }
 
 enum Role {
@@ -334,18 +350,41 @@ model PushToken {
   createdAt DateTime @default(now())
 }
 
+// A message hangs off exactly one context: a Trip (driver/passenger discussing a
+// booked ride) or a RideAlert (driver replying to a published trip request).
+// Both columns are nullable so neither context is privileged; the "exactly one"
+// invariant is enforced in routes/messages.ts, not by the database.
 model Message {
-  id         String   @id @default(cuid())
-  tripId     String
-  trip       Trip     @relation(fields: [tripId], references: [id])
+  id         String     @id @default(cuid())
+  tripId     String?
+  trip       Trip?      @relation(fields: [tripId], references: [id])
+  requestId  String?
+  request    RideAlert? @relation(fields: [requestId], references: [id], onDelete: Cascade)
   senderId   String
-  sender     User     @relation("MessagesSent", fields: [senderId], references: [id])
+  sender     User       @relation("MessagesSent", fields: [senderId], references: [id])
   receiverId String
-  receiver   User     @relation("MessagesReceived", fields: [receiverId], references: [id])
+  receiver   User       @relation("MessagesReceived", fields: [receiverId], references: [id])
   content    String
-  read       Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  read       Boolean    @default(false)
+  createdAt  DateTime   @default(now())
 
   @@index([tripId, senderId, receiverId])
+  @@index([requestId, senderId, receiverId])
   @@index([receiverId, read])
+}
+
+// Parallel to ConversationDeletion, for request-scoped conversations. Kept as a
+// separate table so the trip version — which holds live user data and has a
+// composite unique that a nullable column would silently break — stays as is.
+model RequestConversationDeletion {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  requestId String
+  request   RideAlert @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  otherId   String
+  deletedAt DateTime @default(now())
+
+  @@unique([userId, requestId, otherId])
+  @@index([userId])
 }

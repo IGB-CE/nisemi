@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Switch,
   Modal,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -60,6 +61,9 @@ export default function RideAlertsScreen() {
   const [dest, setDest] = useState<PlaceDetail | null>(null);
   const [date, setDate] = useState<Date | null>(null);
   const [searchRadiusM, setSearchRadiusM] = useState(500);
+  const [price, setPrice] = useState('');
+  const [seats, setSeats] = useState(1);
+  const [note, setNote] = useState('');
 
   const load = useCallback(() => {
     if (!token) return;
@@ -105,11 +109,19 @@ export default function RideAlertsScreen() {
     setDest(null);
     setDate(null);
     setSearchRadiusM(500);
+    setPrice('');
+    setSeats(1);
+    setNote('');
   };
 
   const create = async () => {
     if (!origin || !dest || !token) {
       await dialog.alert('Gabim', 'Plotëso adresat');
+      return;
+    }
+    const priceValue = price.trim() ? Number(price.trim().replace(',', '.')) : null;
+    if (priceValue !== null && (Number.isNaN(priceValue) || priceValue < 0)) {
+      await dialog.alert('Gabim', 'Çmimi nuk është i vlefshëm');
       return;
     }
     setCreating(true);
@@ -124,6 +136,9 @@ export default function RideAlertsScreen() {
           destLabel: dest.label,
           date: date?.toISOString(),
           searchRadiusM,
+          pricePerSeat: price.trim() ? Number(price.trim().replace(',', '.')) : undefined,
+          seats,
+          note: note.trim() || undefined,
         },
         token,
       );
@@ -278,6 +293,41 @@ export default function RideAlertsScreen() {
               ))}
             </View>
 
+            <Text style={s.fieldLabel}>Çmimi për person (opsionale)</Text>
+            <TextInput
+              value={price}
+              onChangeText={setPrice}
+              placeholder="p.sh. 500"
+              placeholderTextColor={colors.subtle}
+              keyboardType="numeric"
+              style={s.input}
+            />
+            <Text style={s.hint}>Lëre bosh nëse çmimi është i negociueshëm.</Text>
+
+            <Text style={s.fieldLabel}>Sa persona udhëtojnë?</Text>
+            <View style={s.radiusRow}>
+              {[1, 2, 3, 4].map((n) => (
+                <TouchableOpacity
+                  key={n}
+                  style={[s.radiusBtn, seats === n && s.radiusBtnActive]}
+                  onPress={() => setSeats(n)}
+                >
+                  <Text style={[s.radiusBtnText, seats === n && s.radiusBtnTextActive]}>{n}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={s.fieldLabel}>Shënim për shoferin (opsionale)</Text>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              placeholder="p.sh. kam dy valixhe"
+              placeholderTextColor={colors.subtle}
+              multiline
+              maxLength={500}
+              style={[s.input, s.inputMultiline]}
+            />
+
             <View style={s.modalBtns}>
               <View style={{ flex: 1 }}>
                 <PrimaryButton
@@ -336,6 +386,19 @@ const makeStyles = ({ colors, typography }: Theme) =>
   radiusBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   radiusBtnText: { fontSize: 13, color: colors.text, fontWeight: '700' },
   radiusBtnTextActive: { color: '#fff' },
+
+  input: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: colors.text,
+    fontSize: 15,
+  },
+  inputMultiline: { minHeight: 72, textAlignVertical: 'top' },
+  hint: { ...typography.caption, color: colors.subtle, marginTop: 6, fontSize: 11 },
 
   modalBtns: { flexDirection: 'row', gap: 10, marginTop: 28 },
 });

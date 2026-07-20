@@ -25,7 +25,7 @@ export function UnreadProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     api
-      .get<{ count: number }>('/api/v1/messages/unread-count', token)
+      .get<{ count: number }>('/api/v1/messages/unread-count?includeRequests=1', token)
       .then((d) => setUnread(d.count ?? 0))
       .catch(() => {});
   }, [token]);

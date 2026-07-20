@@ -11,18 +11,43 @@ import { ErrorScreen, EmptyState } from '../../components/States';
 import AdminBadge from '../../components/AdminBadge';
 
 interface Conversation {
-  tripId: string;
-  trip: {
+  tripId: string | null;
+  trip?: {
     id: string;
     originCity?: { name: string } | null;
     destCity?: { name: string } | null;
     originLabel?: string | null;
     destLabel?: string | null;
     departureAt: string;
-  };
+  } | null;
   otherUser: { id: string; firstName: string; lastName: string; avatarUrl: string | null; role?: string };
   lastMessage: { content: string; createdAt: string; fromMe: boolean };
   unread: number;
+  // Set instead of tripId/trip when the conversation is about a passenger's
+  // published trip request rather than a booked ride.
+  requestId?: string | null;
+  request?: {
+    id: string;
+    originLabel: string;
+    destLabel: string;
+    date: string | null;
+  } | null;
+}
+
+function conversationKey(c: Conversation): string {
+  return c.requestId ? `r:${c.requestId}` : `t:${c.tripId}`;
+}
+
+function conversationRoute(c: Conversation) {
+  return c.requestId
+    ? ({
+        pathname: '/chat/kerkesa/[requestId]/[userId]',
+        params: { requestId: c.requestId, userId: c.otherUser.id },
+      } as const)
+    : ({
+        pathname: '/chat/[tripId]/[userId]',
+        params: { tripId: c.tripId, userId: c.otherUser.id },
+      } as const);
 }
 
 function formatTime(iso: string) {
@@ -48,7 +73,7 @@ export default function Mesazhet() {
     setLoading(true);
     setError(null);
     api
-      .get<Conversation[]>('/api/v1/messages/conversations', token ?? undefined)
+      .get<Conversation[]>('/api/v1/messages/conversations?includeRequests=1', token ?? undefined)
       .then(setConversations)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -71,9 +96,14 @@ export default function Mesazhet() {
     );
     if (!ok) return;
     const prev = conversations;
-    setConversations((cs) => cs.filter((x) => !(x.tripId === c.tripId && x.otherUser.id === c.otherUser.id)));
+    setConversations((cs) =>
+      cs.filter(
+        (x) => !(conversationKey(x) === conversationKey(c) && x.otherUser.id === c.otherUser.id),
+      ),
+    );
+    const path = c.requestId ? `request/${c.requestId}` : `trip/${c.tripId}`;
     try {
-      await api.delete(`/api/v1/messages/trip/${c.tripId}/with/${c.otherUser.id}`, token ?? undefined);
+      await api.delete(`/api/v1/messages/${path}/with/${c.otherUser.id}`, token ?? undefined);
       refreshUnread();
     } catch (e: any) {
       setConversations(prev);
@@ -120,14 +150,9 @@ export default function Mesazhet() {
               const isUnread = c.unread > 0 && !c.lastMessage.fromMe;
               return (
                 <TouchableOpacity
-                  key={`${c.tripId}-${c.otherUser.id}`}
+                  key={`${conversationKey(c)}-${c.otherUser.id}`}
                   style={s.card}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/chat/[tripId]/[userId]',
-                      params: { tripId: c.tripId, userId: c.otherUser.id },
-                    })
-                  }
+                  onPress={() => router.push(conversationRoute(c) as any)}
                   onLongPress={() => deleteConversation(c)}
                   delayLongPress={350}
                   activeOpacity={0.85}
@@ -150,8 +175,9 @@ export default function Mesazhet() {
                       <Text style={[s.time, isUnread && s.timeUnread]}>{formatTime(c.lastMessage.createdAt)}</Text>
                     </View>
                     <Text style={s.route} numberOfLines={1}>
-                      {c.trip.originLabel ?? c.trip.originCity?.name ?? '?'} →{' '}
-                      {c.trip.destLabel ?? c.trip.destCity?.name ?? '?'}
+                      {c.request
+                        ? `${c.request.originLabel} → ${c.request.destLabel} · Kërkesë`
+                        : `${c.trip?.originLabel ?? c.trip?.originCity?.name ?? '?'} → ${c.trip?.destLabel ?? c.trip?.destCity?.name ?? '?'}`}
                     </Text>
                     <View style={s.bottomRow}>
                       <Text style={[s.preview, isUnread && s.previewUnread]} numberOfLines={1}>

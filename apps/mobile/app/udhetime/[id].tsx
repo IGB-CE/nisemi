@@ -99,7 +99,7 @@ export default function TripDetail() {
       await api.post('/api/v1/reservations', body, token);
       await dialog.alert('Sukses', 'Rezervimi u dërgua. Prit konfirmimin e shoferit.');
       maybeShowInterstitialAfterBooking();
-      router.push('/(tabs)/rezervimet');
+      router.push('/rezervimet' as any);
     } catch (e: any) {
       await dialog.alert('Gabim', e.message);
     } finally {

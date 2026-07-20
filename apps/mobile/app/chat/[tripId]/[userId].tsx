@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -32,7 +32,17 @@ interface Message {
 const POLL_MS = 3000;
 
 export default function Chat() {
-  const { tripId, userId } = useLocalSearchParams<{ tripId: string; userId: string }>();
+  // Shared by both chat routes: /chat/[tripId]/[userId] supplies tripId, and
+  // /chat/kerkesa/[requestId]/[userId] supplies requestId. Exactly one is set,
+  // and it decides which message endpoints this screen talks to.
+  const { tripId, requestId, userId } = useLocalSearchParams<{
+    tripId?: string;
+    requestId?: string;
+    userId: string;
+  }>();
+  const ctx = useMemo(() => (requestId ? { requestId } : { tripId }), [requestId, tripId]);
+  const convPath = requestId ? `request/${requestId}` : `trip/${tripId}`;
+  const contextId = requestId ?? tripId;
   const { token, user } = useAuth();
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
@@ -47,7 +57,7 @@ export default function Chat() {
   const scrollRef = useRef<ScrollView>(null);
 
   const deleteChat = async () => {
-    if (!token || !tripId || !userId) return;
+    if (!token || !contextId || !userId) return;
     const name = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'këtë përdorues';
     const firstName = otherUser?.firstName ?? 'Ai';
     const ok = await dialog.confirm(
@@ -58,7 +68,7 @@ export default function Chat() {
     );
     if (!ok) return;
     try {
-      await api.delete(`/api/v1/messages/trip/${tripId}/with/${userId}`, token);
+      await api.delete(`/api/v1/messages/${convPath}/with/${userId}`, token);
       refreshUnread();
       router.back();
     } catch (e: any) {
@@ -86,7 +96,7 @@ export default function Chat() {
 
   const fetchMessages = useCallback(async () => {
     try {
-      const data = await api.get<Message[]>(`/api/v1/messages/trip/${tripId}/with/${userId}`, token ?? undefined);
+      const data = await api.get<Message[]>(`/api/v1/messages/${convPath}/with/${userId}`, token ?? undefined);
       setMessages((prev) => {
         if (prev.length === data.length && prev[prev.length - 1]?.id === data[data.length - 1]?.id) return prev;
         return data;
@@ -95,7 +105,7 @@ export default function Chat() {
     } finally {
       setLoading(false);
     }
-  }, [tripId, userId, token]);
+  }, [convPath, userId, token]);
 
   useEffect(() => {
     fetchMessages();
@@ -107,13 +117,13 @@ export default function Chat() {
   // and refresh immediately when one arrives.
   useFocusEffect(
     useCallback(() => {
-      if (tripId && userId) setActiveChat(tripId, userId, fetchMessages);
+      if (contextId && userId) setActiveChat(ctx, userId, fetchMessages);
       return () => {
         clearActiveChat();
         // Opening this chat marked its messages read on the server — sync the badge.
         refreshUnread();
       };
-    }, [tripId, userId, fetchMessages, refreshUnread]),
+    }, [ctx, contextId, userId, fetchMessages, refreshUnread]),
   );
 
   useEffect(() => {
@@ -136,7 +146,7 @@ export default function Chat() {
     try {
       const m = await api.post<Message>(
         '/api/v1/messages',
-        { tripId, receiverId: userId, content },
+        { ...ctx, receiverId: userId, content },
         token ?? undefined,
       );
       setMessages((prev) => [...prev, m]);

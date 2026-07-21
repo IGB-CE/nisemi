@@ -4,7 +4,7 @@ Step-by-step for deploying `apps/api` to Render's free tier. Mobile and admin ap
 
 ## Prerequisites
 
-- Repo pushed to GitHub at `nisemialb-creator/nisemi` (already done)
+- Repo pushed to GitHub at `IGB-CE/nisemi` (already done)
 - `apps/api/Dockerfile` present (already done)
 - A Render account (free)
 
@@ -12,12 +12,15 @@ Step-by-step for deploying `apps/api` to Render's free tier. Mobile and admin ap
 
 1. Go to https://render.com → **Get Started for Free**
 2. Sign up with GitHub so Render can list your repos
+3. Make sure Render's GitHub App is granted access to `IGB-CE/nisemi`
+
+If the build log says `It looks like we don't have access to your repo, but we'll try to clone it anyway`, the GitHub App is **not** installed on the account that owns the repo. The build still succeeds because the repo is public, but there's no webhook — pushes to `main` won't trigger auto-deploy and you're stuck on Manual Deploy. Grant access under **Settings → Connect**.
 
 ## 2. Create the web service
 
 1. From the Render dashboard → **New +** → **Web Service**
 2. Select **Build and deploy from a Git repository**
-3. Connect your `nisemialb-creator/nisemi` repo
+3. Connect your `IGB-CE/nisemi` repo
 4. Fill in:
    - **Name:** `nisemi-api` (whatever — becomes part of the URL)
    - **Region:** **Frankfurt** (closest to Albania)
@@ -91,6 +94,17 @@ Once you have real users, upgrade to the **$7/mo Starter** plan for always-on.
 - [ ] Run the QA checklist (`docs/qa-checklist.md`) section 17 (production build sanity)
 
 ## Common issues
+
+- **Runtime silently switched off Docker** — the build log starts with `Using Node.js version …` and `Running build command 'npm install; npm run build'` instead of a Docker build. This has happened once (after transferring the repo between GitHub accounts, reconnecting reset the runtime). It fails with a wall of TypeScript errors that look like the code is broken — it isn't. Under the Node runtime:
+  - `NODE_ENV=production` makes `npm install` skip devDependencies, so every `@types/*` package is missing (`TS7016`, `TS2307`)
+  - `prisma generate` never runs, so `@prisma/client` "has no exported member `PrismaClient`"
+  - root `npm run build` also builds `admin` and `landing`, which this service has no business building
+
+  Fix: **Settings → Runtime → Docker**, Dockerfile Path `apps/api/Dockerfile`, Root Directory empty, and clear the build command. Do not try to fix the TypeScript errors — see the next entry.
+
+- **A failed build does not take the API down** — Render keeps the last successful deploy serving while a new build fails, so `api.nisemi.al` stays up. Fix the build; only use **Rollback** if a bad deploy actually went live.
+
+- **`npm run typecheck` is red locally but Docker builds fine** — intentional, for now. `apps/api` has pre-existing implicit-`any` errors (`TS7006`) across `src/routes/`, and the Dockerfile runs `npx tsc … || true` then asserts `dist/server.js` exists. Type errors don't gate deploys; only a missing build artifact does. Don't "fix" a red build by disabling Docker.
 
 - **Build fails with "module not found"** — root directory must be empty so Docker builds with the monorepo root as context. The npm workspaces hoisting depends on it.
 - **Prisma errors at runtime about OpenSSL** — the Dockerfile already installs `openssl ca-certificates`, but verify the `binaryTargets` in `apps/api/prisma/schema.prisma` still includes `debian-openssl-3.0.x`.

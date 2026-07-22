@@ -128,7 +128,34 @@ router.get('/browse', requireAuth, async (req: AuthRequest, res) => {
       },
     },
   });
-  res.json(alerts);
+
+  // Boosted requests float to the top of the feed, same as boosted trips.
+  const now = Date.now();
+  const sorted = [...alerts].sort((a, b) => {
+    const aBoosted = a.boostedUntil && a.boostedUntil.getTime() > now ? 1 : 0;
+    const bBoosted = b.boostedUntil && b.boostedUntil.getTime() > now ? 1 : 0;
+    if (aBoosted !== bBoosted) return bBoosted - aBoosted;
+    return 0;
+  });
+  res.json(sorted);
+});
+
+router.post('/:id/boost', requireAuth, async (req: AuthRequest, res) => {
+  const alert = await prisma.rideAlert.findUnique({ where: { id: req.params.id } });
+  if (!alert || alert.passengerId !== req.userId) {
+    res.status(404).json({ error: 'Kërkesa nuk u gjet' });
+    return;
+  }
+  if (!alert.active || !alert.visibleToDrivers || alert.expiresAt <= new Date()) {
+    res.status(400).json({ error: 'Vetëm kërkesat aktive dhe të dukshme mund të promovohen' });
+    return;
+  }
+  const boostedUntil = new Date(Date.now() + 12 * 60 * 60 * 1000);
+  const updated = await prisma.rideAlert.update({
+    where: { id: req.params.id },
+    data: { boostedUntil },
+  });
+  res.json(updated);
 });
 
 const updateSchema = z.object({

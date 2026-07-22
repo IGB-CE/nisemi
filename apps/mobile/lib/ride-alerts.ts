@@ -19,6 +19,7 @@ export interface RideAlert {
   seats: number;
   note: string | null;
   visibleToDrivers: boolean;
+  boostedUntil: string | null;
 }
 
 // A request as a driver sees it in the browse feed, with the passenger attached.
@@ -77,5 +78,7 @@ export const rideAlerts = {
     api.patch<RideAlert>(`/api/v1/ride-alerts/${id}`, body, token),
   setActive: (id: string, active: boolean, token: string) =>
     api.patch<RideAlert>(`/api/v1/ride-alerts/${id}`, { active }, token),
+  boost: (id: string, token: string) =>
+    api.post<RideAlert>(`/api/v1/ride-alerts/${id}/boost`, {}, token),
   remove: (id: string, token: string) => api.delete<{ ok: true }>(`/api/v1/ride-alerts/${id}`, token),
 };

@@ -25,6 +25,7 @@ import Icon from '../../components/ui/Icon';
 import PlacesAutocomplete from '../../components/PlacesAutocomplete';
 import DateTimeField from '../../components/DateTimeField';
 import type { PlaceDetail } from '../../lib/places';
+import { showInterstitialAfterPublish, showRewardedAd } from '../../lib/ads';
 
 const RADIUS_OPTIONS = [
   { value: 100, label: '100 m' },
@@ -56,6 +57,7 @@ export default function RideAlertsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [boostingId, setBoostingId] = useState<string | null>(null);
 
   const [origin, setOrigin] = useState<PlaceDetail | null>(null);
   const [dest, setDest] = useState<PlaceDetail | null>(null);
@@ -145,10 +147,36 @@ export default function RideAlertsScreen() {
       setShowCreate(false);
       resetForm();
       load();
+      showInterstitialAfterPublish();
     } catch (e: any) {
       await dialog.alert('Gabim', e.message);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const boostAlert = async (alert: RideAlert) => {
+    if (!token) return;
+    const ok = await dialog.confirm(
+      'Promovo kërkesën',
+      'Shiko një reklamë të shkurtër për ta vendosur kërkesën tuaj në krye të listës së shoferëve për 12 orë.',
+      'Vazhdo',
+    );
+    if (!ok) return;
+    setBoostingId(alert.id);
+    try {
+      const earned = await showRewardedAd();
+      if (!earned) {
+        await dialog.alert('Reklama nuk u përfundua', 'Kërkesa nuk u promovua. Provo përsëri më vonë.');
+        return;
+      }
+      const updated = await rideAlerts.boost(alert.id, token);
+      setAlerts((prev) => prev.map((a) => (a.id === alert.id ? updated : a)));
+      await dialog.alert('U promovua', 'Kërkesa do të shfaqet në krye të listës për 12 orë.');
+    } catch (e: any) {
+      await dialog.alert('Gabim', e.message);
+    } finally {
+      setBoostingId(null);
     }
   };
 
@@ -208,8 +236,21 @@ export default function RideAlertsScreen() {
         ) : (
           alerts.map((a) => {
             const expired = new Date(a.expiresAt).getTime() < Date.now();
+            const isBoosted = !!a.boostedUntil && new Date(a.boostedUntil).getTime() > Date.now();
+            const canBoost = !expired && a.active && a.visibleToDrivers && !isBoosted;
             return (
               <Card key={a.id} style={s.card}>
+                {isBoosted && (
+                  <View style={s.boostPill}>
+                    <Text style={s.boostPillText}>
+                      ⚡ Promovuar deri{' '}
+                      {new Date(a.boostedUntil!).toLocaleTimeString('sq-AL', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
+                  </View>
+                )}
                 <View style={s.alertHead}>
                   <View style={{ flex: 1 }}>
                     <Text style={s.alertRoute} numberOfLines={1}>
@@ -240,6 +281,17 @@ export default function RideAlertsScreen() {
                     ? 'Skadoi'
                     : `Skadon: ${new Date(a.expiresAt).toLocaleDateString('sq-AL', { day: 'numeric', month: 'short' })}`}
                 </Text>
+                {canBoost && (
+                  <TouchableOpacity
+                    style={s.boostButton}
+                    disabled={boostingId === a.id}
+                    onPress={() => boostAlert(a)}
+                  >
+                    <Text style={s.boostButtonText}>
+                      {boostingId === a.id ? 'Po ngarkohet…' : '⚡ Promovo kërkesën 12h'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity onPress={() => deleteAlert(a)} style={s.deleteBtn}>
                   <Text style={s.deleteText}>Fshi</Text>
                 </TouchableOpacity>
@@ -370,6 +422,25 @@ const makeStyles = ({ colors, typography }: Theme) =>
   alertExpiry: { ...typography.caption, marginTop: 4, color: colors.subtle, fontSize: 11 },
   deleteBtn: { marginTop: 10, alignSelf: 'flex-end' },
   deleteText: { color: colors.danger, fontSize: 13, fontWeight: '600' },
+
+  boostPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 10,
+  },
+  boostPillText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.3 },
+  boostButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+  },
+  boostButtonText: { color: colors.primary, fontSize: 13, fontWeight: '800', letterSpacing: 0.3 },
 
   modalTitle: { ...typography.h1, marginBottom: 18 },
   fieldLabel: { ...typography.label, marginBottom: 6, marginTop: 14 },

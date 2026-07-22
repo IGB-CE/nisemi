@@ -107,6 +107,7 @@ model RideAlert {
   // routes/ride-alerts.ts, so this default must NOT be flipped to true.
   visibleToDrivers  Boolean  @default(false)
   notifiedDriverIds String[] @default([])
+  boostedUntil      DateTime?
 
   messages             Message[]
   conversationDeletions RequestConversationDeletion[]

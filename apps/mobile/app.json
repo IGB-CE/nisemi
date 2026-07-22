@@ -47,7 +47,7 @@
           "fetch"
         ]
       },
-      "buildNumber": "4"
+      "buildNumber": "5"
     },
     "android": {
       "adaptiveIcon": {
@@ -74,7 +74,7 @@
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION"
       ],
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "bundler": "metro",

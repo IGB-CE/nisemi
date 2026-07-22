@@ -1,5 +1,5 @@
 import { prisma } from './prisma.js';
-import { matchesRoute } from './routeMatch.js';
+import { matchesRoute, haversineM } from './routeMatch.js';
 import { sendPushNotifications } from './push.js';
 
 function sameDay(a: Date, b: Date): boolean {
@@ -54,10 +54,11 @@ export async function notifyMatchingAlerts(tripId: string): Promise<void> {
   }
 }
 
-// Mirror of notifyMatchingAlerts, running the other way: a passenger publishes a
-// trip request, and every driver with an upcoming trip along that route hears
-// about it. Same matcher, arguments swapped — the request supplies the pickup
-// and dropoff points, each candidate trip supplies the route.
+// Runs the other way from notifyMatchingAlerts: a passenger publishes a trip
+// request, and every driver with an upcoming trip that ends near the same place
+// hears about it. Here we only compare destinations — a driver is notified when
+// their trip's destination sits within the search buffer of the passenger's
+// destination, regardless of where either journey starts.
 export async function notifyMatchingRequests(alertId: string): Promise<void> {
   const alert = await prisma.rideAlert.findUnique({ where: { id: alertId } });
   if (!alert || !alert.active || !alert.visibleToDrivers) return;
@@ -69,14 +70,16 @@ export async function notifyMatchingRequests(alertId: string): Promise<void> {
     where: {
       status: 'SCHEDULED',
       departureAt: { gt: now },
-      routePolyline: { not: null },
+      destLat: { not: null },
+      destLng: { not: null },
       driverId: { not: alert.passengerId },
       ...(alert.tripType ? { tripType: alert.tripType } : {}),
     },
     select: {
       id: true,
       driverId: true,
-      routePolyline: true,
+      destLat: true,
+      destLng: true,
       maxDetourM: true,
       departureAt: true,
     },
@@ -102,14 +105,15 @@ export async function notifyMatchingRequests(alertId: string): Promise<void> {
     if (blockedWith.has(trip.driverId)) continue;
     if (alert.date && !sameDay(alert.date, trip.departureAt)) continue;
 
-    const result = matchesRoute({
-      routePolyline: trip.routePolyline!,
-      driverMaxDetourM: trip.maxDetourM,
-      pickup: { lat: alert.originLat, lng: alert.originLng },
-      dropoff: { lat: alert.destLat, lng: alert.destLng },
-      passengerSearchRadiusM: alert.searchRadiusM,
-    });
-    if (!result.matched) continue;
+    // Destination-only match: the two trips need to end near each other. Reuse
+    // the same effective buffer as the route matcher (tighter of the driver's
+    // detour tolerance and the passenger's search radius).
+    const buffer = Math.min(trip.maxDetourM, alert.searchRadiusM);
+    const destDistanceM = haversineM(
+      { lat: alert.destLat, lng: alert.destLng },
+      { lat: trip.destLat!, lng: trip.destLng! },
+    );
+    if (destDistanceM > buffer) continue;
 
     const tokens = await prisma.pushToken.findMany({
       where: { userId: trip.driverId },
